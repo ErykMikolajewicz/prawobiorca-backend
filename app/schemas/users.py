@@ -25,3 +25,12 @@ class UsersAccessTokens(Base):
     access_token: Mapped[str] = mapped_column(sqla.String(256), primary_key=True)
     id: Mapped[UUID] = mapped_column(sqla.ForeignKey('users.id'))
     expiration_date: Mapped[datetime]
+
+
+class UsersFiles(Base, UuidIdMixin, CreateDateMixin):
+    __tablename__ = 'user_files'
+    __table_args__ = (
+        sqla.UniqueConstraint('file_name'),
+    )
+
+    file_name: Mapped[str] = mapped_column(sqla.String(256))

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, status, HTTPException
 from app.models.account import AccountCreate
 import app.services.accounts as account_services
 from app.repositories.users import UsersRepository
-from app.core.exceptions import UserExistsException
+from app.core.exceptions import UserExists
 
 
 logger = logging.getLogger(__name__)
@@ -24,5 +24,5 @@ async def create_account(
         ):
     try:
         await account_services.create_account(users_repo, account_data)
-    except UserExistsException as e:
+    except UserExists as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=e.message)

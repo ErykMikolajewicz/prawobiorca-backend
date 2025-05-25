@@ -37,3 +37,10 @@ class UsersTokensRepository:
                               user_schema.UsersAccessTokens.expiration_date > datetime.datetime.now()))
         token_data = await self.db_session.scalar(select_query)
         return token_data
+
+
+class UserFilesRepository(CrudRepository):
+    def __init__(self, db_session: Annotated[AsyncSession, Depends(get_async_session)]):
+        super().__init__(db_session, user_schema.UsersFiles)
+        self.db_session = db_session
+        self.model = user_schema.UsersFiles

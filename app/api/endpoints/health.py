@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 health_router = APIRouter(
     prefix="/health",
     tags=["health check"],
-    responses={503: {"description": "Service unavailable."}}
+    responses={status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Service unavailable."}}
 )
 
 
