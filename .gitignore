@@ -13,3 +13,5 @@ wheels/
 /config/
 /certificate.crt
 /private.key
+
+.idea
