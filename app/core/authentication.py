@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends, Request, HTTPException, status
 
-from app.repositories.users import Users, UsersTokens
+from app.repositories.users import UsersRepository, UsersTokensRepository
 from app.core.security import verify_password, generate_token, get_expiration_date
 from app.config import settings
 
@@ -14,7 +14,7 @@ token_expiration_minutes = settings.app.USER_TOKEN_EXPIRATION_MINUTES
 
 async def authenticate(login: str,
                        password: str,
-                       users_repo: Annotated[Users, Depends(Users)]) -> UUID:
+                       users_repo: Annotated[UsersRepository, Depends(UsersRepository)]) -> UUID:
     user = await users_repo.get_by_login(login)
     if not verify_password(password, user.hashed_password):
         raise ValueError('Invalid password!')
@@ -22,7 +22,7 @@ async def authenticate(login: str,
 
 
 async def add_token(id_: UUID,
-                    users_tokens_repo: Annotated[UsersTokens, Depends(UsersTokens)]) -> str:
+                    users_tokens_repo: Annotated[UsersTokensRepository, Depends(UsersTokensRepository)]) -> str:
     new_token = generate_token()
     expiration_date = get_expiration_date(token_expiration_minutes)
     token_data = {'id': id_, 'access_token': new_token, 'expiration_date': expiration_date}
@@ -32,7 +32,7 @@ async def add_token(id_: UUID,
 
 async def validate_token(token: Annotated[str, Depends(OAuth2PasswordBearer(tokenUrl='/employees/login'))],
                          request: Request,
-                         users_tokens_repo: Annotated[UsersTokens, Depends(UsersTokens)]):
+                         users_tokens_repo: Annotated[UsersTokensRepository, Depends(UsersTokensRepository)]):
     token_data = await users_tokens_repo.check(token)
     if token_data is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)

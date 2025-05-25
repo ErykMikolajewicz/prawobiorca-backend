@@ -9,7 +9,6 @@ VECTOR_DB_SETTINGS_FILE_PATH = Path('config') / "vector_db.env"
 class VectorDatabaseSettings(BaseSettings):
     HOST: str
     GRPC_PORT: int
-    API_KEY: str
 
     model_config = SettingsConfigDict(
         env_file=VECTOR_DB_SETTINGS_FILE_PATH,

@@ -2,27 +2,25 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from sqlalchemy import Integer, DateTime, text, func
+from sqlalchemy import text, func
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.relational_db.connection import Base
 
-
-class IntIdMixin(Base):
+class IntIdMixin:
     __abstract__ = True
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
 
 
-class UuidIdMixin(Base):
+class UuidIdMixin:
     __abstract__ = True
-    id: Mapped[UUID] = mapped_column(Integer, primary_key=True, server_default=text('gen_random_uuid()'))
+    id: Mapped[UUID] = mapped_column(primary_key=True, server_default=text('gen_random_uuid()'))
 
 
-class CreateDateMixin(Base):
+class CreateDateMixin:
     __abstract__ = True
     create_date: Mapped[datetime] = mapped_column(server_default=text('now()'))
 
 
 class UpdateDateMixin(CreateDateMixin):
     __abstract__ = True
-    updated_at: Mapped[Optional[datetime]] = mapped_column(DateTime, onupdate=func.now())
+    updated_at: Mapped[Optional[datetime]] = mapped_column(onupdate=func.now())

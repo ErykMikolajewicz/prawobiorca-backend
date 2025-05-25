@@ -24,6 +24,13 @@ async_session_maker = async_sessionmaker(
     expire_on_commit=False,
 )
 
+async def get_async_session() -> AsyncSession:
+    async with async_session_maker() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
+
 
 async def check_relational_db_connection():
     async with async_session_maker() as session:

@@ -7,11 +7,11 @@ from fastapi import Depends
 
 import app.schemas.users as user_schema
 from app.repositories.general import CrudRepository
-from app.relational_db.connection import async_session_maker
+from app.relational_db.connection import get_async_session
 
 
-class Users(CrudRepository):
-    def __init__(self, db_session: Annotated[AsyncSession, Depends(async_session_maker)]):
+class UsersRepository(CrudRepository):
+    def __init__(self, db_session: Annotated[AsyncSession, Depends(get_async_session)]):
         super().__init__(db_session, user_schema.Users)
         self.db_session = db_session
         self.model = user_schema.Users
@@ -22,8 +22,8 @@ class Users(CrudRepository):
         return result
 
 
-class UsersTokens:
-    def __init__(self, db_session: Annotated[AsyncSession, Depends(async_session_maker)]):
+class UsersTokensRepository:
+    def __init__(self, db_session: Annotated[AsyncSession, Depends(get_async_session)]):
         self.db_session = db_session
 
     async def add(self, new_token: dict[str, Any]):
