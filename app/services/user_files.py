@@ -1,11 +1,11 @@
 from sqlalchemy.exc import IntegrityError
 from fastapi import UploadFile
 
-from app.repositories.users import UserFilesRepository
 from app.core.exceptions import NoFileName, FileNameExist
+from app.units_of_work.users import UsersUnitOfWork
 
 
-async def add_user_file(user_files_repo: UserFilesRepository, user_file: UploadFile):
+async def add_user_file(users_unit_of_work: UsersUnitOfWork, user_file: UploadFile):
     file_name = user_file.filename
     if file_name is None:
         raise NoFileName
@@ -13,6 +13,7 @@ async def add_user_file(user_files_repo: UserFilesRepository, user_file: UploadF
     file_data = {"file_name": file_name}
 
     try:
-        await user_files_repo.add(file_data)
+        async with users_unit_of_work as uof:
+            await uof.files.add(file_data)
     except IntegrityError:
         raise FileNameExist

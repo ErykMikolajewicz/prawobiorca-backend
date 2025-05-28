@@ -32,3 +32,8 @@ app = FastAPI(lifespan=lifespan, title='PRAWOBIORCA')
 
 setup_logging()
 include_all_routers(app)
+
+
+if __name__ == '__main__':
+    import uvicorn
+    uvicorn.run(app, host='127.0.0.1', port=8000)

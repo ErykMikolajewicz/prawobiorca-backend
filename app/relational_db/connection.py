@@ -26,10 +26,7 @@ async_session_maker = async_sessionmaker(
 
 async def get_async_session() -> AsyncSession:
     async with async_session_maker() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
+        yield session  # bad type hint from PyCharm
 
 
 async def check_relational_db_connection():

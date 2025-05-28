@@ -1,6 +1,6 @@
 [project]
 name = "prawobiorca-backend"
-version = "0.5.0"
+version = "0.6.0"
 description = "Backend for law acts search engine with AI features."
 readme = "README.md"
 requires-python = ">=3.13"
@@ -17,5 +17,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "bandit==1.8.*",
     "granian[reload]==2.2.*",
+    "uvicorn==0.34.*",
 ]

@@ -1,12 +1,12 @@
 from sqlalchemy.exc import IntegrityError
 
 from app.models.account import AccountCreate
-from app.repositories.users import UsersRepository
 from app.core.security import hash_password
 from app.core.exceptions import UserExists
+from app.units_of_work.users import UsersUnitOfWork
 
 
-async def create_account(user_repo: UsersRepository, account_data: AccountCreate):
+async def create_account(users_unit_of_work: UsersUnitOfWork, account_data: AccountCreate):
     login = account_data.login
     password = account_data.password
 
@@ -14,6 +14,7 @@ async def create_account(user_repo: UsersRepository, account_data: AccountCreate
     account_hashed = {"login": login, "hashed_password": hashed_password}
 
     try:
-        await user_repo.add(account_hashed)
+        async with users_unit_of_work as uof:
+            await uof.users.add(account_hashed)
     except IntegrityError:
         raise UserExists
