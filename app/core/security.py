@@ -14,8 +14,8 @@ def generate_token() -> str:
     return token
 
 
-def get_expiration_date(expiration_in_minutes) -> datetime:
-    return datetime.now() + timedelta(minutes=expiration_in_minutes)
+def get_expiration_date(expiration_in_seconds: int) -> datetime:
+    return datetime.now() + timedelta(seconds=expiration_in_seconds)
 
 
 def verify_password(password: str, hashed_password: bytes) -> bool:

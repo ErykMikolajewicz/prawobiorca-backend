@@ -11,7 +11,7 @@ DATABASE_URL = (f"{db_settings.DRIVER}://{db_settings.DB_USER}:{db_settings.PASS
 
 engine = create_async_engine(
     DATABASE_URL,
-    echo = True,
+    echo = False,
     pool_size = db_settings.POOL_SIZE,
     max_overflow = db_settings.MAX_OVERFLOW,
     pool_timeout = db_settings.POOL_TIMEOUT,

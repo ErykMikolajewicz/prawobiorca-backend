@@ -1,4 +1,4 @@
-from typing import TypeVar, Type, Optional, Any
+from typing import TypeVar, Type, Optional, Any, Generic
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -10,10 +10,10 @@ from app.schemas.mixins import UuidIdMixin, IntIdMixin
 ModelWithId = TypeVar('ModelWithId', bound=UuidIdMixin | IntIdMixin)
 
 
-class CrudRepository:
+class CrudRepository(Generic[ModelWithId]):
     def __init__(self, db_session: AsyncSession, model: Type[ModelWithId]):
         self.db_session = db_session
-        self.model = model
+        self.model: Type[ModelWithId] = model
 
     async def get(self, id_: UUID | int) -> Optional[ModelWithId]:
         select_statement = select(self.model).where(self.model.id == id_)

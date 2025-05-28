@@ -1,9 +1,7 @@
 
 
 class UserExists(Exception):
-    def __init__(self, message="User with that login already exists!"):
-        self.message = message
-        super().__init__(self.message)
+    pass
 
 
 class NoFileName(Exception):
@@ -11,4 +9,12 @@ class NoFileName(Exception):
 
 
 class FileNameExist(Exception):
+    pass
+
+
+class InvalidCredentials(Exception):
+    pass
+
+
+class UserNotFound(Exception):
     pass
