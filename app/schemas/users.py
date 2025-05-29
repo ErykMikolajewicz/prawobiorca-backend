@@ -14,8 +14,8 @@ class Users(Base, UuidIdMixin, CreateDateMixin):
         sqla.UniqueConstraint('login'),
     )
 
-    hashed_password: Mapped[bytes] = mapped_column(sqla.LargeBinary(256))
-    login: Mapped[str] = mapped_column(sqla.String(256))
+    hashed_password: Mapped[bytes] = mapped_column(sqla.LargeBinary(60))
+    login: Mapped[str] = mapped_column(sqla.String(32))
 
 
 
