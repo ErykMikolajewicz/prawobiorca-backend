@@ -8,7 +8,6 @@ from app.models.account import AccountCreate
 import app.services.accounts as account_services
 from app.units_of_work.users import UsersUnitOfWork
 from app.core.exceptions import UserExists, UserNotFound, InvalidCredentials
-from app.core.authentication import authenticate, add_token
 from app.models.token import AccessToken
 
 
@@ -36,12 +35,11 @@ async def create_token(authentication_data: Annotated[OAuth2PasswordRequestForm,
     login = authentication_data.username
     password = authentication_data.password
     try:
-        id_ = await authenticate(login, password, users_unit_of_work)
+        token = await account_services.log_user(login, password, users_unit_of_work)
     except UserNotFound:
         logger.warning(f'Failed login attempt. User not found!')
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid credentials!')
     except InvalidCredentials:
         logger.warning(f'Failed login attempt, invalid password!')
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid credentials!')
-    token = await add_token(id_, users_unit_of_work)
     return token
