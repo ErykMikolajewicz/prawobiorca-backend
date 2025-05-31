@@ -3,10 +3,10 @@ from typing import Annotated
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends
 
-from app.relational_db.connection import get_async_session
+from app.relational_db.connection import get_relational_session
 
 class BaseUnitOfWork:
-    def __init__(self, session: Annotated[AsyncSession, Depends(get_async_session)]):
+    def __init__(self, session: Annotated[AsyncSession, Depends(get_relational_session)]):
         self.session = session
 
     async def __aenter__(self):

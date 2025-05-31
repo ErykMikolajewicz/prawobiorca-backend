@@ -1,17 +1,15 @@
-from typing import Any, Annotated, Optional
+from typing import Any, Optional
 import datetime
 
 from sqlalchemy import insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
 
 import app.schemas.users as user_schema
 from app.repositories.general import CrudRepository
-from app.relational_db.connection import get_async_session
 
 
 class UsersRepository(CrudRepository[user_schema.Users]):
-    def __init__(self, session: Annotated[AsyncSession, Depends(get_async_session)]):
+    def __init__(self, session: AsyncSession):
         super().__init__(session, user_schema.Users)
 
     async def get_by_login(self, login: str) -> Optional[user_schema.Users]:
@@ -21,7 +19,7 @@ class UsersRepository(CrudRepository[user_schema.Users]):
 
 
 class UsersTokensRepository:
-    def __init__(self, session: Annotated[AsyncSession, Depends(get_async_session)]):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
     async def add(self, new_token: dict[str, Any]):
@@ -38,5 +36,5 @@ class UsersTokensRepository:
 
 
 class UsersFilesRepository(CrudRepository[user_schema.UsersFiles]):
-    def __init__(self, session: Annotated[AsyncSession, Depends(get_async_session)]):
+    def __init__(self, session: AsyncSession):
         super().__init__(session, user_schema.UsersFiles)

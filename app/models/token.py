@@ -4,10 +4,11 @@ from pydantic import BaseModel
 from pydantic.types import StringConstraints
 
 from app.core.enums import TokenType
-from app.core.consts import BEARER_TOKEN_LENGTH
+from app.core.security import url_safe_bearer_token_length
 
 
 class AccessToken(BaseModel):
-    access_token: Annotated[str, StringConstraints(min_length=BEARER_TOKEN_LENGTH , max_length=BEARER_TOKEN_LENGTH )]
+    access_token: Annotated[str, StringConstraints(min_length=url_safe_bearer_token_length,
+                                                   max_length=url_safe_bearer_token_length)]
     expires_in: int
     token_type: TokenType

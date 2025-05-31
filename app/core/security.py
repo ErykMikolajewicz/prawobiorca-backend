@@ -1,9 +1,13 @@
 import secrets
 from datetime import datetime, timedelta
+from math import ceil
 
 import bcrypt
 
 from app.core.consts import BEARER_TOKEN_LENGTH
+
+
+url_safe_bearer_token_length = ceil(BEARER_TOKEN_LENGTH * 4 / 3)
 
 
 def hash_password(password: str) -> bytes:

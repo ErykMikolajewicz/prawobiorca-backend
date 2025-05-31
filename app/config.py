@@ -3,12 +3,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from app.settings.relational_database import RelationalDatabaseSettings
 from app.settings.vector_database import VectorDatabaseSettings
 from app.settings.application import ApplicationSettings
+from app.settings.key_value_database import KeyValueDatabaseSettings
 
 
 class Settings(BaseSettings):
     relational_db: RelationalDatabaseSettings = RelationalDatabaseSettings()
     vector_db: VectorDatabaseSettings = VectorDatabaseSettings()
     app: ApplicationSettings = ApplicationSettings()
+    key_value_db: KeyValueDatabaseSettings = KeyValueDatabaseSettings()
 
     model_config = SettingsConfigDict(
         case_sensitive=True,

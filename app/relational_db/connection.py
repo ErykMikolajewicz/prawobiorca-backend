@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy import text
@@ -24,7 +26,8 @@ async_session_maker = async_sessionmaker(
     expire_on_commit=False,
 )
 
-async def get_async_session() -> AsyncSession:
+
+async def get_relational_session() -> AsyncSession:
     async with async_session_maker() as session:
         yield session  # bad type hint from PyCharm
 
@@ -32,10 +35,6 @@ async def get_async_session() -> AsyncSession:
 async def check_relational_db_connection():
     async with async_session_maker() as session:
         await session.execute(text('SELECT 1'))
-
-
-async def get_relational_session() -> AsyncSession:
-    return async_session_maker()
 
 
 class Base(DeclarativeBase):
