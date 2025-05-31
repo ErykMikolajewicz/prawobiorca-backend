@@ -17,7 +17,7 @@ async def get_redis() -> redis.Redis:
     try:
         yield redis_client  # bad type hint from PyCharm
     finally:
-        await redis_client.close()
+        await redis_client.aclose()
 
 
 async def check_redis_connection():
@@ -25,4 +25,4 @@ async def check_redis_connection():
     pong = await redis_client.ping()
     if not pong:
         raise RuntimeError("Can not connect to redis db!")
-    await redis_client.close()
+    await redis_client.aclose()
