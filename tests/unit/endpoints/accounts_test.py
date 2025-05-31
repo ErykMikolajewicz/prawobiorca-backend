@@ -8,6 +8,7 @@ from fastapi import status
 from app.main import app
 from app.core.exceptions import UserExists, UserNotFound, InvalidCredentials
 from app.core.security import url_safe_bearer_token_length
+from app.core.authentication import validate_token
 
 
 @pytest.fixture
@@ -135,3 +136,41 @@ def test_login_missing_fields(client, mock_log_user, data, expected_status):
         mock_log_user.side_effect = UserNotFound()
     response = client.post("/auth/login", data=data)
     assert response.status_code == expected_status
+
+
+@pytest.fixture
+def override_validate_token():
+    def _override():
+        return "testaccesstoken", "user-123"
+    app.dependency_overrides[validate_token] = _override
+    yield
+    app.dependency_overrides = {}
+
+
+@pytest.fixture
+def mock_logout_user():
+    with patch("app.services.accounts.logout_user", new_callable=AsyncMock) as mock:
+        yield mock
+
+
+def test_logout_success(client, override_validate_token, mock_logout_user):
+    headers = {"Authorization": "Bearer testaccesstoken"}
+    response = client.post("/auth/logout", headers=headers)
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    mock_logout_user.assert_awaited_once_with("testaccesstoken", "user-123", ANY)
+
+
+
+def test_logout_invalid_token(client, mock_logout_user):
+    headers = {"Authorization": "Bearer invalidtoken"}
+    response = client.post("/auth/logout", headers=headers)
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    mock_logout_user.assert_not_called()
+
+
+def test_logout_missing_authorization_header(client, mock_logout_user):
+    response = client.post("/auth/logout")
+
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    mock_logout_user.assert_not_called()

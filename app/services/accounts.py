@@ -1,4 +1,5 @@
 import logging
+from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
 from redis.asyncio.client import Redis
@@ -42,7 +43,7 @@ async def log_user(login: str, password: str, redis_client: Redis, users_unit_of
     if not verify_password(password, hashed_password):
         raise InvalidCredentials('Invalid password!')
 
-    user_id = user.id
+    user_id: UUID = user.id
     # To ensure exist only one refresh token
     previous_refresh_token = await redis_client.get(f"user_refresh_token:{user_id}")
     if previous_refresh_token is not None:
@@ -67,3 +68,22 @@ async def log_user(login: str, password: str, redis_client: Redis, users_unit_of
                         expires_in=access_token_expiration_seconds,
                         refresh_token=refresh_token)
     return token
+
+
+async def logout_user(access_token: str, user_id: str, redis_client: Redis):
+    refresh_token = await redis_client.get(f"user_refresh_token:{user_id}")
+
+    if refresh_token is None:
+        logger.error('Invalid application state, no refresh token for user!')
+        async with redis_client.pipeline() as pipe:
+            await pipe.delete(f"user_refresh_token:{user_id}")
+            await pipe.delete(f'access_token:{access_token}')
+            await pipe.execute()
+        return None
+
+    async with redis_client.pipeline() as pipe:
+        await pipe.delete(f'refresh_token:{refresh_token}')
+        await pipe.delete(f"user_refresh_token:{user_id}")
+        await pipe.delete(f'access_token:{access_token}')
+        await pipe.execute()
+    return None

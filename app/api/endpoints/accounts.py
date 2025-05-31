@@ -10,6 +10,7 @@ import app.services.accounts as account_services
 from app.units_of_work.users import UsersUnitOfWork
 from app.core.exceptions import UserExists, UserNotFound, InvalidCredentials
 from app.key_value_db.connection import get_redis
+from app.core.authentication import validate_token
 
 
 logger = logging.getLogger(__name__)
@@ -45,3 +46,13 @@ async def log_user(authentication_data: Annotated[OAuth2PasswordRequestForm, Dep
         logger.warning(f'Failed login attempt, invalid password!')
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid credentials!')
     return tokens
+
+
+@account_router.post('/auth/logout', status_code=status.HTTP_204_NO_CONTENT)
+async def logout_user(
+    redis_client: Annotated[Redis, Depends(get_redis)],
+    login_data: Annotated[tuple[str, str], Depends(validate_token)]
+):
+    token, user_id = login_data
+    await account_services.logout_user(token, user_id, redis_client)
+    return None
