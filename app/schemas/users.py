@@ -1,6 +1,3 @@
-from datetime import datetime
-from uuid import UUID
-
 import sqlalchemy as sqla
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -16,15 +13,6 @@ class Users(Base, UuidIdMixin, CreateDateMixin):
 
     hashed_password: Mapped[bytes] = mapped_column(sqla.LargeBinary(60))
     login: Mapped[str] = mapped_column(sqla.String(32))
-
-
-
-class UsersAccessTokens(Base):
-    __tablename__ = 'users_access_tokens'
-
-    access_token: Mapped[str] = mapped_column(sqla.String(256), primary_key=True)
-    id: Mapped[UUID] = mapped_column(sqla.ForeignKey('users.id'))
-    expiration_date: Mapped[datetime]
 
 
 class UsersFiles(Base, UuidIdMixin, CreateDateMixin):

@@ -7,7 +7,7 @@ from fastapi import status
 
 from app.main import app
 from app.core.exceptions import UserExists, UserNotFound, InvalidCredentials
-from app.core.consts import BEARER_TOKEN_LENGTH
+from app.core.security import url_safe_bearer_token_length
 
 
 @pytest.fixture
@@ -79,9 +79,10 @@ def mock_log_user():
 
 def test_login_success(client, mock_log_user):
     mock_log_user.return_value = {
-        "access_token": "a" * BEARER_TOKEN_LENGTH,
+        "access_token": "a" * url_safe_bearer_token_length,
         "expires_in": 3600,
-        "token_type": "bearer"
+        "token_type": "bearer",
+        "refresh_token": "a" * url_safe_bearer_token_length
     }
 
     data = {"username": "testuser", "password": "StrongPassword1!"}
@@ -93,8 +94,8 @@ def test_login_success(client, mock_log_user):
     assert "expires_in" in result
     assert "token_type" in result
     assert result["token_type"] == "bearer"
-    assert len(result["access_token"]) == BEARER_TOKEN_LENGTH
-    mock_log_user.assert_awaited_once_with("testuser", "StrongPassword1!", ANY)
+    assert len(result["access_token"]) == url_safe_bearer_token_length
+    mock_log_user.assert_awaited_once_with("testuser", "StrongPassword1!", ANY, ANY)
 
 
 def test_login_user_not_found(client, mock_log_user):
@@ -105,7 +106,7 @@ def test_login_user_not_found(client, mock_log_user):
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {"detail": "Invalid credentials!"}
-    mock_log_user.assert_awaited_once_with("nouser", "anyPassword1!", ANY)
+    mock_log_user.assert_awaited_once_with("nouser", "anyPassword1!", ANY, ANY)
 
 
 def test_login_invalid_password(client, mock_log_user):
@@ -116,7 +117,7 @@ def test_login_invalid_password(client, mock_log_user):
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {"detail": "Invalid credentials!"}
-    mock_log_user.assert_awaited_once_with("testuser", "wrongPassword1!", ANY)
+    mock_log_user.assert_awaited_once_with("testuser", "wrongPassword1!", ANY, ANY)
 
 
 @pytest.mark.parametrize(

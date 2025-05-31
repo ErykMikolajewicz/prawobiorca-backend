@@ -1,6 +1,10 @@
 import re
+from typing import Annotated
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, StringConstraints
+
+from app.core.enums import TokenType
+from app.core.security import url_safe_bearer_token_length
 
 
 class AccountCreate(BaseModel):
@@ -27,3 +31,11 @@ class AccountCreate(BaseModel):
             raise ValueError("Password must contain at least one special character.")
         return value
 
+
+class LoginOutput(BaseModel):
+    access_token: Annotated[str, StringConstraints(min_length=url_safe_bearer_token_length,
+                                                   max_length=url_safe_bearer_token_length)]
+    expires_in: int
+    token_type: TokenType
+    refresh_token: Annotated[str, StringConstraints(min_length=url_safe_bearer_token_length,
+                                                   max_length=url_safe_bearer_token_length)]

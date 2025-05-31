@@ -1,5 +1,4 @@
 import secrets
-from datetime import datetime, timedelta
 from math import ceil
 
 import bcrypt
@@ -18,10 +17,6 @@ def hash_password(password: str) -> bytes:
 def generate_token() -> str:
     token = secrets.token_urlsafe(BEARER_TOKEN_LENGTH)
     return token
-
-
-def get_expiration_date(expiration_in_seconds: int) -> datetime:
-    return datetime.now() + timedelta(seconds=expiration_in_seconds)
 
 
 def verify_password(password: str, hashed_password: bytes) -> bool:

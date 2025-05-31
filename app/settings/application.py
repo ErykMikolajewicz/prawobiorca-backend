@@ -8,7 +8,8 @@ APPLICATION_SETTINGS_FILE_PATH = Path('.env')
 
 class ApplicationSettings(BaseSettings):
     LOGGING_LEVEL: str
-    USER_TOKEN_EXPIRATION_SECONDS: int
+    ACCESS_TOKEN_EXPIRATION_SECONDS: int
+    REFRESH_TOKEN_EXPIRATION_SECONDS: int
     CREATE_TABLES: bool
 
     model_config = SettingsConfigDict(

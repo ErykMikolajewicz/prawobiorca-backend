@@ -3,12 +3,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
+from redis.asyncio.client import Redis
 
-from app.models.account import AccountCreate
+from app.models.account import AccountCreate, LoginOutput
 import app.services.accounts as account_services
 from app.units_of_work.users import UsersUnitOfWork
 from app.core.exceptions import UserExists, UserNotFound, InvalidCredentials
-from app.models.token import AccessToken
+from app.key_value_db.connection import get_redis
 
 
 logger = logging.getLogger(__name__)
@@ -30,16 +31,17 @@ async def create_account(account_data: AccountCreate, users_unit_of_work: UsersU
 @account_router.post('/auth/login',
                      responses={status.HTTP_401_UNAUTHORIZED: {'description': 'Invalid credentials!'
                                                                               ' Bad login or password.'}})
-async def create_token(authentication_data: Annotated[OAuth2PasswordRequestForm, Depends(OAuth2PasswordRequestForm)],
-                       users_unit_of_work: UsersUnitOfWork = Depends()) -> AccessToken:
+async def log_user(authentication_data: Annotated[OAuth2PasswordRequestForm, Depends(OAuth2PasswordRequestForm)],
+                        redis_client: Annotated[Redis, Depends(get_redis)],
+                        users_unit_of_work: UsersUnitOfWork = Depends()) -> LoginOutput:
     login = authentication_data.username
     password = authentication_data.password
     try:
-        token = await account_services.log_user(login, password, users_unit_of_work)
+        tokens = await account_services.log_user(login, password, redis_client, users_unit_of_work)
     except UserNotFound:
         logger.warning(f'Failed login attempt. User not found!')
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid credentials!')
     except InvalidCredentials:
         logger.warning(f'Failed login attempt, invalid password!')
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid credentials!')
-    return token
+    return tokens

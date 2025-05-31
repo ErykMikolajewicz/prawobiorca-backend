@@ -1,5 +1,3 @@
-from contextlib import asynccontextmanager
-
 import redis.asyncio as redis
 
 from app.config import settings
@@ -14,7 +12,6 @@ redis_pool = redis.ConnectionPool(
 )
 
 
-@asynccontextmanager
 async def get_redis() -> redis.Redis:
     redis_client = redis.Redis(connection_pool=redis_pool)
     try:
@@ -24,7 +21,8 @@ async def get_redis() -> redis.Redis:
 
 
 async def check_redis_connection():
-    async with get_redis() as redis_client:
-        pong = await redis_client.ping()
-        if not pong:
-            raise RuntimeError("Can not connect to redis db!")
+    redis_client = redis.Redis(connection_pool=redis_pool)
+    pong = await redis_client.ping()
+    if not pong:
+        raise RuntimeError("Can not connect to redis db!")
+    await redis_client.close()
