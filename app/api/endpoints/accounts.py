@@ -1,7 +1,7 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, status, HTTPException, Header
 from fastapi.security import OAuth2PasswordRequestForm
 from redis.asyncio.client import Redis
 
@@ -11,6 +11,7 @@ from app.units_of_work.users import UsersUnitOfWork
 from app.core.exceptions import UserExists, UserNotFound, InvalidCredentials
 from app.key_value_db.connection import get_redis
 from app.core.authentication import validate_token
+from app.core.security import url_safe_bearer_token_length
 
 
 logger = logging.getLogger(__name__)
@@ -48,7 +49,8 @@ async def log_user(authentication_data: Annotated[OAuth2PasswordRequestForm, Dep
     return tokens
 
 
-@account_router.post('/auth/logout', status_code=status.HTTP_204_NO_CONTENT)
+@account_router.post('/auth/logout', status_code=status.HTTP_204_NO_CONTENT,
+                     responses={status.HTTP_401_UNAUTHORIZED: {'description': 'Invalid access token!'}})
 async def logout_user(
     redis_client: Annotated[Redis, Depends(get_redis)],
     login_data: Annotated[tuple[str, str], Depends(validate_token)]
@@ -56,3 +58,20 @@ async def logout_user(
     token, user_id = login_data
     await account_services.logout_user(token, user_id, redis_client)
     return None
+
+
+@account_router.post('/auth/refresh',
+                     responses={status.HTTP_401_UNAUTHORIZED: {'description': 'Invalid refresh token!'}})
+async def refresh(
+    redis_client: Annotated[Redis, Depends(get_redis)],
+    refresh_token: str = Header(..., alias="X-Refresh-Token", min_length=url_safe_bearer_token_length,
+                                max_length=url_safe_bearer_token_length)
+)  -> LoginOutput:
+    try:
+        tokens = await account_services.refresh(refresh_token, redis_client)
+    except InvalidCredentials:
+        logger.warning('Invalid refresh token!')
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid refresh token!')
+    return tokens
+
+

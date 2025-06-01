@@ -87,3 +87,26 @@ async def logout_user(access_token: str, user_id: str, redis_client: Redis):
         await pipe.delete(f'access_token:{access_token}')
         await pipe.execute()
     return None
+
+
+async def refresh(refresh_token: str, redis_client: Redis) -> LoginOutput:
+    user_id = await redis_client.get(f'refresh_token:{refresh_token}')
+    if not user_id:
+        raise InvalidCredentials()
+
+    access_token = generate_token()
+    new_refresh_token = generate_token()
+
+    async with redis_client.pipeline() as pipe:
+        await pipe.delete(f'refresh_token:{refresh_token}')
+        await pipe.set(f"user_refresh_token:{user_id}", new_refresh_token, ex=refresh_token_expiration_seconds)
+        await pipe.set(f'refresh_token:{new_refresh_token}', user_id, ex=refresh_token_expiration_seconds)
+        await pipe.set(f'access_token:{access_token}', user_id, ex=access_token_expiration_seconds)
+        await pipe.execute()
+
+    return LoginOutput(
+        access_token=access_token,
+        refresh_token=new_refresh_token,
+        expires_in=access_token_expiration_seconds,
+        token_type=TokenType.bearer
+    )

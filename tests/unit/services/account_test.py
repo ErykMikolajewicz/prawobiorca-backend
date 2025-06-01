@@ -2,8 +2,20 @@ import pytest
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
-from app.core.exceptions import InvalidCredentials, UserNotFound
-from app.services.accounts import log_user
+from sqlalchemy.exc import IntegrityError
+
+from app.core.exceptions import InvalidCredentials, UserNotFound, UserExists
+from app.config import settings
+from app.services.accounts import log_user, create_account, logout_user, refresh
+from app.core.security import url_safe_bearer_token_length, generate_token
+from app.models.account import AccountCreate, LoginOutput
+from app.core.enums import TokenType
+
+invalid_bearer_token = 'a' *  url_safe_bearer_token_length
+valid_bearer_token = generate_token() # It is random, not valid in sense exist in database
+user_id = str(uuid4())
+access_token_expiration_seconds = settings.app.ACCESS_TOKEN_EXPIRATION_SECONDS
+refresh_token_expiration_seconds = settings.app.REFRESH_TOKEN_EXPIRATION_SECONDS
 
 
 class DummyUser:
@@ -13,40 +25,35 @@ class DummyUser:
         self.hashed_password = hashed_password
 
 
+class DummyAsyncContextManager:
+    def __init__(self, return_object):
+        self.return_object = return_object
+
+    async def __aenter__(self):
+        return self.return_object
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return None
+
+
 @pytest.fixture
 def user():
-    return DummyUser(id_=uuid4(), login="testuser", hashed_password=b"hashed")
+    return DummyUser(id_=uuid4(), login="test_user", hashed_password=b"hashed")
 
 
 @pytest.fixture
-def uow(user):
+def uow():
     uow = AsyncMock()
     uow.__aenter__.return_value = uow
-    uow.users.get_by_login = AsyncMock(return_value=user)
-    return uow
-
-
-@pytest.fixture
-def uow_none():
-    uow = AsyncMock()
-    uow.__aenter__.return_value = uow
-    uow.users.get_by_login = AsyncMock(return_value=None)
     return uow
 
 
 @pytest.fixture
 def redis_client():
     redis = AsyncMock()
-    redis.get = AsyncMock(return_value=None)
     pipeline = AsyncMock()
 
-    class DummyAsyncContextManager:
-        async def __aenter__(self):
-            return pipeline
-        async def __aexit__(self, exc_type, exc, tb):
-            return None
-
-    redis.pipeline = lambda: DummyAsyncContextManager()
+    redis.pipeline = lambda: DummyAsyncContextManager(pipeline)
     return redis, pipeline
 
 
@@ -56,13 +63,7 @@ def redis_client_with_token():
     redis.get = AsyncMock(return_value="old_refresh")
     pipeline = AsyncMock()
 
-    class DummyAsyncContextManager:
-        async def __aenter__(self):
-            return pipeline
-        async def __aexit__(self, exc_type, exc, tb):
-            return None
-
-    redis.pipeline = lambda: DummyAsyncContextManager()
+    redis.pipeline = lambda: DummyAsyncContextManager(pipeline)
     return redis, pipeline
 
 
@@ -78,9 +79,48 @@ def token_mocks():
 
 
 @pytest.mark.asyncio
+async def test_create_account_success(uow):
+    account_data = AccountCreate(login="valid_user", password="Valid123!")
+    uow.users.add = AsyncMock()
+
+    with patch("app.services.accounts.hash_password", return_value=b"hashed_pass") as mock_hash:
+        await create_account(uow, account_data)
+
+    mock_hash.assert_called_once_with("Valid123!")
+    uow.users.add.assert_awaited_once_with({
+        "login": "valid_user",
+        "hashed_password": b"hashed_pass"
+    })
+
+
+@pytest.mark.asyncio
+async def test_create_account_user_exists(uow):
+    account_data = AccountCreate(login="already_taken", password="Valid123!")
+    uow.users.add = AsyncMock(side_effect=IntegrityError("msg", None, Exception()))
+
+    with patch("app.services.accounts.hash_password", return_value=b"hashed_pass"):
+        with pytest.raises(UserExists):
+            await create_account(uow, account_data)
+
+
+@pytest.mark.asyncio
+async def test_create_account_hashing_and_argument_check(uow):
+    account_data = AccountCreate(login="test_user", password="Valid123!")
+    uow.users.add = AsyncMock()
+
+    with patch("app.services.accounts.hash_password", return_value=b"hashed") as mock_hash:
+        await create_account(uow, account_data)
+        mock_hash.assert_called_once_with("Valid123!")
+        uow.users.add.assert_awaited_once_with({
+            "login": "test_user",
+            "hashed_password": b"hashed"
+        })
+
+
+@pytest.mark.asyncio
 async def test_log_user_success(user, uow, redis_client, token_mocks):
     redis, _ = redis_client
-    result = await log_user("testuser", "secret", redis, uow)
+    await log_user("test_user", "secret", redis, uow)
     token_mocks[2].assert_called_once()
     called_kwargs = token_mocks[2].call_args.kwargs
     assert called_kwargs["access_token"] == "access"
@@ -92,22 +132,24 @@ async def test_log_user_invalid_password(user, uow, redis_client):
     redis, _ = redis_client
     with patch("app.services.accounts.verify_password", return_value=False):
         with pytest.raises(InvalidCredentials):
-            await log_user("testuser", "wrongpass", redis, uow)
+            await log_user("test_user", "wrong_pass", redis, uow)
 
 
 @pytest.mark.asyncio
-async def test_log_user_user_not_found(uow_none, redis_client):
+async def test_log_user_user_not_found(uow, redis_client):
     redis, _ = redis_client
+    uow.users.get_by_login = AsyncMock(return_value=None)
     with patch("app.services.accounts.verify_password", return_value=False) as mock_ver:
         with pytest.raises(UserNotFound):
-            await log_user("noone", "pass", redis, uow_none)
-        mock_ver.assert_called_once_with("pass", b"")
+            await log_user("noone", "pass", redis, uow)
+    mock_ver.assert_called_once_with("pass", b"")
 
 
 @pytest.mark.asyncio
 async def test_log_user_existing_refresh_token(user, uow, redis_client_with_token, token_mocks):
     redis, pipeline = redis_client_with_token
-    await log_user("testuser", "secret", redis, uow)
+    uow.users.get_by_login = AsyncMock(return_value=user)
+    await log_user("test_user", "secret", redis, uow)
     pipeline.delete.assert_any_call("refresh_token:old_refresh")
     pipeline.delete.assert_any_call(f"user_refresh_token:{str(user.id)}")
     pipeline.execute.assert_awaited()
@@ -116,5 +158,83 @@ async def test_log_user_existing_refresh_token(user, uow, redis_client_with_toke
 @pytest.mark.asyncio
 async def test_log_user_no_existing_refresh_token(user, uow, redis_client, token_mocks):
     redis, pipeline = redis_client
-    await log_user("testuser", "secret", redis, uow)
+    redis.get = AsyncMock(return_value=None)
+    await log_user("test_user", "secret", redis, uow)
     pipeline.delete.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_logout_user_success(redis_client):
+    redis, pipeline = redis_client
+    redis.get = AsyncMock(return_value="refresh-token-abc")
+
+    access_token = "token-access"
+
+    result = await logout_user(access_token, user_id, redis)
+
+    redis.get.assert_awaited_once_with(f"user_refresh_token:{user_id}")
+    pipeline.delete.assert_any_await(f'refresh_token:refresh-token-abc')
+    pipeline.delete.assert_any_await(f"user_refresh_token:{user_id}")
+    pipeline.delete.assert_any_await(f'access_token:{access_token}')
+    pipeline.execute.assert_awaited_once()
+    assert result is None
+
+@pytest.mark.asyncio
+async def test_logout_user_no_refresh_token(redis_client):
+    redis, pipeline = redis_client
+
+    access_token = "token-access"
+
+    await logout_user(access_token, user_id, redis)
+
+    redis.get.assert_awaited_once_with(f"user_refresh_token:{user_id}")
+    pipeline.delete.assert_any_await(f"user_refresh_token:{user_id}")
+    pipeline.delete.assert_any_await(f'access_token:{access_token}')
+    pipeline.execute.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_refresh_success(redis_client):
+    redis, pipeline = redis_client
+    redis.get = AsyncMock(return_value=user_id)
+
+    access_token = valid_bearer_token
+    new_refresh_token = valid_bearer_token
+
+    with patch("app.services.accounts.generate_token", side_effect=[access_token, new_refresh_token]):
+
+        result = await refresh("refresh_token_example", redis)
+
+    redis.get.assert_awaited_once_with("refresh_token:refresh_token_example")
+    pipeline.delete.assert_any_await("refresh_token:refresh_token_example")
+    pipeline.set.assert_any_await(f"user_refresh_token:{user_id}", new_refresh_token,
+                                  ex=refresh_token_expiration_seconds)
+    pipeline.set.assert_any_await(f"refresh_token:{new_refresh_token}", user_id, ex=refresh_token_expiration_seconds)
+    pipeline.set.assert_any_await(f"access_token:{access_token}", user_id, ex=access_token_expiration_seconds)
+    pipeline.execute.assert_awaited_once()
+
+    assert isinstance(result, LoginOutput)
+    assert result.access_token == access_token
+    assert result.refresh_token == new_refresh_token
+    assert result.expires_in == access_token_expiration_seconds
+    assert result.token_type == TokenType.bearer
+
+
+@pytest.mark.asyncio
+async def test_refresh_invalid_refresh_token(redis_client):
+    redis, _ = redis_client
+    redis.get = AsyncMock(return_value=None)
+
+    with pytest.raises(InvalidCredentials):
+        await refresh("not_existing_token", redis)
+    redis.get.assert_awaited_once_with("refresh_token:not_existing_token")
+
+
+@pytest.mark.asyncio
+async def test_refresh_redis_returns_empty_string(redis_client):
+    redis, _ = redis_client
+    redis.get = AsyncMock(return_value="")
+
+    with pytest.raises(InvalidCredentials):
+        await refresh("expired_token", redis)
+    redis.get.assert_awaited_once_with("refresh_token:expired_token")
