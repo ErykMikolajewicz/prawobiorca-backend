@@ -1,8 +1,8 @@
 from contextlib import asynccontextmanager
 import logging
-import asyncio
 
 from fastapi import FastAPI
+from fastapi.concurrency import run_in_threadpool
 
 from app.core.logging_config import setup_logging
 from app.api.router import include_all_routers
@@ -25,8 +25,7 @@ async def lifespan(_: FastAPI):
     if settings.app.CREATE_TABLES:
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, check_cloud_storage_connection)
+    await run_in_threadpool(check_cloud_storage_connection)
     app.state.ready = True
     logger.info('Application is ready to serve.')
     yield
