@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 import logging
+import tomllib
 
 from fastapi import FastAPI
 from fastapi.concurrency import run_in_threadpool
@@ -14,6 +15,10 @@ from app.cloud_storage.connection import storage_client, check_cloud_storage_con
 
 
 logger = logging.getLogger("app")
+with open("pyproject.toml", "rb") as f:
+    data = tomllib.load(f)
+
+version = data["project"]["version"]
 
 
 @asynccontextmanager
@@ -35,7 +40,7 @@ async def lifespan(_: FastAPI):
     await engine.dispose()
     storage_client.close()
 
-app = FastAPI(lifespan=lifespan, title='PRAWOBIORCA')
+app = FastAPI(lifespan=lifespan, title='PRAWOBIORCA', version=version)
 
 setup_logging()
 include_all_routers(app)

@@ -25,6 +25,9 @@ COPY --chown=prawobiorca_app:prawobiorca_app private.key certificate.crt /
 ENV PATH="/.venv/bin:$PATH"
 
 COPY --chown=prawobiorca_app:prawobiorca_app config /config
+COPY --chown=prawobiorca_app:prawobiorca_app secrets /secrets
+COPY --chown=prawobiorca_app:prawobiorca_app pyproject.toml pyproject.toml
+COPY --chown=prawobiorca_app:prawobiorca_app .env .env
 
 COPY --from=builder --chown=prawobiorca_app:prawobiorca_app  .venv /.venv
 
