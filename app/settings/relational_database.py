@@ -2,8 +2,7 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
-RELATIONAL_DB_SETTINGS_FILE_PATH = Path('config') / "relational_db.env"
+RELATIONAL_DB_SETTINGS_FILE_PATH = Path("config") / "relational_db.env"
 
 
 class RelationalDatabaseSettings(BaseSettings):
@@ -19,8 +18,5 @@ class RelationalDatabaseSettings(BaseSettings):
     POOL_RECYCLE: int
 
     model_config = SettingsConfigDict(
-        env_file=RELATIONAL_DB_SETTINGS_FILE_PATH,
-        env_file_encoding="utf-8",
-        case_sensitive=True,
-        frozen=True
+        env_file=RELATIONAL_DB_SETTINGS_FILE_PATH, env_file_encoding="utf-8", case_sensitive=True, frozen=True
     )

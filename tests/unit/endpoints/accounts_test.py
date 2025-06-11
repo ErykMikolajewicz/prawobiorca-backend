@@ -1,12 +1,11 @@
-from unittest.mock import AsyncMock, patch
-from unittest.mock import ANY
+from unittest.mock import ANY, AsyncMock, patch
 
 import pytest
 from fastapi import status
 
-from app.core.exceptions import UserExists, UserNotFound, InvalidCredentials
+from app.core.exceptions import InvalidCredentials, UserExists, UserNotFound
 from app.core.security import url_safe_bearer_token_length
-from tests.unit.consts import valid_bearer_token, invalid_bearer_token
+from tests.unit.consts import invalid_bearer_token, valid_bearer_token
 
 
 @pytest.fixture
@@ -60,7 +59,7 @@ def test_create_account_conflict(client, mock_users_unit_of_work):
         ("NOLOWERCASE1!", "Password must contain at least one lowercase letter."),
         ("NoDigits!!", "Password must contain at least one digit."),
         ("NoSpecial1", "Password must contain at least one special character."),
-    ]
+    ],
 )
 def test_create_account_weak_passwords(client, password, error_detail):
     payload = {"login": "valid_login", "password": password}
@@ -71,10 +70,7 @@ def test_create_account_weak_passwords(client, password, error_detail):
     assert error_detail in response.text
 
 
-@pytest.mark.parametrize(
-    "login",
-    ["in valid", "with@symbol", "!", "", "a"]
-)
+@pytest.mark.parametrize("login", ["in valid", "with@symbol", "!", "", "a"])
 def test_create_account_invalid_login(client, login):
     payload = {"login": login, "password": "ValidPass1!"}
 
@@ -88,7 +84,7 @@ def test_login_success(client, mock_log_user):
         "access_token": "a" * url_safe_bearer_token_length,
         "expires_in": 3600,
         "token_type": "bearer",
-        "refresh_token": "a" * url_safe_bearer_token_length
+        "refresh_token": "a" * url_safe_bearer_token_length,
     }
 
     data = {"username": "test_user", "password": "StrongPassword1!"}
@@ -134,7 +130,7 @@ def test_login_invalid_password(client, mock_log_user):
         ({"password": "Pass1!"}, status.HTTP_422_UNPROCESSABLE_ENTITY),
         ({"username": "", "password": "Pass1!"}, status.HTTP_401_UNAUTHORIZED),
         ({"username": "user", "password": ""}, status.HTTP_401_UNAUTHORIZED),
-    ]
+    ],
 )
 def test_login_missing_fields(client, mock_log_user, data, expected_status):
     if data.get("username", "") == "" or data.get("password", "") == "":
@@ -170,7 +166,7 @@ def test_refresh_success(client, mock_refresh_token):
         "access_token": valid_bearer_token,
         "expires_in": 3600,
         "token_type": "bearer",
-        "refresh_token": valid_bearer_token
+        "refresh_token": valid_bearer_token,
     }
     headers = {"X-Refresh-Token": valid_bearer_token}
 

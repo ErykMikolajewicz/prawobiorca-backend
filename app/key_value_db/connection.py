@@ -2,13 +2,12 @@ import redis.asyncio as redis
 
 from app.config import settings
 
-
 redis_pool = redis.ConnectionPool(
     host=settings.key_value_db.HOST,
     port=settings.key_value_db.PORT,
     db=settings.key_value_db.DB_NUMBER,
     max_connections=settings.key_value_db.MAX_CONNECTIONS,
-    decode_responses=True
+    decode_responses=True,
 )
 
 

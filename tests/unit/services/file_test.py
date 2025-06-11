@@ -1,13 +1,13 @@
-from unittest.mock import AsyncMock, patch, MagicMock
-from uuid import uuid4, UUID
 import io
+from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import uuid4
 
 import pytest
 from fastapi import UploadFile
-from starlette.datastructures import Headers
 from sqlalchemy.exc import IntegrityError
+from starlette.datastructures import Headers
 
-from app.core.exceptions import FileNameExist, EmptyFileException
+from app.core.exceptions import EmptyFileException, FileNameExist
 from app.services.user_files import add_user_file
 from tests.unit.consts import user_id
 
@@ -30,7 +30,7 @@ async def test_add_user_file_success(uow, storage_client):
     with patch("app.services.user_files.upload_file_to_cloud_storage", new_callable=AsyncMock) as mock_upload:
         await add_user_file(uow, upload_file, user_id, storage_client)
 
-    uow.files.add.assert_awaited_once_with({"file_name": "test.txt", 'user_id': user_id})
+    uow.files.add.assert_awaited_once_with({"file_name": "test.txt", "user_id": user_id})
     mock_upload.assert_awaited_once_with(storage_client, str(fake_file_id), upload_file)
 
 

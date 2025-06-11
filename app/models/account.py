@@ -1,7 +1,7 @@
 import re
 from typing import Annotated
 
-from pydantic import BaseModel, Field, field_validator, StringConstraints
+from pydantic import BaseModel, Field, StringConstraints, field_validator
 
 from app.core.enums import TokenType
 from app.core.security import url_safe_bearer_token_length
@@ -33,9 +33,11 @@ class AccountCreate(BaseModel):
 
 
 class LoginOutput(BaseModel):
-    access_token: Annotated[str, StringConstraints(min_length=url_safe_bearer_token_length,
-                                                   max_length=url_safe_bearer_token_length)]
+    access_token: Annotated[
+        str, StringConstraints(min_length=url_safe_bearer_token_length, max_length=url_safe_bearer_token_length)
+    ]
     expires_in: int
     token_type: TokenType
-    refresh_token: Annotated[str, StringConstraints(min_length=url_safe_bearer_token_length,
-                                                   max_length=url_safe_bearer_token_length)]
+    refresh_token: Annotated[
+        str, StringConstraints(min_length=url_safe_bearer_token_length, max_length=url_safe_bearer_token_length)
+    ]

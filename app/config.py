@@ -1,10 +1,10 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.settings.application import ApplicationSettings
+from app.settings.cloud_storage import CloudStorageSettings
+from app.settings.key_value_database import KeyValueDatabaseSettings
 from app.settings.relational_database import RelationalDatabaseSettings
 from app.settings.vector_database import VectorDatabaseSettings
-from app.settings.application import ApplicationSettings
-from app.settings.key_value_database import KeyValueDatabaseSettings
-from app.settings.cloud_storage import CloudStorageSettings
 
 
 class Settings(BaseSettings):
@@ -14,9 +14,7 @@ class Settings(BaseSettings):
     key_value_db: KeyValueDatabaseSettings = KeyValueDatabaseSettings()
     cloud_storage: CloudStorageSettings = CloudStorageSettings()
 
-    model_config = SettingsConfigDict(
-        case_sensitive=True,
-        frozen=True
-    )
+    model_config = SettingsConfigDict(case_sensitive=True, frozen=True)
+
 
 settings = Settings()

@@ -1,5 +1,6 @@
-from app.repositories.users import UsersRepository, UsersFilesRepository
+from app.repositories.users import UsersFilesRepository, UsersRepository
 from app.units_of_work.base import BaseUnitOfWork
+
 
 class UsersUnitOfWork(BaseUnitOfWork):
     async def __aenter__(self):

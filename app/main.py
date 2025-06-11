@@ -1,18 +1,17 @@
-from contextlib import asynccontextmanager
 import logging
 import tomllib
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.concurrency import run_in_threadpool
 
-from app.core.logging_config import setup_logging
 from app.api.router import include_all_routers
-from app.relational_db.connection import engine, check_relational_db_connection, Base
-from app.vector_db.connection import qdrant_client, check_vector_db_connection
-from app.key_value_db.connection import check_redis_connection, redis_pool
+from app.cloud_storage.connection import check_cloud_storage_connection, storage_client
 from app.config import settings
-from app.cloud_storage.connection import storage_client, check_cloud_storage_connection
-
+from app.core.logging_config import setup_logging
+from app.key_value_db.connection import check_redis_connection, redis_pool
+from app.relational_db.connection import Base, check_relational_db_connection, engine
+from app.vector_db.connection import check_vector_db_connection, qdrant_client
 
 logger = logging.getLogger("app")
 with open("pyproject.toml", "rb") as f:
@@ -23,7 +22,7 @@ version = data["project"]["version"]
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    logger.info('Connecting to external services.')
+    logger.info("Connecting to external services.")
     await check_relational_db_connection()
     await check_redis_connection()
     await check_vector_db_connection()
@@ -32,20 +31,22 @@ async def lifespan(_: FastAPI):
             await conn.run_sync(Base.metadata.create_all)
     await run_in_threadpool(check_cloud_storage_connection)
     app.state.ready = True
-    logger.info('Application is ready to serve.')
+    logger.info("Application is ready to serve.")
     yield
-    logger.info('Closing application.')
+    logger.info("Closing application.")
     await qdrant_client.close()
     await redis_pool.disconnect()
     await engine.dispose()
     storage_client.close()
 
-app = FastAPI(lifespan=lifespan, title='PRAWOBIORCA', version=version)
+
+app = FastAPI(lifespan=lifespan, title="PRAWOBIORCA", version=version)
 
 setup_logging()
 include_all_routers(app)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host='127.0.0.1', port=8000)
+
+    uvicorn.run(app, host="127.0.0.1", port=8000)

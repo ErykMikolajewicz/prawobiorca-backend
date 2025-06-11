@@ -1,13 +1,12 @@
-from typing import TypeVar, Type, Optional, Any, Generic
+from typing import Any, Generic, Optional, Type, TypeVar
 from uuid import UUID
 
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, insert, update, delete
 
-from app.schemas.mixins import UuidIdMixin, IntIdMixin
+from app.schemas.mixins import IntIdMixin, UuidIdMixin
 
-
-ModelWithId = TypeVar('ModelWithId', bound=UuidIdMixin | IntIdMixin)
+ModelWithId = TypeVar("ModelWithId", bound=UuidIdMixin | IntIdMixin)
 
 
 class CrudRepository(Generic[ModelWithId]):

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
-from app.api.endpoints.health import health_router
 from app.api.endpoints.accounts import account_router
+from app.api.endpoints.health import health_router
 from app.api.endpoints.user_files import user_files_router
 
 
