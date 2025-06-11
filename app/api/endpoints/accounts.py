@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from typing import Annotated
 
@@ -7,6 +8,7 @@ from redis.asyncio.client import Redis
 
 import app.services.accounts as account_services
 from app.core.authentication import validate_token
+from app.core.consts import SECURITY_MIN_RESPONSE_TIME
 from app.core.exceptions import InvalidCredentials, UserExists, UserNotFound
 from app.core.security import url_safe_bearer_token_length
 from app.key_value_db.connection import get_redis
@@ -39,16 +41,28 @@ async def log_user(
     redis_client: Annotated[Redis, Depends(get_redis)],
     users_unit_of_work: UsersUnitOfWork = Depends(),
 ) -> LoginOutput:
+    execution_start_time = asyncio.get_event_loop().time()
+    error_occurred = False
+
     login = authentication_data.username
     password = authentication_data.password
+
     try:
         tokens = await account_services.log_user(login, password, redis_client, users_unit_of_work)
     except UserNotFound:
         logger.warning(f"Failed login attempt. User not found!")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials!")
+        error_occurred = True
     except InvalidCredentials:
-        logger.warning(f"Failed login attempt, invalid password!")
+        logger.warning(f"Failed login attempt. Invalid password!")
+        error_occurred = True
+
+    # To prevent timeing attacks
+    if error_occurred:
+        elapsed_execution_time = asyncio.get_event_loop().time() - execution_start_time
+        delay = max(0.0, SECURITY_MIN_RESPONSE_TIME - elapsed_execution_time)
+        await asyncio.sleep(delay)
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials!")
+
     return tokens
 
 
