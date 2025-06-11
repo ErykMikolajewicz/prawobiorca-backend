@@ -1,5 +1,7 @@
 import logging
 from uuid import UUID
+import random
+import asyncio
 
 from sqlalchemy.exc import IntegrityError
 from redis.asyncio.client import Redis
@@ -36,7 +38,8 @@ async def log_user(login: str, password: str, redis_client: Redis, users_unit_of
     async with users_unit_of_work as uof:
         user = await uof.users.get_by_login(login)
     if user is None:
-        verify_password(password, b'') # To prevent timeing attacks
+        delay = random.uniform(0, 0.5)
+        await asyncio.sleep(delay)  # To prevent timeing attacks
         raise UserNotFound('No user with that login!')
 
     hashed_password = user.hashed_password

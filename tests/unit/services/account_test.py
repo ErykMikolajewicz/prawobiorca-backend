@@ -1,70 +1,14 @@
-import pytest
 from unittest.mock import AsyncMock, patch
-from uuid import uuid4
 
+import pytest
 from sqlalchemy.exc import IntegrityError
 
 from app.core.exceptions import InvalidCredentials, UserNotFound, UserExists
-from app.config import settings
 from app.services.accounts import log_user, create_account, logout_user, refresh
-from app.core.security import url_safe_bearer_token_length, generate_token
 from app.models.account import AccountCreate, LoginOutput
 from app.core.enums import TokenType
-
-invalid_bearer_token = 'a' *  url_safe_bearer_token_length
-valid_bearer_token = generate_token() # It is random, not valid in sense exist in database
-user_id = str(uuid4())
-access_token_expiration_seconds = settings.app.ACCESS_TOKEN_EXPIRATION_SECONDS
-refresh_token_expiration_seconds = settings.app.REFRESH_TOKEN_EXPIRATION_SECONDS
-
-
-class DummyUser:
-    def __init__(self, id_, login, hashed_password):
-        self.id = id_
-        self.login = login
-        self.hashed_password = hashed_password
-
-
-class DummyAsyncContextManager:
-    def __init__(self, return_object):
-        self.return_object = return_object
-
-    async def __aenter__(self):
-        return self.return_object
-
-    async def __aexit__(self, exc_type, exc, tb):
-        return None
-
-
-@pytest.fixture
-def user():
-    return DummyUser(id_=uuid4(), login="test_user", hashed_password=b"hashed")
-
-
-@pytest.fixture
-def uow():
-    uow = AsyncMock()
-    uow.__aenter__.return_value = uow
-    return uow
-
-
-@pytest.fixture
-def redis_client():
-    redis = AsyncMock()
-    pipeline = AsyncMock()
-
-    redis.pipeline = lambda: DummyAsyncContextManager(pipeline)
-    return redis, pipeline
-
-
-@pytest.fixture
-def redis_client_with_token():
-    redis = AsyncMock()
-    redis.get = AsyncMock(return_value="old_refresh")
-    pipeline = AsyncMock()
-
-    redis.pipeline = lambda: DummyAsyncContextManager(pipeline)
-    return redis, pipeline
+from tests.unit.consts import valid_bearer_token, user_id, access_token_expiration_seconds, \
+    refresh_token_expiration_seconds
 
 
 @pytest.fixture
@@ -139,15 +83,15 @@ async def test_log_user_invalid_password(user, uow, redis_client):
 async def test_log_user_user_not_found(uow, redis_client):
     redis, _ = redis_client
     uow.users.get_by_login = AsyncMock(return_value=None)
-    with patch("app.services.accounts.verify_password", return_value=False) as mock_ver:
+    with patch("app.services.accounts.verify_password", return_value=False):
         with pytest.raises(UserNotFound):
             await log_user("noone", "pass", redis, uow)
-    mock_ver.assert_called_once_with("pass", b"")
 
 
 @pytest.mark.asyncio
-async def test_log_user_existing_refresh_token(user, uow, redis_client_with_token, token_mocks):
-    redis, pipeline = redis_client_with_token
+async def test_log_user_existing_refresh_token(user, uow, redis_client, token_mocks):
+    redis, pipeline = redis_client
+    redis.get = AsyncMock(return_value="old_refresh")
     uow.users.get_by_login = AsyncMock(return_value=user)
     await log_user("test_user", "secret", redis, uow)
     pipeline.delete.assert_any_call("refresh_token:old_refresh")

@@ -2,39 +2,17 @@ from unittest.mock import AsyncMock, patch
 from unittest.mock import ANY
 
 import pytest
-from fastapi.testclient import TestClient
-from fastapi import status, HTTPException
+from fastapi import status
 
-from app.main import app
 from app.core.exceptions import UserExists, UserNotFound, InvalidCredentials
-from app.core.security import url_safe_bearer_token_length, generate_token
-from app.core.authentication import validate_token
-from app.key_value_db.connection import get_redis
-
-
-invalid_bearer_token = 'a' *  url_safe_bearer_token_length
-valid_bearer_token = generate_token() # It is random, not valid in sense exist in database
-
-
-@pytest.fixture
-def client():
-    return TestClient(app)
+from app.core.security import url_safe_bearer_token_length
+from tests.unit.consts import valid_bearer_token, invalid_bearer_token
 
 
 @pytest.fixture
 def mock_users_unit_of_work():
     with patch("app.services.accounts.create_account", new_callable=AsyncMock) as mock_create_account:
         yield mock_create_account
-
-
-@pytest.fixture
-def override_get_redis():
-    def _override():
-        return AsyncMock()
-
-    app.dependency_overrides[get_redis] = _override
-    yield
-    app.dependency_overrides = {}
 
 
 @pytest.fixture
@@ -47,24 +25,6 @@ def mock_refresh_token():
 def mock_log_user():
     with patch("app.services.accounts.log_user", new_callable=AsyncMock) as mock:
         yield mock
-
-
-@pytest.fixture
-def override_validate_token():
-    def _override():
-        return valid_bearer_token, "user-123"
-    app.dependency_overrides[validate_token] = _override
-    yield
-    app.dependency_overrides = {}
-
-
-@pytest.fixture
-def override_validate_token_unauthorized():
-    def _override():
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
-    app.dependency_overrides[validate_token] = _override
-    yield
-    app.dependency_overrides = {}
 
 
 @pytest.fixture

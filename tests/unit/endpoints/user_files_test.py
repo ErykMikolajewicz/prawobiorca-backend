@@ -1,50 +1,10 @@
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from fastapi.testclient import TestClient
 from fastapi import status
 
-from app.main import app
 from app.core.exceptions import FileNameExist, EmptyFileException
-from app.core.authentication import validate_token
-from app.cloud_storage.connection import get_storage_client
-from app.units_of_work.users import UsersUnitOfWork
-from app.core.security import generate_token
-
-
-valid_bearer_token = generate_token() # It is random, not valid in sense exist in database
-
-
-@pytest.fixture
-def client():
-    return TestClient(app)
-
-
-@pytest.fixture
-def override_validate_token():
-    def _override():
-        return valid_bearer_token, "user-123"
-    app.dependency_overrides[validate_token] = _override
-    yield
-    app.dependency_overrides = {}
-
-
-@pytest.fixture
-def override_get_storage_client():
-    def _override():
-        return AsyncMock()
-    app.dependency_overrides[get_storage_client] = _override
-    yield
-    app.dependency_overrides = {}
-
-
-@pytest.fixture
-def override_users_unit_of_work():
-    def _override():
-        return AsyncMock()
-    app.dependency_overrides[UsersUnitOfWork] = _override
-    yield
-    app.dependency_overrides = {}
+from tests.unit.consts import valid_bearer_token
 
 
 @pytest.fixture
@@ -116,4 +76,3 @@ def test_add_user_file_empty_file(client, override_validate_token, override_get_
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {"detail": "File can not be empty!"}
     mock_add_user_file.assert_awaited_once()
-
