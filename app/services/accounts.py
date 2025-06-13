@@ -24,11 +24,11 @@ async def create_account(users_unit_of_work: UsersUnitOfWork, account_data: Acco
     hashed_password = hash_password(password)
     account_hashed = {"login": login, "hashed_password": hashed_password}
 
-    try:
-        async with users_unit_of_work as uof:
+    async with users_unit_of_work as uof:
+        try:
             await uof.users.add(account_hashed)
-    except IntegrityError:
-        raise UserExists
+        except IntegrityError:
+            raise UserExists
 
 
 async def log_user(login: str, password: str, redis_client: Redis, users_unit_of_work: UsersUnitOfWork) -> LoginOutput:

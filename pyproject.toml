@@ -1,10 +1,11 @@
 [project]
 name = "prawobiorca-backend"
-version = "0.15.1"
+version = "0.16.0"
 description = "Backend for law acts search engine with AI features."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "alembic==1.16.*",
     "asyncpg==0.30.*",
     "bcrypt==4.3.*",
     "fastapi==0.115.*",
@@ -23,6 +24,7 @@ dev = [
     "black==25.1.*",
     "granian[reload]==2.2.*",
     "isort==6.0.*",
+    "psycopg==3.2.*",
     "pytest==8.3.*",
     "pytest-asyncio==1.0.*",
     "uvicorn==0.34.*",
@@ -41,5 +43,9 @@ exclude = '''
   | config
   | secrets
   | bash
+  | alembic
 )/
 '''
+
+[tool.isort]
+skip = ["alembic", ".venv"]

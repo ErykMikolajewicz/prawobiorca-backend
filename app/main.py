@@ -7,10 +7,9 @@ from fastapi.concurrency import run_in_threadpool
 
 from app.api.router import include_all_routers
 from app.cloud_storage.connection import check_cloud_storage_connection, storage_client
-from app.config import settings
 from app.core.logging_config import setup_logging
 from app.key_value_db.connection import check_redis_connection, redis_pool
-from app.relational_db.connection import Base, check_relational_db_connection, engine
+from app.relational_db.connection import check_relational_db_connection, engine
 from app.vector_db.connection import check_vector_db_connection, qdrant_client
 
 logger = logging.getLogger("app")
@@ -26,9 +25,6 @@ async def lifespan(_: FastAPI):
     await check_relational_db_connection()
     await check_redis_connection()
     await check_vector_db_connection()
-    if settings.app.CREATE_TABLES:
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
     await run_in_threadpool(check_cloud_storage_connection)
     app.state.ready = True
     logger.info("Application is ready to serve.")
