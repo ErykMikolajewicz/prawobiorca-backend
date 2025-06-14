@@ -2,21 +2,26 @@ import secrets
 from math import ceil
 
 import bcrypt
+from pydantic import SecretStr
 
 from app.core.consts import BEARER_TOKEN_LENGTH
 
 url_safe_bearer_token_length = ceil(BEARER_TOKEN_LENGTH * 4 / 3)
 
 
-def hash_password(password: str) -> bytes:
-    hashed_password = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+def hash_password(password: SecretStr) -> bytes:
+    password_str = password.get_secret_value()
+    password_bytes = password_str.encode("utf-8")
+    hashed_password = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
     return hashed_password
 
 
-def generate_token() -> str:
-    token = secrets.token_urlsafe(BEARER_TOKEN_LENGTH)
+def generate_token(token_length: int = BEARER_TOKEN_LENGTH) -> str:
+    token = secrets.token_urlsafe(token_length)
     return token
 
 
-def verify_password(password: str, hashed_password: bytes) -> bool:
-    return bcrypt.checkpw(password.encode("utf-8"), hashed_password)
+def verify_password(password: SecretStr, hashed_password: bytes) -> bool:
+    password_str = password.get_secret_value()
+    password_bytes = password_str.encode("utf-8")
+    return bcrypt.checkpw(password_bytes, hashed_password)

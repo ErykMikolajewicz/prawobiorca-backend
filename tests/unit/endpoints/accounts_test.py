@@ -2,10 +2,15 @@ from unittest.mock import ANY, AsyncMock, patch
 
 import pytest
 from fastapi import status
+from pydantic import SecretStr
 
+from app.config import settings
+from app.core.enums import TokenType
 from app.core.exceptions import InvalidCredentials, UserExists, UserNotFound
 from app.core.security import url_safe_bearer_token_length
-from tests.unit.consts import invalid_bearer_token, valid_bearer_token
+from tests.test_consts import STRONG_PASSWORD
+
+REFRESH_TOKEN_EXPIRATION_SECONDS = settings.app.REFRESH_TOKEN_EXPIRATION_SECONDS
 
 
 @pytest.fixture
@@ -33,7 +38,7 @@ def mock_logout_user():
 
 
 def test_create_account_success(client, mock_users_unit_of_work):
-    payload = {"login": "test_user", "password": "StrongPassword1!"}
+    payload = {"login": "test_user", "password": STRONG_PASSWORD}
 
     response = client.post("/accounts", json=payload)
 
@@ -43,7 +48,7 @@ def test_create_account_success(client, mock_users_unit_of_work):
 
 def test_create_account_conflict(client, mock_users_unit_of_work):
     mock_users_unit_of_work.side_effect = UserExists()
-    payload = {"login": "existing_user", "password": "StrongPassword1!"}
+    payload = {"login": "existing_user", "password": STRONG_PASSWORD}
 
     response = client.post("/accounts", json=payload)
 
@@ -72,22 +77,24 @@ def test_create_account_weak_passwords(client, password, error_detail):
 
 @pytest.mark.parametrize("login", ["in valid", "with@symbol", "!", "", "a"])
 def test_create_account_invalid_login(client, login):
-    payload = {"login": login, "password": "ValidPass1!"}
+    payload = {"login": login, "password": STRONG_PASSWORD}
 
     response = client.post("/accounts", json=payload)
 
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
 
-def test_login_success(client, mock_log_user):
+def test_login_success(client, mock_log_user, bearer_token_generator):
+    access_token = next(bearer_token_generator)
+    refresh_token = next(bearer_token_generator)
     mock_log_user.return_value = {
-        "access_token": "a" * url_safe_bearer_token_length,
-        "expires_in": 3600,
-        "token_type": "bearer",
-        "refresh_token": "a" * url_safe_bearer_token_length,
+        "access_token": access_token,
+        "expires_in": REFRESH_TOKEN_EXPIRATION_SECONDS,
+        "token_type": TokenType.BEARER,
+        "refresh_token": refresh_token,
     }
 
-    data = {"username": "test_user", "password": "StrongPassword1!"}
+    data = {"username": "test_user", "password": STRONG_PASSWORD}
     response = client.post("/auth/login", data=data)
 
     assert response.status_code == status.HTTP_200_OK
@@ -95,31 +102,32 @@ def test_login_success(client, mock_log_user):
     assert "access_token" in result
     assert "expires_in" in result
     assert "token_type" in result
-    assert result["token_type"] == "bearer"
+    assert result["token_type"] == TokenType.BEARER
     assert len(result["access_token"]) == url_safe_bearer_token_length
-    mock_log_user.assert_awaited_once_with("test_user", "StrongPassword1!", ANY, ANY)
+    mock_log_user.assert_awaited_once_with("test_user", SecretStr(STRONG_PASSWORD), ANY, ANY)
 
 
 def test_login_user_not_found(client, mock_log_user):
     mock_log_user.side_effect = UserNotFound()
 
-    data = {"username": "no_user", "password": "anyPassword1!"}
+    data = {"username": "no_user", "password": STRONG_PASSWORD}
     response = client.post("/auth/login", data=data)
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {"detail": "Invalid credentials!"}
-    mock_log_user.assert_awaited_once_with("no_user", "anyPassword1!", ANY, ANY)
+    mock_log_user.assert_awaited_once_with("no_user", SecretStr(STRONG_PASSWORD), ANY, ANY)
 
 
 def test_login_invalid_password(client, mock_log_user):
     mock_log_user.side_effect = InvalidCredentials()
+    wrong_password = STRONG_PASSWORD
 
-    data = {"username": "test_user", "password": "wrongPassword1!"}
+    data = {"username": "test_user", "password": wrong_password}
     response = client.post("/auth/login", data=data)
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {"detail": "Invalid credentials!"}
-    mock_log_user.assert_awaited_once_with("test_user", "wrongPassword1!", ANY, ANY)
+    mock_log_user.assert_awaited_once_with("test_user", SecretStr(wrong_password), ANY, ANY)
 
 
 @pytest.mark.parametrize(
@@ -127,8 +135,8 @@ def test_login_invalid_password(client, mock_log_user):
     [
         ({}, status.HTTP_422_UNPROCESSABLE_ENTITY),
         ({"username": "user"}, status.HTTP_422_UNPROCESSABLE_ENTITY),
-        ({"password": "Pass1!"}, status.HTTP_422_UNPROCESSABLE_ENTITY),
-        ({"username": "", "password": "Pass1!"}, status.HTTP_401_UNAUTHORIZED),
+        ({"password": STRONG_PASSWORD}, status.HTTP_422_UNPROCESSABLE_ENTITY),
+        ({"username": "", "password": STRONG_PASSWORD}, status.HTTP_401_UNAUTHORIZED),
         ({"username": "user", "password": ""}, status.HTTP_401_UNAUTHORIZED),
     ],
 )
@@ -139,16 +147,20 @@ def test_login_missing_fields(client, mock_log_user, data, expected_status):
     assert response.status_code == expected_status
 
 
-def test_logout_success(client, override_validate_token, mock_logout_user):
-    headers = {"Authorization": f"Bearer {valid_bearer_token}"}
+def test_logout_success(client, override_validate_token, mock_logout_user, bearer_token_generator):
+    access_token, user_id = override_validate_token
+    headers = {"Authorization": f"Bearer {access_token}"}
     response = client.post("/auth/logout", headers=headers)
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
-    mock_logout_user.assert_awaited_once_with(valid_bearer_token, "user-123", ANY)
+    mock_logout_user.assert_awaited_once_with(access_token, user_id, ANY)
 
 
-def test_logout_invalid_token(client, mock_logout_user, override_validate_token_unauthorized, override_get_redis):
-    headers = {"Authorization": f"Bearer {invalid_bearer_token}"}
+def test_logout_invalid_token(
+    client, mock_logout_user, override_validate_token_unauthorized, override_get_redis, bearer_token_generator
+):
+    invalid_access_token = next(bearer_token_generator)
+    headers = {"Authorization": f"Bearer {invalid_access_token}"}
     response = client.post("/auth/logout", headers=headers)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     mock_logout_user.assert_not_called()
@@ -161,24 +173,28 @@ def test_logout_missing_authorization_header(client, mock_logout_user):
     mock_logout_user.assert_not_called()
 
 
-def test_refresh_success(client, mock_refresh_token):
+def test_refresh_success(client, mock_refresh_token, bearer_token_generator):
+    refresh_token = next(bearer_token_generator)
+    headers = {"X-Refresh-Token": refresh_token}
+
+    new_access_token = next(bearer_token_generator)
+    new_refresh_token = next(bearer_token_generator)
     mock_refresh_token.return_value = {
-        "access_token": valid_bearer_token,
-        "expires_in": 3600,
-        "token_type": "bearer",
-        "refresh_token": valid_bearer_token,
+        "access_token": new_access_token,
+        "expires_in": REFRESH_TOKEN_EXPIRATION_SECONDS,
+        "token_type": TokenType.BEARER,
+        "refresh_token": new_refresh_token,
     }
-    headers = {"X-Refresh-Token": valid_bearer_token}
 
     response = client.post("/auth/refresh", headers=headers)
 
     assert response.status_code == status.HTTP_200_OK
     result = response.json()
     assert set(result.keys()) == {"access_token", "expires_in", "token_type", "refresh_token"}
-    assert result["token_type"] == "bearer"
+    assert result["token_type"] == TokenType.BEARER
     assert len(result["access_token"]) == url_safe_bearer_token_length
     assert len(result["refresh_token"]) == url_safe_bearer_token_length
-    mock_refresh_token.assert_awaited_once_with(valid_bearer_token, ANY)
+    mock_refresh_token.assert_awaited_once_with(refresh_token, ANY)
 
 
 def test_refresh_missing_header(client, mock_refresh_token):
@@ -194,12 +210,13 @@ def test_refresh_empty_token(client, mock_refresh_token):
     mock_refresh_token.assert_not_called()
 
 
-def test_refresh_invalid_token(client, mock_refresh_token):
+def test_refresh_invalid_token(client, mock_refresh_token, bearer_token_generator):
+    invalid_refresh_token = next(bearer_token_generator)
     mock_refresh_token.side_effect = InvalidCredentials()
-    headers = {"X-Refresh-Token": invalid_bearer_token}
+    headers = {"X-Refresh-Token": invalid_refresh_token}
 
     response = client.post("/auth/refresh", headers=headers)
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {"detail": "Invalid refresh token!"}
-    mock_refresh_token.assert_awaited_once_with(invalid_bearer_token, ANY)
+    mock_refresh_token.assert_awaited_once_with(invalid_refresh_token, ANY)

@@ -4,7 +4,6 @@ import pytest
 from fastapi import status
 
 from app.core.exceptions import EmptyFileException, FileNameExist
-from tests.unit.consts import valid_bearer_token
 
 
 @pytest.fixture
@@ -16,9 +15,10 @@ def mock_add_user_file():
 def test_add_user_file_success(
     client, override_validate_token, override_get_storage_client, override_users_unit_of_work, mock_add_user_file
 ):
+    access_token, _ = override_validate_token
     file_content = b"test"
     file = ("test.txt", file_content, "text/plain")
-    headers = {"Authorization": f"Bearer {valid_bearer_token}"}
+    headers = {"Authorization": f"Bearer {access_token}"}
 
     response = client.post("/user/files", files={"user_file": file}, headers=headers)
 
@@ -29,7 +29,8 @@ def test_add_user_file_success(
 def test_add_user_file_missing_file_field(
     client, override_validate_token, override_get_storage_client, override_users_unit_of_work, mock_add_user_file
 ):
-    headers = {"Authorization": f"Bearer {valid_bearer_token}"}
+    access_token, _ = override_validate_token
+    headers = {"Authorization": f"Bearer {access_token}"}
 
     response = client.post("/user/files", headers=headers, files={})
 
@@ -40,10 +41,11 @@ def test_add_user_file_missing_file_field(
 def test_add_user_file_name_exist(
     client, override_validate_token, override_get_storage_client, override_users_unit_of_work, mock_add_user_file
 ):
+    access_token, _ = override_validate_token
     mock_add_user_file.side_effect = FileNameExist()
     file_content = b"duplicate"
     file = ("duplicate.txt", file_content, "text/plain")
-    headers = {"Authorization": f"Bearer {valid_bearer_token}"}
+    headers = {"Authorization": f"Bearer {access_token}"}
 
     response = client.post("/user/files", files={"user_file": file}, headers=headers)
 
@@ -55,9 +57,10 @@ def test_add_user_file_name_exist(
 def test_add_user_file_empty_file(
     client, override_validate_token, override_get_storage_client, override_users_unit_of_work, mock_add_user_file
 ):
+    access_token, _ = override_validate_token
     mock_add_user_file.side_effect = EmptyFileException()
     empty_file = ("empty.txt", b"", "text/plain")
-    headers = {"Authorization": f"Bearer {valid_bearer_token}"}
+    headers = {"Authorization": f"Bearer {access_token}"}
 
     response = client.post("/user/files", files={"user_file": empty_file}, headers=headers)
 

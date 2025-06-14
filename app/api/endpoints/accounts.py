@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import SecretStr
 from redis.asyncio.client import Redis
 
 import app.services.accounts as account_services
@@ -45,7 +46,7 @@ async def log_user(
     error_occurred = False
 
     login = authentication_data.username
-    password = authentication_data.password
+    password = SecretStr(authentication_data.password)
 
     try:
         tokens = await account_services.log_user(login, password, redis_client, users_unit_of_work)

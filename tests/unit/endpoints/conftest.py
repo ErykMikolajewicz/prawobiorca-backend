@@ -9,7 +9,6 @@ from app.core.authentication import validate_token
 from app.key_value_db.connection import get_redis
 from app.main import app
 from app.units_of_work.users import UsersUnitOfWork
-from tests.unit.consts import valid_bearer_token
 
 
 @pytest.fixture
@@ -18,13 +17,16 @@ def client():
 
 
 @pytest.fixture
-def override_validate_token():
+def override_validate_token(bearer_token_generator, uuid_generator):
+    access_token = next(bearer_token_generator)
+    user_id = next(uuid_generator)
+
     def _override(request: Request):
-        request.state.user_id = "test-user-id"
-        return valid_bearer_token, "user-123"
+        request.state.user_id = user_id
+        return access_token, user_id
 
     app.dependency_overrides[validate_token] = _override
-    yield
+    yield access_token, user_id
     app.dependency_overrides = {}
 
 

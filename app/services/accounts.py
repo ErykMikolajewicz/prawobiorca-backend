@@ -1,6 +1,7 @@
 import logging
 from uuid import UUID
 
+from pydantic import SecretStr
 from redis.asyncio.client import Redis
 from sqlalchemy.exc import IntegrityError
 
@@ -31,7 +32,9 @@ async def create_account(users_unit_of_work: UsersUnitOfWork, account_data: Acco
             raise UserExists
 
 
-async def log_user(login: str, password: str, redis_client: Redis, users_unit_of_work: UsersUnitOfWork) -> LoginOutput:
+async def log_user(
+    login: str, password: SecretStr, redis_client: Redis, users_unit_of_work: UsersUnitOfWork
+) -> LoginOutput:
     async with users_unit_of_work as uof:
         user = await uof.users.get_by_login(login)
     if user is None:
@@ -63,7 +66,7 @@ async def log_user(login: str, password: str, redis_client: Redis, users_unit_of
 
     token = LoginOutput(
         access_token=access_token,
-        token_type=TokenType.bearer,
+        token_type=TokenType.BEARER,
         expires_in=access_token_expiration_seconds,
         refresh_token=refresh_token,
     )
@@ -108,5 +111,5 @@ async def refresh(refresh_token: str, redis_client: Redis) -> LoginOutput:
         access_token=access_token,
         refresh_token=new_refresh_token,
         expires_in=access_token_expiration_seconds,
-        token_type=TokenType.bearer,
+        token_type=TokenType.BEARER,
     )

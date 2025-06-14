@@ -1,7 +1,8 @@
 import re
+from string import punctuation
 from typing import Annotated
 
-from pydantic import BaseModel, Field, StringConstraints, field_validator
+from pydantic import BaseModel, Field, SecretStr, StringConstraints, field_validator
 
 from app.core.enums import TokenType
 from app.core.security import url_safe_bearer_token_length
@@ -9,7 +10,7 @@ from app.core.security import url_safe_bearer_token_length
 
 class AccountCreate(BaseModel):
     login: str = Field(min_length=3, max_length=32)
-    password: str = Field(min_length=8, max_length=32)
+    password: SecretStr = Field(min_length=8, max_length=32)
 
     @field_validator("login")
     @classmethod
@@ -20,14 +21,15 @@ class AccountCreate(BaseModel):
 
     @field_validator("password")
     @classmethod
-    def validate_password(cls, value):
-        if not re.search(r"[A-Z]", value):
+    def validate_password(cls, value: SecretStr):
+        password_str = value.get_secret_value()
+        if not re.search(r"[A-Z]", password_str):
             raise ValueError("Password must contain at least one uppercase letter.")
-        if not re.search(r"[a-z]", value):
+        if not re.search(r"[a-z]", password_str):
             raise ValueError("Password must contain at least one lowercase letter.")
-        if not re.search(r"[0-9]", value):
+        if not re.search(r"[0-9]", password_str):
             raise ValueError("Password must contain at least one digit.")
-        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", value):
+        if not re.search(f"[{re.escape(punctuation)}]", password_str):
             raise ValueError("Password must contain at least one special character.")
         return value
 
