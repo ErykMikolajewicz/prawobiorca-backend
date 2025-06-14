@@ -6,7 +6,7 @@ from redis.asyncio.client import Redis
 from sqlalchemy.exc import IntegrityError
 
 from app.config import settings
-from app.core.enums import TokenType
+from app.core.enums import RedisPrefix, TokenType
 from app.core.exceptions import InvalidCredentials, UserExists, UserNotFound
 from app.core.security import generate_token, hash_password, verify_password
 from app.models.account import AccountCreate, LoginOutput
@@ -32,6 +32,7 @@ async def create_account(users_unit_of_work: UsersUnitOfWork, account_data: Acco
             raise UserExists
 
 
+# noinspection DuplicatedCode
 async def log_user(
     login: str, password: SecretStr, redis_client: Redis, users_unit_of_work: UsersUnitOfWork
 ) -> LoginOutput:
@@ -46,12 +47,12 @@ async def log_user(
 
     user_id: UUID = user.id
     # To ensure exist only one refresh token
-    previous_refresh_token = await redis_client.get(f"user_refresh_token:{user_id}")
+    previous_refresh_token = await redis_client.get(f"{RedisPrefix.USER_REFRESH_TOKEN}:{user_id}")
     if previous_refresh_token is not None:
         logger.warning("User with existing refresh token logging.")
         async with redis_client.pipeline() as pipe:
-            await pipe.delete(f"refresh_token:{previous_refresh_token}")
-            await pipe.delete(f"user_refresh_token:{user_id}")
+            await pipe.delete(f"{RedisPrefix.REFRESH_TOKEN}:{previous_refresh_token}")
+            await pipe.delete(f"{RedisPrefix.USER_REFRESH_TOKEN}:{user_id}")
             await pipe.execute()
 
     access_token = generate_token()
@@ -59,9 +60,13 @@ async def log_user(
     user_id_string = str(user_id)
 
     async with redis_client.pipeline() as pipe:
-        await pipe.set(f"user_refresh_token:{user_id_string}", refresh_token, ex=refresh_token_expiration_seconds)
-        await pipe.set(f"refresh_token:{refresh_token}", user_id_string, ex=refresh_token_expiration_seconds)
-        await pipe.set(f"access_token:{access_token}", user_id_string, ex=access_token_expiration_seconds)
+        await pipe.set(
+            f"{RedisPrefix.USER_REFRESH_TOKEN}:{user_id_string}", refresh_token, ex=refresh_token_expiration_seconds
+        )
+        await pipe.set(
+            f"{RedisPrefix.REFRESH_TOKEN}:{refresh_token}", user_id_string, ex=refresh_token_expiration_seconds
+        )
+        await pipe.set(f"{RedisPrefix.ACCESS_TOKEN}:{access_token}", user_id_string, ex=access_token_expiration_seconds)
         await pipe.execute()
 
     token = LoginOutput(
@@ -74,26 +79,27 @@ async def log_user(
 
 
 async def logout_user(access_token: str, user_id: str, redis_client: Redis):
-    refresh_token = await redis_client.get(f"user_refresh_token:{user_id}")
+    refresh_token = await redis_client.get(f"{RedisPrefix.USER_REFRESH_TOKEN}:{user_id}")
 
     if refresh_token is None:
         logger.error("Invalid application state, no refresh token for user!")
         async with redis_client.pipeline() as pipe:
-            await pipe.delete(f"user_refresh_token:{user_id}")
-            await pipe.delete(f"access_token:{access_token}")
+            await pipe.delete(f"{RedisPrefix.USER_REFRESH_TOKEN}:{user_id}")
+            await pipe.delete(f"{RedisPrefix.ACCESS_TOKEN}:{access_token}")
             await pipe.execute()
         return None
 
     async with redis_client.pipeline() as pipe:
-        await pipe.delete(f"refresh_token:{refresh_token}")
-        await pipe.delete(f"user_refresh_token:{user_id}")
-        await pipe.delete(f"access_token:{access_token}")
+        await pipe.delete(f"{RedisPrefix.REFRESH_TOKEN}:{refresh_token}")
+        await pipe.delete(f"{RedisPrefix.USER_REFRESH_TOKEN}:{user_id}")
+        await pipe.delete(f"{RedisPrefix.ACCESS_TOKEN}:{access_token}")
         await pipe.execute()
     return None
 
 
+# noinspection DuplicatedCode
 async def refresh(refresh_token: str, redis_client: Redis) -> LoginOutput:
-    user_id = await redis_client.get(f"refresh_token:{refresh_token}")
+    user_id = await redis_client.get(f"{RedisPrefix.REFRESH_TOKEN}:{refresh_token}")
     if not user_id:
         raise InvalidCredentials()
 
@@ -101,10 +107,12 @@ async def refresh(refresh_token: str, redis_client: Redis) -> LoginOutput:
     new_refresh_token = generate_token()
 
     async with redis_client.pipeline() as pipe:
-        await pipe.delete(f"refresh_token:{refresh_token}")
-        await pipe.set(f"user_refresh_token:{user_id}", new_refresh_token, ex=refresh_token_expiration_seconds)
-        await pipe.set(f"refresh_token:{new_refresh_token}", user_id, ex=refresh_token_expiration_seconds)
-        await pipe.set(f"access_token:{access_token}", user_id, ex=access_token_expiration_seconds)
+        await pipe.delete(f"{RedisPrefix.REFRESH_TOKEN}:{refresh_token}")
+        await pipe.set(
+            f"{RedisPrefix.USER_REFRESH_TOKEN}:{user_id}", new_refresh_token, ex=refresh_token_expiration_seconds
+        )
+        await pipe.set(f"{RedisPrefix.REFRESH_TOKEN}:{new_refresh_token}", user_id, ex=refresh_token_expiration_seconds)
+        await pipe.set(f"{RedisPrefix.ACCESS_TOKEN}:{access_token}", user_id, ex=access_token_expiration_seconds)
         await pipe.execute()
 
     return LoginOutput(

@@ -650,10 +650,9 @@ wheels = [
 
 [[package]]
 name = "prawobiorca-backend"
-version = "0.16.0"
+version = "0.16.1"
 source = { virtual = "." }
 dependencies = [
-    { name = "alembic" },
     { name = "asyncpg" },
     { name = "bcrypt" },
     { name = "fastapi" },
@@ -668,6 +667,7 @@ dependencies = [
 
 [package.optional-dependencies]
 dev = [
+    { name = "alembic" },
     { name = "bandit" },
     { name = "black" },
     { name = "granian", extra = ["reload"] },
@@ -680,7 +680,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "alembic", specifier = "==1.16.*" },
+    { name = "alembic", marker = "extra == 'dev'", specifier = "==1.16.*" },
     { name = "asyncpg", specifier = "==0.30.*" },
     { name = "bandit", marker = "extra == 'dev'", specifier = "==1.8.*" },
     { name = "bcrypt", specifier = "==4.3.*" },

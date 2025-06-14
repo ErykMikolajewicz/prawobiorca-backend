@@ -16,7 +16,6 @@ def make_upload_file(name="test.txt", content=b"test-content"):
     return upload_file
 
 
-@pytest.mark.asyncio
 async def test_add_user_file_success(uow, storage_client, uuid_generator):
     upload_file = make_upload_file()
     user_id = next(uuid_generator)
@@ -33,7 +32,6 @@ async def test_add_user_file_success(uow, storage_client, uuid_generator):
     mock_upload.assert_awaited_once_with(storage_client, str(fake_file_id), upload_file)
 
 
-@pytest.mark.asyncio
 async def test_add_user_file_duplicate_file_name(uow, storage_client, uuid_generator):
     upload_file = make_upload_file()
     user_id = next(uuid_generator)
@@ -43,7 +41,6 @@ async def test_add_user_file_duplicate_file_name(uow, storage_client, uuid_gener
             await add_user_file(uow, upload_file, user_id, storage_client)
 
 
-@pytest.mark.asyncio
 async def test_add_user_file_empty_file(uow, storage_client, uuid_generator):
     user_id = next(uuid_generator)
     upload_file = make_upload_file(content=b"")

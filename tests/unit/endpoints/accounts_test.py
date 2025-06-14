@@ -111,7 +111,9 @@ def test_login_user_not_found(client, mock_log_user):
     mock_log_user.side_effect = UserNotFound()
 
     data = {"username": "no_user", "password": STRONG_PASSWORD}
-    response = client.post("/auth/login", data=data)
+    with patch("asyncio.sleep", new=AsyncMock()) as mock_sleep:
+        response = client.post("/auth/login", data=data)
+        mock_sleep.assert_called()
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {"detail": "Invalid credentials!"}
@@ -123,7 +125,9 @@ def test_login_invalid_password(client, mock_log_user):
     wrong_password = STRONG_PASSWORD
 
     data = {"username": "test_user", "password": wrong_password}
-    response = client.post("/auth/login", data=data)
+    with patch("asyncio.sleep", new=AsyncMock()) as mock_sleep:
+        response = client.post("/auth/login", data=data)
+        mock_sleep.assert_called()
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {"detail": "Invalid credentials!"}
@@ -143,7 +147,10 @@ def test_login_invalid_password(client, mock_log_user):
 def test_login_missing_fields(client, mock_log_user, data, expected_status):
     if data.get("username", "") == "" or data.get("password", "") == "":
         mock_log_user.side_effect = UserNotFound()
-    response = client.post("/auth/login", data=data)
+    with patch("asyncio.sleep", new=AsyncMock()) as mock_sleep:
+        response = client.post("/auth/login", data=data)
+        if expected_status == status.HTTP_401_UNAUTHORIZED:
+            mock_sleep.assert_called()
     assert response.status_code == expected_status
 
 
