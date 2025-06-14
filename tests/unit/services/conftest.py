@@ -35,12 +35,12 @@ def uow():
 
 
 @pytest.fixture
-def redis_client():
-    redis = AsyncMock()
+def key_value_repository():
+    repo = AsyncMock()
     pipeline = AsyncMock()
 
-    redis.pipeline = lambda: DummyAsyncContextManager(pipeline)
-    return redis, pipeline
+    repo.pipeline = lambda: DummyAsyncContextManager(pipeline)
+    return repo, pipeline
 
 
 @pytest.fixture

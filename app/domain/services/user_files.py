@@ -2,9 +2,9 @@ from fastapi import UploadFile
 from google.cloud.storage import Client as StorageClient
 from sqlalchemy.exc import IntegrityError
 
-from app.cloud_storage.utils import upload_file_to_cloud_storage
-from app.core.exceptions import EmptyFileException, FileNameExist
-from app.units_of_work.users import UsersUnitOfWork
+from app.infrastructure.cloud_storage.utils import upload_file_to_cloud_storage
+from app.shared.exceptions import EmptyFileException, FileNameExist
+from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 
 
 async def add_user_file(

@@ -3,8 +3,8 @@ from uuid import UUID
 import sqlalchemy as sqla
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.relational_db.connection import Base
-from app.schemas.mixins import CreateDateMixin, UuidIdMixin
+from app.infrastructure.relational_db.connection import Base
+from app.infrastructure.relational_db.schemas.mixins import CreateDateMixin, UuidIdMixin
 
 
 class Users(Base, UuidIdMixin, CreateDateMixin):

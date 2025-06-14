@@ -1,5 +1,5 @@
-from app.repositories.users import UsersFilesRepository, UsersRepository
-from app.units_of_work.base import BaseUnitOfWork
+from app.infrastructure.relational_db.repositories.users import UsersFilesRepository, UsersRepository
+from app.infrastructure.relational_db.bases import BaseUnitOfWork
 
 
 class UsersUnitOfWork(BaseUnitOfWork):

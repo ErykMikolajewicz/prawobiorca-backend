@@ -5,8 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from app.relational_db.connection import Base
-from app.schemas.users import Users, UsersFiles
+from app.infrastructure.relational_db.connection import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

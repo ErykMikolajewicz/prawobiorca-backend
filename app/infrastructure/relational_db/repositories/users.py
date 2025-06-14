@@ -3,8 +3,8 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.schemas.users as user_schema
-from app.repositories.general import CrudRepository
+import app.infrastructure.relational_db.schemas.users as user_schema
+from app.infrastructure.relational_db.bases import CrudRepository
 
 
 class UsersRepository(CrudRepository[user_schema.Users]):

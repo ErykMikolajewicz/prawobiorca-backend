@@ -3,12 +3,12 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi import status
 
-from app.core.exceptions import EmptyFileException, FileNameExist
+from app.shared.exceptions import EmptyFileException, FileNameExist
 
 
 @pytest.fixture
 def mock_add_user_file():
-    with patch("app.services.user_files.add_user_file", new_callable=AsyncMock) as mock:
+    with patch("app.domain.services.user_files.add_user_file", new_callable=AsyncMock) as mock:
         yield mock
 
 

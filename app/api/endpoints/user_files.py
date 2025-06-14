@@ -4,11 +4,13 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
 from google.cloud.storage import Client as StorageClient
 
-import app.services.user_files as files_services
-from app.cloud_storage.connection import get_storage_client
-from app.core.authentication import validate_token
-from app.core.exceptions import EmptyFileException, FileNameExist
-from app.units_of_work.users import UsersUnitOfWork
+import app.domain.services.user_files as files_services
+from app.infrastructure.cloud_storage.connection import get_storage_client
+from app.dependencies.authentication import validate_token
+from app.shared.exceptions import EmptyFileException, FileNameExist
+from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
+from app.dependencies.units_of_work import get_users_unit_of_work
+
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +29,7 @@ async def add_user_file(
     user_file: UploadFile,
     request: Request,
     storage_client: Annotated[StorageClient, Depends(get_storage_client)],
-    users_unit_of_work: UsersUnitOfWork = Depends(),
+    users_unit_of_work: UsersUnitOfWork = Depends(get_users_unit_of_work),
 ):
     user_id = request.state.user_id
     try:

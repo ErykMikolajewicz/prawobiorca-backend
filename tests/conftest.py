@@ -1,6 +1,6 @@
 import pytest
 
-from app.core.security import url_safe_bearer_token_length
+from app.infrastructure.utilities.security import url_safe_bearer_token_length
 
 
 @pytest.fixture

@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from redis.asyncio.client import Redis
 
-from app.key_value_db.connection import get_redis
+from app.infrastructure.key_value_db.connection import get_redis
 
 
 async def validate_token(

@@ -4,8 +4,8 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field, SecretStr, StringConstraints, field_validator
 
-from app.core.enums import TokenType
-from app.core.security import url_safe_bearer_token_length
+from app.shared.enums import TokenType
+from app.infrastructure.utilities.security import url_safe_bearer_token_length
 
 
 class AccountCreate(BaseModel):

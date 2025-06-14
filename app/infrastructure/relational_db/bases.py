@@ -1,12 +1,34 @@
-from typing import Any, Generic, Optional, Type, TypeVar
+from typing import Generic, Type, Optional, Any, TypeVar
 from uuid import UUID
 
-from sqlalchemy import delete, insert, select, update
+from sqlalchemy import select, insert, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.schemas.mixins import IntIdMixin, UuidIdMixin
+from app.domain.interfaces.unit_of_work import AbstractUnitOfWork
+from app.infrastructure.relational_db.schemas.mixins import IntIdMixin, UuidIdMixin
+
 
 ModelWithId = TypeVar("ModelWithId", bound=UuidIdMixin | IntIdMixin)
+
+
+class BaseUnitOfWork(AbstractUnitOfWork):
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        if exc_type:
+            await self.rollback()
+        else:
+            await self.commit()
+
+    async def commit(self):
+        await self.session.commit()
+
+    async def rollback(self):
+        await self.session.rollback()
 
 
 class CrudRepository(Generic[ModelWithId]):

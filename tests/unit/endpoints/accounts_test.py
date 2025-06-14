@@ -5,56 +5,57 @@ from fastapi import status
 from pydantic import SecretStr
 
 from app.config import settings
-from app.core.enums import TokenType
-from app.core.exceptions import InvalidCredentials, UserExists, UserNotFound
-from app.core.security import url_safe_bearer_token_length
+from app.shared.enums import TokenType
+from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound
+from app.infrastructure.utilities.security import url_safe_bearer_token_length
 from tests.test_consts import STRONG_PASSWORD
+
 
 REFRESH_TOKEN_EXPIRATION_SECONDS = settings.app.REFRESH_TOKEN_EXPIRATION_SECONDS
 
 
 @pytest.fixture
-def mock_users_unit_of_work():
-    with patch("app.services.accounts.create_account", new_callable=AsyncMock) as mock_create_account:
+def mock_create_account():
+    with patch("app.domain.services.accounts.create_account", new_callable=AsyncMock) as mock_create_account:
         yield mock_create_account
 
 
 @pytest.fixture
 def mock_refresh_token():
-    with patch("app.services.accounts.refresh", new_callable=AsyncMock) as mock:
+    with patch("app.domain.services.accounts.refresh", new_callable=AsyncMock) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_log_user():
-    with patch("app.services.accounts.log_user", new_callable=AsyncMock) as mock:
+    with patch("app.domain.services.accounts.log_user", new_callable=AsyncMock) as mock:
         yield mock
 
 
 @pytest.fixture
 def mock_logout_user():
-    with patch("app.services.accounts.logout_user", new_callable=AsyncMock) as mock:
+    with patch("app.domain.services.accounts.logout_user", new_callable=AsyncMock) as mock:
         yield mock
 
 
-def test_create_account_success(client, mock_users_unit_of_work):
+def test_create_account_success(client, mock_create_account):
     payload = {"login": "test_user", "password": STRONG_PASSWORD}
 
     response = client.post("/accounts", json=payload)
 
     assert response.status_code == status.HTTP_201_CREATED
-    mock_users_unit_of_work.assert_awaited_once()
+    mock_create_account.assert_awaited_once()
 
 
-def test_create_account_conflict(client, mock_users_unit_of_work):
-    mock_users_unit_of_work.side_effect = UserExists()
+def test_create_account_conflict(client, mock_create_account):
+    mock_create_account.side_effect = UserExists()
     payload = {"login": "existing_user", "password": STRONG_PASSWORD}
 
     response = client.post("/accounts", json=payload)
 
     assert response.status_code == status.HTTP_409_CONFLICT
     assert response.json() == {"detail": "User with that login already exist!"}
-    mock_users_unit_of_work.assert_awaited_once()
+    mock_create_account.assert_awaited_once()
 
 
 @pytest.mark.parametrize(
@@ -164,7 +165,7 @@ def test_logout_success(client, override_validate_token, mock_logout_user, beare
 
 
 def test_logout_invalid_token(
-    client, mock_logout_user, override_validate_token_unauthorized, override_get_redis, bearer_token_generator
+    client, mock_logout_user, override_validate_token_unauthorized, bearer_token_generator
 ):
     invalid_access_token = next(bearer_token_generator)
     headers = {"Authorization": f"Bearer {invalid_access_token}"}
