@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -45,4 +45,4 @@ def key_value_repository():
 
 @pytest.fixture
 def storage_client():
-    return MagicMock()
+    return AsyncMock()

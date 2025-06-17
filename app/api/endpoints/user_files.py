@@ -2,14 +2,14 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
-from google.cloud.storage import Client as StorageClient
 
 import app.domain.services.user_files as files_services
-from app.infrastructure.cloud_storage.connection import get_storage_client
 from app.dependencies.authentication import validate_token
 from app.shared.exceptions import EmptyFileException, FileNameExist
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 from app.dependencies.units_of_work import get_users_unit_of_work
+from app.dependencies.file_storage import storage_repo_factory
+from app.domain.interfaces.file_storage import StorageRepository
 
 
 logger = logging.getLogger(__name__)
@@ -28,12 +28,12 @@ user_files_router = APIRouter(prefix="/user", tags=["user files"], dependencies=
 async def add_user_file(
     user_file: UploadFile,
     request: Request,
-    storage_client: Annotated[StorageClient, Depends(get_storage_client)],
+    storage_repository: Annotated[StorageRepository, Depends(storage_repo_factory(is_public=False))],
     users_unit_of_work: UsersUnitOfWork = Depends(get_users_unit_of_work),
 ):
     user_id = request.state.user_id
     try:
-        await files_services.add_user_file(users_unit_of_work, user_file, user_id, storage_client)
+        await files_services.add_user_file(users_unit_of_work, user_file, user_id, storage_repository)
     except EmptyFileException:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File can not be empty!")
     except FileNameExist:

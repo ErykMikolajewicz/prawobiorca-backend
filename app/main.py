@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.concurrency import run_in_threadpool
 
 from app.api.router import include_all_routers
-from app.infrastructure.cloud_storage.connection import check_cloud_storage_connection, storage_client
+from app.infrastructure.file_storage.connection import check_file_storage_connection, storage_client
 from app.shared.logging_config import setup_logging
 from app.infrastructure.key_value_db.connection import check_redis_connection, redis_pool
 from app.infrastructure.relational_db.connection import check_relational_db_connection, engine
@@ -25,7 +25,7 @@ async def lifespan(_: FastAPI):
     await check_relational_db_connection()
     await check_redis_connection()
     await check_vector_db_connection()
-    await run_in_threadpool(check_cloud_storage_connection)
+    await run_in_threadpool(check_file_storage_connection)
     app.state.ready = True
     logger.info("Application is ready to serve.")
     yield

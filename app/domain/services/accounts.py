@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import SecretStr
 from sqlalchemy.exc import IntegrityError
+from redis.asyncio import Redis
 
 from app.config import settings
 from app.shared.enums import KeyPrefix, TokenType
@@ -10,7 +11,6 @@ from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound
 from app.infrastructure.utilities.security import generate_token, hash_password, verify_password
 from app.domain.models.account import AccountCreate, LoginOutput
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
-from app.domain.interfaces.key_value_db import KeyValueRepository
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ async def create_account(users_unit_of_work: UsersUnitOfWork, account_data: Acco
 
 # noinspection DuplicatedCode
 async def log_user(
-    login: str, password: SecretStr, key_value_repo: KeyValueRepository, users_unit_of_work: UsersUnitOfWork
+    login: str, password: SecretStr, redis_client: Redis, users_unit_of_work: UsersUnitOfWork
 ) -> LoginOutput:
     async with users_unit_of_work as uof:
         user = await uof.users.get_by_login(login)
@@ -47,10 +47,10 @@ async def log_user(
 
     user_id: UUID = user.id
     # To ensure exist only one refresh token
-    previous_refresh_token = await key_value_repo.get(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
+    previous_refresh_token = await redis_client.get(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
     if previous_refresh_token is not None:
         logger.warning("User with existing refresh token logging.")
-        async with key_value_repo.pipeline() as pipe:
+        async with redis_client.pipeline() as pipe:
             await pipe.delete(f"{KeyPrefix.REFRESH_TOKEN}:{previous_refresh_token}")
             await pipe.delete(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
             await pipe.execute()
@@ -59,7 +59,7 @@ async def log_user(
     refresh_token = generate_token()
     user_id_string = str(user_id)
 
-    async with key_value_repo.pipeline() as pipe:
+    async with redis_client.pipeline() as pipe:
         await pipe.set(
             f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id_string}", refresh_token, ex=refresh_token_expiration_seconds
         )
@@ -78,18 +78,18 @@ async def log_user(
     return token
 
 
-async def logout_user(access_token: str, user_id: str, key_value_repo: KeyValueRepository):
-    refresh_token = await key_value_repo.get(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
+async def logout_user(access_token: str, user_id: str, redis_client: Redis):
+    refresh_token = await redis_client.get(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
 
     if refresh_token is None:
         logger.error("Invalid application state, no refresh token for user!")
-        async with key_value_repo.pipeline() as pipe:
+        async with redis_client.pipeline() as pipe:
             await pipe.delete(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
             await pipe.delete(f"{KeyPrefix.ACCESS_TOKEN}:{access_token}")
             await pipe.execute()
         return None
 
-    async with key_value_repo.pipeline() as pipe:
+    async with redis_client.pipeline() as pipe:
         await pipe.delete(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
         await pipe.delete(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
         await pipe.delete(f"{KeyPrefix.ACCESS_TOKEN}:{access_token}")
@@ -98,15 +98,15 @@ async def logout_user(access_token: str, user_id: str, key_value_repo: KeyValueR
 
 
 # noinspection DuplicatedCode
-async def refresh(refresh_token: str, key_value_repo: KeyValueRepository) -> LoginOutput:
-    user_id = await key_value_repo.get(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
+async def refresh(refresh_token: str, redis_client: Redis) -> LoginOutput:
+    user_id = await redis_client.get(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
     if not user_id:
         raise InvalidCredentials()
 
     access_token = generate_token()
     new_refresh_token = generate_token()
 
-    async with key_value_repo.pipeline() as pipe:
+    async with redis_client.pipeline() as pipe:
         await pipe.delete(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
         await pipe.set(
             f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}", new_refresh_token, ex=refresh_token_expiration_seconds

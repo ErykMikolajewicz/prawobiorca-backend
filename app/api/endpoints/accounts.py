@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import SecretStr
+from redis.asyncio import Redis
 
 import app.domain.services.accounts as account_services
 from app.dependencies.authentication import validate_token
@@ -14,7 +15,6 @@ from app.infrastructure.utilities.security import url_safe_bearer_token_length
 from app.domain.models.account import AccountCreate, LoginOutput
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 from app.dependencies.units_of_work import get_users_unit_of_work
-from app.domain.interfaces.key_value_db import KeyValueRepository
 from app.dependencies.key_value_repository import get_key_value_repository
 
 
@@ -41,7 +41,7 @@ async def create_account(account_data: AccountCreate, users_unit_of_work: UsersU
 )
 async def log_user(
     authentication_data: Annotated[OAuth2PasswordRequestForm, Depends(OAuth2PasswordRequestForm)],
-    key_value_repo: Annotated[KeyValueRepository, Depends(get_key_value_repository)],
+    key_value_repo: Annotated[Redis, Depends(get_key_value_repository)],
     users_unit_of_work: UsersUnitOfWork = Depends(get_users_unit_of_work),
 ) -> LoginOutput:
     execution_start_time = asyncio.get_event_loop().time()
@@ -75,7 +75,7 @@ async def log_user(
     responses={status.HTTP_401_UNAUTHORIZED: {"description": "Invalid access token!"}},
 )
 async def logout_user(
-    key_value_repo: Annotated[KeyValueRepository, Depends(get_key_value_repository)], login_data: Annotated[tuple[str, str], Depends(validate_token)]
+    key_value_repo: Annotated[Redis, Depends(get_key_value_repository)], login_data: Annotated[tuple[str, str], Depends(validate_token)]
 ):
     token, user_id = login_data
     await account_services.logout_user(token, user_id, key_value_repo)
@@ -86,7 +86,7 @@ async def logout_user(
     "/auth/refresh", responses={status.HTTP_401_UNAUTHORIZED: {"description": "Invalid refresh token!"}}
 )
 async def refresh(
-    key_value_repo: Annotated[KeyValueRepository, Depends(get_key_value_repository)],
+    key_value_repo: Annotated[Redis, Depends(get_key_value_repository)],
     refresh_token: str = Header(
         ..., alias="X-Refresh-Token", min_length=url_safe_bearer_token_length, max_length=url_safe_bearer_token_length
     ),
