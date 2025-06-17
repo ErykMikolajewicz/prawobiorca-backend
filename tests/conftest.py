@@ -1,6 +1,10 @@
+import asyncio
+
 import pytest
+from starlette.testclient import TestClient
 
 from app.infrastructure.utilities.security import url_safe_bearer_token_length
+from app.main import app
 
 
 @pytest.fixture
@@ -30,3 +34,16 @@ def uuid_generator():
             yield uuid_
 
     return get_uuid()
+
+
+@pytest.fixture(scope="session")
+def client():
+    return TestClient(app)
+
+
+@pytest.fixture(scope="session")
+def _function_event_loop():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    yield loop
+    loop.close()

@@ -2,17 +2,11 @@ from unittest.mock import AsyncMock
 
 import pytest
 from fastapi import HTTPException, Request, status
-from fastapi.testclient import TestClient
 
 from app.dependencies.authentication import validate_token
 from app.infrastructure.file_storage.connection import get_storage_client
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 from app.main import app
-
-
-@pytest.fixture
-def client():
-    return TestClient(app)
 
 
 @pytest.fixture
