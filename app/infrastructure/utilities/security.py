@@ -6,7 +6,6 @@ from pydantic import SecretStr
 
 from app.shared.consts import BEARER_TOKEN_LENGTH
 
-
 url_safe_bearer_token_length = ceil(BEARER_TOKEN_LENGTH * 4 / 3)
 
 

@@ -2,7 +2,6 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 FILE_STORAGE_SETTINGS_FILE_PATH = Path("config") / "file_storage.env"
 
 

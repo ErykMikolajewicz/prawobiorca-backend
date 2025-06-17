@@ -2,22 +2,15 @@ import re
 from string import punctuation
 from typing import Annotated
 
-from pydantic import BaseModel, Field, SecretStr, StringConstraints, field_validator
+from pydantic import BaseModel, EmailStr, Field, SecretStr, StringConstraints, field_validator
 
-from app.shared.enums import TokenType
 from app.infrastructure.utilities.security import url_safe_bearer_token_length
+from app.shared.enums import TokenType
 
 
 class AccountCreate(BaseModel):
-    login: str = Field(min_length=3, max_length=32)
+    email: EmailStr
     password: SecretStr = Field(min_length=8, max_length=32)
-
-    @field_validator("login")
-    @classmethod
-    def validate_login(cls, value):
-        if not re.match(r"^[a-zA-Z0-9_.-]+$", value):
-            raise ValueError("Login can only contain letters, digits, dots, underscores, and hyphens.")
-        return value
 
     @field_validator("password")
     @classmethod

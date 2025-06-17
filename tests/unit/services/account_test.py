@@ -1,16 +1,16 @@
+from typing import cast
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from pydantic import SecretStr
+from pydantic import EmailStr, SecretStr
 from sqlalchemy.exc import IntegrityError
 
 from app.config import settings
-from app.shared.enums import KeyPrefix, TokenType
-from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound
 from app.domain.models.account import AccountCreate, LoginOutput
 from app.domain.services.accounts import create_account, log_user, logout_user, refresh
-from tests.test_consts import STRONG_PASSWORD
-
+from app.shared.enums import KeyPrefix, TokenType
+from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound
+from tests.test_consts import STRONG_PASSWORD, VALID_EMAIL
 
 ACCESS_TOKEN_EXPIRATION_SECONDS = settings.app.ACCESS_TOKEN_EXPIRATION_SECONDS
 REFRESH_TOKEN_EXPIRATION_SECONDS = settings.app.REFRESH_TOKEN_EXPIRATION_SECONDS
@@ -24,19 +24,21 @@ def mock_hash_password():
 
 async def test_create_account_success(uow):
     strong_password = SecretStr(STRONG_PASSWORD)
-    account_data = AccountCreate(login="valid_user", password=strong_password)
+    email = cast(EmailStr, VALID_EMAIL)
+    account_data = AccountCreate(email=email, password=strong_password)
     uow.users.add = AsyncMock()
 
     with patch("app.domain.services.accounts.hash_password", return_value=b"hashed_pass") as mock_hash:
         await create_account(uow, account_data)
 
     mock_hash.assert_called_once_with(strong_password)
-    uow.users.add.assert_awaited_once_with({"login": "valid_user", "hashed_password": b"hashed_pass"})
+    uow.users.add.assert_awaited_once_with({"email": email, "hashed_password": b"hashed_pass"})
 
 
 async def test_create_account_user_exists(uow):
     strong_password = SecretStr(STRONG_PASSWORD)
-    account_data = AccountCreate(login="already_taken", password=strong_password)
+    taken_email = cast(EmailStr, VALID_EMAIL)
+    account_data = AccountCreate(email=taken_email, password=strong_password)
     uow.users.add = AsyncMock(side_effect=IntegrityError("msg", None, Exception()))
 
     with patch("app.domain.services.accounts.hash_password", return_value=b"hashed_pass"):
@@ -46,13 +48,14 @@ async def test_create_account_user_exists(uow):
 
 async def test_create_account_hashing_and_argument_check(uow):
     strong_password = SecretStr(STRONG_PASSWORD)
-    account_data = AccountCreate(login="test_user", password=strong_password)
+    email = cast(EmailStr, VALID_EMAIL)
+    account_data = AccountCreate(email=email, password=strong_password)
     uow.users.add = AsyncMock()
 
     with patch("app.domain.services.accounts.hash_password", return_value=b"hashed") as mock_hash:
         await create_account(uow, account_data)
         mock_hash.assert_called_once_with(strong_password)
-        uow.users.add.assert_awaited_once_with({"login": "test_user", "hashed_password": b"hashed"})
+        uow.users.add.assert_awaited_once_with({"email": email, "hashed_password": b"hashed"})
 
 
 async def test_log_user_success(user, uow, key_value_repository, mock_hash_password, bearer_token_generator):
@@ -65,7 +68,7 @@ async def test_log_user_success(user, uow, key_value_repository, mock_hash_passw
         patch("app.domain.services.accounts.LoginOutput") as mock_login_output,
         patch("app.domain.services.accounts.generate_token", side_effect=[access_token, refresh_token]),
     ):
-        await log_user("test_user", correct_password, key_value_repository, uow)
+        await log_user(VALID_EMAIL, correct_password, key_value_repository, uow)
     mock_login_output.assert_called_once()
     called_kwargs = mock_login_output.call_args.kwargs
     assert called_kwargs["access_token"] == access_token
@@ -77,26 +80,29 @@ async def test_log_user_invalid_password(user, uow, key_value_repository):
     wrong_password = SecretStr(STRONG_PASSWORD)
     with patch("app.domain.services.accounts.verify_password", return_value=False):
         with pytest.raises(InvalidCredentials):
-            await log_user("test_user", wrong_password, key_value_repository, uow)
+            await log_user(VALID_EMAIL, wrong_password, key_value_repository, uow)
 
 
 async def test_log_user_user_not_found(uow, key_value_repository):
     key_value_repository, _ = key_value_repository
     strong_password = SecretStr(STRONG_PASSWORD)
-    uow.users.get_by_login = AsyncMock(return_value=None)
+    email_without_user = VALID_EMAIL
+    uow.users.get_by_email = AsyncMock(return_value=None)
     with patch("app.domain.services.accounts.verify_password", return_value=False):
         with pytest.raises(UserNotFound):
-            await log_user("not_existing_user", strong_password, key_value_repository, uow)
+            await log_user(email_without_user, strong_password, key_value_repository, uow)
 
 
-async def test_log_user_existing_refresh_token(user, uow, key_value_repository, mock_hash_password, bearer_token_generator):
+async def test_log_user_existing_refresh_token(
+    user, uow, key_value_repository, mock_hash_password, bearer_token_generator
+):
     key_value_repository, pipeline = key_value_repository
     strong_password = SecretStr(STRONG_PASSWORD)
     refresh_token = next(bearer_token_generator)
     key_value_repository.get = AsyncMock(return_value=refresh_token)
-    uow.users.get_by_login = AsyncMock(return_value=user)
+    uow.users.get_by_email = AsyncMock(return_value=user)
 
-    await log_user("test_user", strong_password, key_value_repository, uow)
+    await log_user(VALID_EMAIL, strong_password, key_value_repository, uow)
     pipeline.delete.assert_any_call(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
     pipeline.delete.assert_any_call(f"{KeyPrefix.USER_REFRESH_TOKEN}:{str(user.id)}")
     pipeline.execute.assert_awaited()
@@ -106,7 +112,7 @@ async def test_log_user_no_existing_refresh_token(user, uow, key_value_repositor
     key_value_repository, pipeline = key_value_repository
     strong_password = SecretStr(STRONG_PASSWORD)
     key_value_repository.get = AsyncMock(return_value=None)
-    await log_user("test_user", strong_password, key_value_repository, uow)
+    await log_user(VALID_EMAIL, strong_password, key_value_repository, uow)
     pipeline.delete.assert_not_called()
 
 

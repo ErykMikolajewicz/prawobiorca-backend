@@ -1,9 +1,9 @@
 from fastapi import UploadFile
 from sqlalchemy.exc import IntegrityError
 
-from app.shared.exceptions import EmptyFileException, FileNameExist
-from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 from app.domain.interfaces.file_storage import StorageRepository
+from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
+from app.shared.exceptions import EmptyFileException, FileNameExist
 
 
 async def add_user_file(

@@ -1,29 +1,21 @@
 from typing import List, Optional
 
-from google.cloud.storage import Blob
-from fastapi.concurrency import run_in_threadpool
 from fastapi import UploadFile
+from fastapi.concurrency import run_in_threadpool
+from google.cloud.storage import Blob
 
 from app.infrastructure.file_storage.connection import get_storage_client
 from app.shared.consts import DEFAULT_URL_EXPIRY
 
 
 class GCSStorageRepository:
-    def __init__(
-        self,
-        bucket_name: str,
-        is_public: bool = False
-    ):
+    def __init__(self, bucket_name: str, is_public: bool = False):
         self.client = get_storage_client()
         self.bucket = self.client.bucket(bucket_name)
         self.is_public = is_public
         self.default_url_expiry = DEFAULT_URL_EXPIRY
 
-    async def upload_file(
-        self,
-        file_bytes: UploadFile,
-        file_name: str
-    ) -> str:
+    async def upload_file(self, file_bytes: UploadFile, file_name: str) -> str:
         blob: Blob = self.bucket.blob(file_name)
         await run_in_threadpool(blob.upload_from_string, file_bytes.file)
         return await self.get_file_url(file_name)
@@ -49,5 +41,6 @@ class GCSStorageRepository:
     ) -> List[str]:
         def _list_blobs():
             return list(self.client.list_blobs(self.bucket, prefix=prefix))
+
         blobs = await run_in_threadpool(_list_blobs)
         return [blob.name for blob in blobs]

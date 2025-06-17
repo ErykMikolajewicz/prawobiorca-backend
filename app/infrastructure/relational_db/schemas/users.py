@@ -9,10 +9,11 @@ from app.infrastructure.relational_db.schemas.mixins import CreateDateMixin, Uui
 
 class Users(Base, UuidIdMixin, CreateDateMixin):
     __tablename__ = "users"
-    __table_args__ = (sqla.UniqueConstraint("login"),)
+    __table_args__ = (sqla.UniqueConstraint("email"),)
 
     hashed_password: Mapped[bytes] = mapped_column(sqla.LargeBinary(60))
-    login: Mapped[str] = mapped_column(sqla.String(32))
+    email: Mapped[str] = mapped_column(sqla.String(320), nullable=False, index=True)
+    is_email_verified: Mapped[bool] = mapped_column(sqla.Boolean, nullable=False, server_default=sqla.text("false"))
 
     user_files: Mapped[list["UsersFiles"]] = relationship("UsersFiles", back_populates="user")
 

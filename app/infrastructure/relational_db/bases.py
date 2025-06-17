@@ -1,12 +1,11 @@
-from typing import Generic, Type, Optional, Any, TypeVar
+from typing import Any, Generic, Optional, Type, TypeVar
 from uuid import UUID
 
-from sqlalchemy import select, insert, update, delete
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domain.interfaces.unit_of_work import AbstractUnitOfWork
 from app.infrastructure.relational_db.schemas.mixins import IntIdMixin, UuidIdMixin
-
 
 ModelWithId = TypeVar("ModelWithId", bound=UuidIdMixin | IntIdMixin)
 

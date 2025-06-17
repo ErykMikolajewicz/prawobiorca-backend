@@ -5,11 +5,10 @@ from fastapi import status
 from pydantic import SecretStr
 
 from app.config import settings
+from app.infrastructure.utilities.security import url_safe_bearer_token_length
 from app.shared.enums import TokenType
 from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound
-from app.infrastructure.utilities.security import url_safe_bearer_token_length
-from tests.test_consts import STRONG_PASSWORD
-
+from tests.test_consts import STRONG_PASSWORD, VALID_EMAIL
 
 REFRESH_TOKEN_EXPIRATION_SECONDS = settings.app.REFRESH_TOKEN_EXPIRATION_SECONDS
 
@@ -39,7 +38,7 @@ def mock_logout_user():
 
 
 def test_create_account_success(client, mock_create_account):
-    payload = {"login": "test_user", "password": STRONG_PASSWORD}
+    payload = {"email": VALID_EMAIL, "password": STRONG_PASSWORD}
 
     response = client.post("/accounts", json=payload)
 
@@ -49,12 +48,13 @@ def test_create_account_success(client, mock_create_account):
 
 def test_create_account_conflict(client, mock_create_account):
     mock_create_account.side_effect = UserExists()
-    payload = {"login": "existing_user", "password": STRONG_PASSWORD}
+    existing_email = VALID_EMAIL
+    payload = {"email": existing_email, "password": STRONG_PASSWORD}
 
     response = client.post("/accounts", json=payload)
 
     assert response.status_code == status.HTTP_409_CONFLICT
-    assert response.json() == {"detail": "User with that login already exist!"}
+    assert response.json() == {"detail": "User with that email already exist!"}
     mock_create_account.assert_awaited_once()
 
 
@@ -76,9 +76,22 @@ def test_create_account_weak_passwords(client, password, error_detail):
     assert error_detail in response.text
 
 
-@pytest.mark.parametrize("login", ["in valid", "with@symbol", "!", "", "a"])
-def test_create_account_invalid_login(client, login):
-    payload = {"login": login, "password": STRONG_PASSWORD}
+@pytest.mark.parametrize(
+    "email",
+    [
+        "not-an-email",
+        "foo@",
+        "foo@bar",
+        "with space@example.com",
+        "",
+        "a",
+        "foo@.com",
+        "@no-local-part.com",
+        "user@@domain.com",
+    ],
+)
+def test_create_account_invalid_email(client, email):
+    payload = {"email": email, "password": STRONG_PASSWORD}
 
     response = client.post("/accounts", json=payload)
 
@@ -164,9 +177,7 @@ def test_logout_success(client, override_validate_token, mock_logout_user, beare
     mock_logout_user.assert_awaited_once_with(access_token, user_id, ANY)
 
 
-def test_logout_invalid_token(
-    client, mock_logout_user, override_validate_token_unauthorized, bearer_token_generator
-):
+def test_logout_invalid_token(client, mock_logout_user, override_validate_token_unauthorized, bearer_token_generator):
     invalid_access_token = next(bearer_token_generator)
     headers = {"Authorization": f"Bearer {invalid_access_token}"}
     response = client.post("/auth/logout", headers=headers)

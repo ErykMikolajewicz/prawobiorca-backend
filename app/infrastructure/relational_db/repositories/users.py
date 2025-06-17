@@ -11,8 +11,8 @@ class UsersRepository(CrudRepository[user_schema.Users]):
     def __init__(self, session: AsyncSession):
         super().__init__(session, user_schema.Users)
 
-    async def get_by_login(self, login: str) -> Optional[user_schema.Users]:
-        select_statement = select(self.model).where(self.model.login == login)
+    async def get_by_email(self, email: str) -> Optional[user_schema.Users]:
+        select_statement = select(self.model).where(self.model.email == email)
         result = await self.session.scalar(select_statement)
         return result
 

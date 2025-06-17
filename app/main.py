@@ -7,10 +7,10 @@ from fastapi.concurrency import run_in_threadpool
 
 from app.api.router import include_all_routers
 from app.infrastructure.file_storage.connection import check_file_storage_connection, storage_client
-from app.shared.logging_config import setup_logging
 from app.infrastructure.key_value_db.connection import check_redis_connection, redis_pool
 from app.infrastructure.relational_db.connection import check_relational_db_connection, engine
 from app.infrastructure.vector_db import check_vector_db_connection, qdrant_client
+from app.shared.logging_config import setup_logging
 
 logger = logging.getLogger("app")
 with open("pyproject.toml", "rb") as f:

@@ -6,8 +6,8 @@ from fastapi import UploadFile
 from sqlalchemy.exc import IntegrityError
 from starlette.datastructures import Headers
 
-from app.shared.exceptions import EmptyFileException, FileNameExist
 from app.domain.services.user_files import add_user_file
+from app.shared.exceptions import EmptyFileException, FileNameExist
 
 
 def make_upload_file(name="test.txt", content=b"test-content"):

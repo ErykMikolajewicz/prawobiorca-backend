@@ -2,15 +2,15 @@ import logging
 from uuid import UUID
 
 from pydantic import SecretStr
-from sqlalchemy.exc import IntegrityError
 from redis.asyncio import Redis
+from sqlalchemy.exc import IntegrityError
 
 from app.config import settings
-from app.shared.enums import KeyPrefix, TokenType
-from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound
-from app.infrastructure.utilities.security import generate_token, hash_password, verify_password
 from app.domain.models.account import AccountCreate, LoginOutput
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
+from app.infrastructure.utilities.security import generate_token, hash_password, verify_password
+from app.shared.enums import KeyPrefix, TokenType
+from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound
 
 logger = logging.getLogger(__name__)
 
@@ -19,11 +19,11 @@ refresh_token_expiration_seconds = settings.app.REFRESH_TOKEN_EXPIRATION_SECONDS
 
 
 async def create_account(users_unit_of_work: UsersUnitOfWork, account_data: AccountCreate):
-    login = account_data.login
+    email = account_data.email
     password = account_data.password
 
     hashed_password = hash_password(password)
-    account_hashed = {"login": login, "hashed_password": hashed_password}
+    account_hashed = {"email": email, "hashed_password": hashed_password}
 
     async with users_unit_of_work as uof:
         try:
@@ -34,12 +34,12 @@ async def create_account(users_unit_of_work: UsersUnitOfWork, account_data: Acco
 
 # noinspection DuplicatedCode
 async def log_user(
-    login: str, password: SecretStr, redis_client: Redis, users_unit_of_work: UsersUnitOfWork
+    email: str, password: SecretStr, redis_client: Redis, users_unit_of_work: UsersUnitOfWork
 ) -> LoginOutput:
     async with users_unit_of_work as uof:
-        user = await uof.users.get_by_login(login)
+        user = await uof.users.get_by_email(email)
     if user is None:
-        raise UserNotFound("No user with that login!")
+        raise UserNotFound("No user with that email!")
 
     hashed_password = user.hashed_password
     if not verify_password(password, hashed_password):

@@ -5,12 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, stat
 
 import app.domain.services.user_files as files_services
 from app.dependencies.authentication import validate_token
-from app.shared.exceptions import EmptyFileException, FileNameExist
-from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
-from app.dependencies.units_of_work import get_users_unit_of_work
 from app.dependencies.file_storage import storage_repo_factory
+from app.dependencies.units_of_work import get_users_unit_of_work
 from app.domain.interfaces.file_storage import StorageRepository
-
+from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
+from app.shared.exceptions import EmptyFileException, FileNameExist
 
 logger = logging.getLogger(__name__)
 
