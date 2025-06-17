@@ -15,7 +15,7 @@ from app.domain.models.account import AccountCreate, LoginOutput
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 from app.infrastructure.utilities.security import url_safe_bearer_token_length
 from app.shared.consts import SECURITY_MIN_RESPONSE_TIME
-from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound
+from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound, UserNotVerified
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +56,8 @@ async def log_user(
         logger.warning(f"Failed login attempt. User not found!")
     except InvalidCredentials:
         logger.warning(f"Failed login attempt. Invalid password!")
+    except UserNotVerified:
+        logger.warning(f"User with not verified email attempt to log!")
     else:
         return tokens
 

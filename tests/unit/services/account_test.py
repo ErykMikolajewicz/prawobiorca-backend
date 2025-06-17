@@ -100,6 +100,7 @@ async def test_log_user_existing_refresh_token(
     strong_password = SecretStr(STRONG_PASSWORD)
     refresh_token = next(bearer_token_generator)
     key_value_repository.get = AsyncMock(return_value=refresh_token)
+    user.is_email_verified = True
     uow.users.get_by_email = AsyncMock(return_value=user)
 
     await log_user(VALID_EMAIL, strong_password, key_value_repository, uow)

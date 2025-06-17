@@ -10,7 +10,7 @@ from app.domain.models.account import AccountCreate, LoginOutput
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 from app.infrastructure.utilities.security import generate_token, hash_password, verify_password
 from app.shared.enums import KeyPrefix, TokenType
-from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound
+from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound, UserNotVerified
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +40,9 @@ async def log_user(
         user = await uof.users.get_by_email(email)
     if user is None:
         raise UserNotFound("No user with that email!")
+
+    if not user.is_email_verified:
+        raise UserNotVerified
 
     hashed_password = user.hashed_password
     if not verify_password(password, hashed_password):

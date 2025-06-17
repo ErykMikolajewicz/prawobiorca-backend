@@ -16,3 +16,7 @@ class UserNotFound(Exception):
 
 class EmptyFileException(Exception):
     pass
+
+
+class UserNotVerified(Exception):
+    pass
