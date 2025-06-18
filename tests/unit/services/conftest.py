@@ -25,6 +25,20 @@ class DummyAsyncContextManager:
         return None
 
 
+class DummyUnitOfWork:
+    def __init__(self, return_object):
+        self.return_object = return_object
+
+    async def __aenter__(self):
+        return self.return_object
+
+    async def __aexit__(self, exc_type, exc, tb):
+        if exc_type is None:
+            await self.return_object.commit()
+        else:
+            await self.return_object.rollback()
+
+
 @pytest.fixture
 def user():
     return DummyUser(id_=uuid4(), email=VALID_EMAIL, hashed_password=b"hashed", is_email_verified=False)
@@ -32,9 +46,20 @@ def user():
 
 @pytest.fixture
 def uow():
-    uow = AsyncMock()
-    uow.__aenter__.return_value = uow
-    return uow
+    mock_uow = AsyncMock()
+    async def aenter_mock(self):
+        return self
+
+    async def aexit_mock(self, exc_type, exc, tb):
+        if exc_type is None:
+            await self.commit()
+        else:
+            await self.rollback()
+
+    mock_uow.__aenter__ = aenter_mock
+    mock_uow.__aexit__ = aexit_mock
+
+    return mock_uow
 
 
 @pytest.fixture

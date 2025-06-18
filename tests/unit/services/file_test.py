@@ -30,6 +30,7 @@ async def test_add_user_file_success(uow, storage_client, uuid_generator):
 
     uow.files.add.assert_awaited_once_with({"file_name": "test.txt", "user_id": user_id})
     storage_client.upload_file.assert_awaited_once_with(upload_file, fake_file_id)
+    uow.commit.assert_awaited_once()
 
 
 async def test_add_user_file_duplicate_file_name(uow, storage_client, uuid_generator):
@@ -38,6 +39,7 @@ async def test_add_user_file_duplicate_file_name(uow, storage_client, uuid_gener
     uow.files.add = AsyncMock(side_effect=IntegrityError("msg", None, Exception()))
     with pytest.raises(FileNameExist):
         await add_user_file(uow, upload_file, user_id, storage_client)
+    uow.commit.assert_not_awaited()
 
 
 async def test_add_user_file_empty_file(uow, storage_client, uuid_generator):
@@ -45,3 +47,4 @@ async def test_add_user_file_empty_file(uow, storage_client, uuid_generator):
     upload_file = make_upload_file(content=b"")
     with pytest.raises(EmptyFileException):
         await add_user_file(uow, upload_file, user_id, storage_client)
+    uow.commit.assert_not_awaited()

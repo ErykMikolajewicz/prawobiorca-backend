@@ -4,9 +4,10 @@ from math import ceil
 import bcrypt
 from pydantic import SecretStr
 
-from app.shared.consts import BEARER_TOKEN_LENGTH
+from app.shared.consts import BEARER_TOKEN_LENGTH, EMAIL_VERIFICATION_TOKEN_LENGTH
 
 url_safe_bearer_token_length = ceil(BEARER_TOKEN_LENGTH * 4 / 3)
+url_safe_email_verification_token_length = ceil(EMAIL_VERIFICATION_TOKEN_LENGTH * 4 / 3)
 
 
 def hash_password(password: SecretStr) -> bytes:

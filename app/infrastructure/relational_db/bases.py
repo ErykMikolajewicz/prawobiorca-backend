@@ -4,13 +4,12 @@ from uuid import UUID
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.interfaces.unit_of_work import AbstractUnitOfWork
 from app.infrastructure.relational_db.schemas.mixins import IntIdMixin, UuidIdMixin
 
 ModelWithId = TypeVar("ModelWithId", bound=UuidIdMixin | IntIdMixin)
 
 
-class BaseUnitOfWork(AbstractUnitOfWork):
+class BaseUnitOfWork:
     def __init__(self, session: AsyncSession):
         self.session = session
 

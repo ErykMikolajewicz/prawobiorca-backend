@@ -124,3 +124,15 @@ async def refresh(refresh_token: str, redis_client: Redis) -> LoginOutput:
         expires_in=access_token_expiration_seconds,
         token_type=TokenType.BEARER,
     )
+
+
+async def verify_account_email(token: str, redis_client: Redis, users_unit_of_work: UsersUnitOfWork):
+    email_verification_key = f"{KeyPrefix.EMAIL_VERIFICATION_TOKEN}:{token}"
+    user_id = await redis_client.get(email_verification_key)
+    if not user_id:
+        raise InvalidCredentials("Invalid verification token!")
+
+    async with users_unit_of_work as uow:
+        await uow.users.verify_email(user_id)
+
+    await redis_client.delete(email_verification_key)

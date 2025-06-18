@@ -11,6 +11,7 @@ from app.domain.services.accounts import create_account, log_user, logout_user, 
 from app.shared.enums import KeyPrefix, TokenType
 from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound
 from tests.test_consts import STRONG_PASSWORD, VALID_EMAIL
+from app.domain.services.accounts import verify_account_email
 
 ACCESS_TOKEN_EXPIRATION_SECONDS = settings.app.ACCESS_TOKEN_EXPIRATION_SECONDS
 REFRESH_TOKEN_EXPIRATION_SECONDS = settings.app.REFRESH_TOKEN_EXPIRATION_SECONDS
@@ -33,6 +34,7 @@ async def test_create_account_success(uow):
 
     mock_hash.assert_called_once_with(strong_password)
     uow.users.add.assert_awaited_once_with({"email": email, "hashed_password": b"hashed_pass"})
+    uow.commit.assert_awaited_once()
 
 
 async def test_create_account_user_exists(uow):
@@ -44,6 +46,7 @@ async def test_create_account_user_exists(uow):
     with patch("app.domain.services.accounts.hash_password", return_value=b"hashed_pass"):
         with pytest.raises(UserExists):
             await create_account(uow, account_data)
+    uow.commit.assert_not_awaited()
 
 
 async def test_create_account_hashing_and_argument_check(uow):
@@ -54,8 +57,9 @@ async def test_create_account_hashing_and_argument_check(uow):
 
     with patch("app.domain.services.accounts.hash_password", return_value=b"hashed") as mock_hash:
         await create_account(uow, account_data)
-        mock_hash.assert_called_once_with(strong_password)
-        uow.users.add.assert_awaited_once_with({"email": email, "hashed_password": b"hashed"})
+    mock_hash.assert_called_once_with(strong_password)
+    uow.users.add.assert_awaited_once_with({"email": email, "hashed_password": b"hashed"})
+    uow.commit.assert_awaited_once()
 
 
 async def test_log_user_success(user, uow, key_value_repository, mock_hash_password, bearer_token_generator):
@@ -73,6 +77,7 @@ async def test_log_user_success(user, uow, key_value_repository, mock_hash_passw
     called_kwargs = mock_login_output.call_args.kwargs
     assert called_kwargs["access_token"] == access_token
     assert called_kwargs["refresh_token"] == refresh_token
+    uow.commit.assert_awaited_once()
 
 
 async def test_log_user_invalid_password(user, uow, key_value_repository):
@@ -81,6 +86,7 @@ async def test_log_user_invalid_password(user, uow, key_value_repository):
     with patch("app.domain.services.accounts.verify_password", return_value=False):
         with pytest.raises(InvalidCredentials):
             await log_user(VALID_EMAIL, wrong_password, key_value_repository, uow)
+    uow.commit.assert_awaited_once()
 
 
 async def test_log_user_user_not_found(uow, key_value_repository):
@@ -91,6 +97,7 @@ async def test_log_user_user_not_found(uow, key_value_repository):
     with patch("app.domain.services.accounts.verify_password", return_value=False):
         with pytest.raises(UserNotFound):
             await log_user(email_without_user, strong_password, key_value_repository, uow)
+    uow.commit.assert_awaited_once()
 
 
 async def test_log_user_existing_refresh_token(
@@ -107,6 +114,7 @@ async def test_log_user_existing_refresh_token(
     pipeline.delete.assert_any_call(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
     pipeline.delete.assert_any_call(f"{KeyPrefix.USER_REFRESH_TOKEN}:{str(user.id)}")
     pipeline.execute.assert_awaited()
+    uow.commit.assert_awaited_once()
 
 
 async def test_log_user_no_existing_refresh_token(user, uow, key_value_repository, mock_hash_password):
@@ -115,6 +123,7 @@ async def test_log_user_no_existing_refresh_token(user, uow, key_value_repositor
     key_value_repository.get = AsyncMock(return_value=None)
     await log_user(VALID_EMAIL, strong_password, key_value_repository, uow)
     pipeline.delete.assert_not_called()
+    uow.commit.assert_awaited_once()
 
 
 async def test_logout_user_success(key_value_repository, bearer_token_generator, uuid_generator):
@@ -197,3 +206,37 @@ async def test_refresh_user_not_found(key_value_repository, bearer_token_generat
     with pytest.raises(InvalidCredentials):
         await refresh(expired_token, key_value_repository)
     key_value_repository.get.assert_awaited_once_with(f"{KeyPrefix.REFRESH_TOKEN}:{expired_token}")
+
+
+async def test_verify_account_email_success(key_value_repository, uow, email_token_generator, uuid_generator):
+    redis_client, _ = key_value_repository
+    token = next(email_token_generator)
+    user_id = next(uuid_generator)
+
+    redis_client.get = AsyncMock(return_value=user_id)
+    uow.users.verify_email = AsyncMock()
+    redis_client.delete = AsyncMock()
+
+    await verify_account_email(token, redis_client, uow)
+
+    redis_client.get.assert_awaited_once_with(f"{KeyPrefix.EMAIL_VERIFICATION_TOKEN}:{token}")
+    uow.users.verify_email.assert_awaited_once_with(user_id)
+    redis_client.delete.assert_awaited_once_with(f"{KeyPrefix.EMAIL_VERIFICATION_TOKEN}:{token}")
+    uow.commit.assert_awaited_once()
+
+
+async def test_verify_account_email_invalid_token(key_value_repository, uow, email_token_generator):
+    redis_client, _ = key_value_repository
+    invalid_verification_token = next(email_token_generator)
+
+    redis_client.get = AsyncMock(return_value=None)
+    uow.users.verify_email = AsyncMock()
+    redis_client.delete = AsyncMock()
+
+    with pytest.raises(InvalidCredentials, match="Invalid verification token!"):
+        await verify_account_email(invalid_verification_token, redis_client, uow)
+
+    redis_client.get.assert_awaited_once_with(f"{KeyPrefix.EMAIL_VERIFICATION_TOKEN}:{invalid_verification_token}")
+    uow.users.verify_email.assert_not_awaited()
+    redis_client.delete.assert_not_awaited()
+    uow.commit.assert_not_awaited()

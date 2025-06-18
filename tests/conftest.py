@@ -3,7 +3,7 @@ import asyncio
 import pytest
 from starlette.testclient import TestClient
 
-from app.infrastructure.utilities.security import url_safe_bearer_token_length
+from app.infrastructure.utilities.security import url_safe_bearer_token_length, url_safe_email_verification_token_length
 from app.main import app
 
 
@@ -34,6 +34,19 @@ def uuid_generator():
             yield uuid_
 
     return get_uuid()
+
+
+@pytest.fixture
+def email_token_generator():
+    def get_token():
+        tokens = (
+            'csca-AVXPdclA0dJlSLhgGc1sWpaPOxVTiHjVfTLyog',
+        )
+        for token in tokens:
+            assert len(token) == url_safe_email_verification_token_length
+            yield token
+
+    return get_token()
 
 
 @pytest.fixture(scope="session")

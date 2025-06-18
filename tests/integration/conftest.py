@@ -1,10 +1,14 @@
+import pytest
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from testcontainers.postgres import PostgresContainer
+from testcontainers.redis import RedisContainer
+from redis.asyncio import Redis, ConnectionPool
+
 import alembic.command
 import alembic.config
-import pytest
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from testcontainers.postgres import PostgresContainer
 
 from app.infrastructure.relational_db.connection import get_relational_session
+from app.dependencies.key_value_repository import get_key_value_repository
 from app.main import app
 
 
@@ -43,6 +47,38 @@ async def db_session(db_engine):
 async def override_get_relational_session(db_session):
     async def _get():
         yield db_session
+
     app.dependency_overrides[get_relational_session] = _get
     yield db_session
     app.dependency_overrides = {}
+
+
+@pytest.fixture
+async def override_get_key_value_repository(get_redis_client):
+    async def _get():
+        yield get_redis_client
+
+    app.dependency_overrides[get_key_value_repository] = _get
+    yield get_redis_client
+    app.dependency_overrides = {}
+
+
+@pytest.fixture(scope="session")
+def redis_container():
+    with RedisContainer("redis:7.2.4") as redis:
+        yield redis
+
+
+
+@pytest.fixture
+async def get_redis_client(redis_container):
+    redis_pool = ConnectionPool(
+        host=redis_container.get_container_host_ip(),
+        port=redis_container.get_exposed_port(6379),
+        decode_responses=True,
+    )
+    redis_client = Redis(connection_pool=redis_pool)
+    try:
+        yield redis_client
+    finally:
+        await redis_client.aclose()

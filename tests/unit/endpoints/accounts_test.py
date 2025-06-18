@@ -37,6 +37,12 @@ def mock_logout_user():
         yield mock
 
 
+@pytest.fixture
+def mock_verify_account_email():
+    with patch("app.domain.services.accounts.verify_account_email", new_callable=AsyncMock) as mock:
+        yield mock
+
+
 def test_create_account_success(client, mock_create_account):
     payload = {"email": VALID_EMAIL, "password": STRONG_PASSWORD}
 
@@ -239,3 +245,40 @@ def test_refresh_invalid_token(client, mock_refresh_token, bearer_token_generato
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {"detail": "Invalid refresh token!"}
     mock_refresh_token.assert_awaited_once_with(invalid_refresh_token, ANY)
+
+
+async def test_verify_account_success(client, mock_verify_account_email, email_token_generator):
+    verification_token = next(email_token_generator)
+    response = client.get(f"/accounts/verify/{verification_token}")
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    mock_verify_account_email.assert_awaited_once_with(
+        verification_token, ANY, ANY
+    )
+
+
+async def test_verify_account_invalid_token(client, mock_verify_account_email, email_token_generator):
+    verification_token = next(email_token_generator)
+    mock_verify_account_email.side_effect = InvalidCredentials()
+
+    response = client.get(f"/accounts/verify/{verification_token}")
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {"detail": "Invalid verification token!"}
+    mock_verify_account_email.assert_awaited_once_with(
+        verification_token, ANY, ANY
+    )
+
+
+@pytest.mark.parametrize(
+    "verification_token",
+    [
+        'zEFGWPDYgwWvmBzqZa9DNnGY8CGhOMbDtmJMZmLwLw',
+        'LpWPt8b1-rcaCviPtdoLSZyHNHNKEAxtxe7jEBLuyuwN'
+    ],
+)
+async def test_verify_account_invalid_token_length(client, mock_verify_account_email, verification_token):
+    response = client.get(f"/accounts/verify/{verification_token}")
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    mock_verify_account_email.assert_not_awaited()

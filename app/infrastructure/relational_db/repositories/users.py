@@ -1,6 +1,6 @@
 from typing import Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 import app.infrastructure.relational_db.schemas.users as user_schema
@@ -15,6 +15,10 @@ class UsersRepository(CrudRepository[user_schema.Users]):
         select_statement = select(self.model).where(self.model.email == email)
         result = await self.session.scalar(select_statement)
         return result
+
+    async def verify_email(self, user_id: str):
+        update_statement = update(self.model).where(self.model.id == user_id)
+        await self.session.execute(update_statement)
 
 
 class UsersFilesRepository(CrudRepository[user_schema.UsersFiles]):
