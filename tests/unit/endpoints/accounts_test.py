@@ -252,9 +252,7 @@ async def test_verify_account_success(client, mock_verify_account_email, email_t
     response = client.get(f"/accounts/verify/{verification_token}")
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
-    mock_verify_account_email.assert_awaited_once_with(
-        verification_token, ANY, ANY
-    )
+    mock_verify_account_email.assert_awaited_once_with(verification_token, ANY, ANY)
 
 
 async def test_verify_account_invalid_token(client, mock_verify_account_email, email_token_generator):
@@ -265,17 +263,12 @@ async def test_verify_account_invalid_token(client, mock_verify_account_email, e
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {"detail": "Invalid verification token!"}
-    mock_verify_account_email.assert_awaited_once_with(
-        verification_token, ANY, ANY
-    )
+    mock_verify_account_email.assert_awaited_once_with(verification_token, ANY, ANY)
 
 
 @pytest.mark.parametrize(
     "verification_token",
-    [
-        'zEFGWPDYgwWvmBzqZa9DNnGY8CGhOMbDtmJMZmLwLw',
-        'LpWPt8b1-rcaCviPtdoLSZyHNHNKEAxtxe7jEBLuyuwN'
-    ],
+    ["zEFGWPDYgwWvmBzqZa9DNnGY8CGhOMbDtmJMZmLwLw", "LpWPt8b1-rcaCviPtdoLSZyHNHNKEAxtxe7jEBLuyuwN"],
 )
 async def test_verify_account_invalid_token_length(client, mock_verify_account_email, verification_token):
     response = client.get(f"/accounts/verify/{verification_token}")

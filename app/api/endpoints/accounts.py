@@ -2,7 +2,7 @@ import asyncio
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status, Path
+from fastapi import APIRouter, Depends, Header, HTTPException, Path, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import SecretStr
 from redis.asyncio import Redis
@@ -87,8 +87,8 @@ async def logout_user(
 )
 async def refresh(
     key_value_repo: Annotated[Redis, Depends(get_key_value_repository)],
-    refresh_token: str = Header(alias="X-Refresh-Token", min_length=url_safe_bearer_token_length,
-                                max_length=url_safe_bearer_token_length
+    refresh_token: str = Header(
+        alias="X-Refresh-Token", min_length=url_safe_bearer_token_length, max_length=url_safe_bearer_token_length
     ),
 ) -> LoginOutput:
     try:
@@ -102,20 +102,19 @@ async def refresh(
 @account_router.get(
     "/accounts/verify/{verificationToken}",
     status_code=status.HTTP_204_NO_CONTENT,
-    responses={
-        status.HTTP_400_BAD_REQUEST: {"description": "Invalid or expired verification token!"}
-    },
+    responses={status.HTTP_400_BAD_REQUEST: {"description": "Invalid or expired verification token!"}},
 )
 async def verify_account(
     key_value_repo: Annotated[Redis, Depends(get_key_value_repository)],
     users_unit_of_work: UsersUnitOfWork = Depends(get_users_unit_of_work),
-    verification_token: str = Path(min_length=url_safe_email_verification_token_length,
-                                   max_length=url_safe_email_verification_token_length, alias='verificationToken'),
+    verification_token: str = Path(
+        min_length=url_safe_email_verification_token_length,
+        max_length=url_safe_email_verification_token_length,
+        alias="verificationToken",
+    ),
 ):
     try:
-        await account_services.verify_account_email(
-            verification_token, key_value_repo, users_unit_of_work
-        )
+        await account_services.verify_account_email(verification_token, key_value_repo, users_unit_of_work)
     except InvalidCredentials:
         logger.warning("Invalid email verification token!")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid verification token!")

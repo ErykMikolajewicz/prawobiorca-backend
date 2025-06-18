@@ -17,7 +17,7 @@ class UsersRepository(CrudRepository[user_schema.Users]):
         return result
 
     async def verify_email(self, user_id: str):
-        update_statement = update(self.model).where(self.model.id == user_id)
+        update_statement = update(self.model).where(self.model.id == user_id).values(is_email_verified=True)
         await self.session.execute(update_statement)
 
 

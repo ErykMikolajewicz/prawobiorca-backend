@@ -47,6 +47,7 @@ def user():
 @pytest.fixture
 def uow():
     mock_uow = AsyncMock()
+
     async def aenter_mock(self):
         return self
 

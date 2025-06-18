@@ -1,7 +1,7 @@
 import asyncio
 
 import pytest
-from starlette.testclient import TestClient
+from fastapi.testclient import TestClient
 
 from app.infrastructure.utilities.security import url_safe_bearer_token_length, url_safe_email_verification_token_length
 from app.main import app
@@ -39,9 +39,7 @@ def uuid_generator():
 @pytest.fixture
 def email_token_generator():
     def get_token():
-        tokens = (
-            'csca-AVXPdclA0dJlSLhgGc1sWpaPOxVTiHjVfTLyog',
-        )
+        tokens = ("csca-AVXPdclA0dJlSLhgGc1sWpaPOxVTiHjVfTLyog",)
         for token in tokens:
             assert len(token) == url_safe_email_verification_token_length
             yield token
@@ -52,11 +50,3 @@ def email_token_generator():
 @pytest.fixture(scope="session")
 def client():
     return TestClient(app)
-
-
-@pytest.fixture(scope="session")
-def _function_event_loop():
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    yield loop
-    loop.close()
