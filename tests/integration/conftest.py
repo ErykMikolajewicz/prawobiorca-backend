@@ -37,27 +37,25 @@ async def override_get_relational_session(postgres_container):
     async_session_maker = async_sessionmaker(db_engine, expire_on_commit=False, class_=AsyncSession)
     session = async_session_maker()
 
-    async with session.begin():
+    async def _override():
+        yield session
 
-        async def _override():
-            yield session
-
-        app.dependency_overrides[get_relational_session] = _override
-        yield
-        await session.rollback()
-        await db_engine.dispose()
-        app.dependency_overrides = {}
+    app.dependency_overrides[get_relational_session] = _override
+    yield
+    await db_engine.dispose()
+    app.dependency_overrides = {}
 
 
 @pytest.fixture
-async def db_session_maker(postgres_container):
+async def relational_session(postgres_container):
     url = postgres_container.get_connection_url().replace("psycopg", "asyncpg")
-    db_engine = create_async_engine(url, future=True, echo=False)
+    db_engine = create_async_engine(url, future=True, echo=False, isolation_level="AUTOCOMMIT")
     async_session_maker = async_sessionmaker(db_engine, expire_on_commit=False, class_=AsyncSession)
-
+    session = async_session_maker()
     try:
-        yield async_session_maker
+        yield session
     finally:
+        await session.close()
         await db_engine.dispose()
 
 
