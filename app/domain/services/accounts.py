@@ -53,10 +53,9 @@ async def log_user(
     previous_refresh_token = await redis_client.get(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
     if previous_refresh_token is not None:
         logger.warning("User with existing refresh token logging.")
-        async with redis_client.pipeline() as pipe:
-            await pipe.delete(f"{KeyPrefix.REFRESH_TOKEN}:{previous_refresh_token}")
-            await pipe.delete(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
-            await pipe.execute()
+        await redis_client.delete(
+            f"{KeyPrefix.REFRESH_TOKEN}:{previous_refresh_token}", f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}"
+        )
 
     access_token = generate_token()
     refresh_token = generate_token()
@@ -86,17 +85,16 @@ async def logout_user(access_token: str, user_id: str, redis_client: Redis):
 
     if refresh_token is None:
         logger.error("Invalid application state, no refresh token for user!")
-        async with redis_client.pipeline() as pipe:
-            await pipe.delete(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
-            await pipe.delete(f"{KeyPrefix.ACCESS_TOKEN}:{access_token}")
-            await pipe.execute()
+        await redis_client.delete(
+            f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}", f"{KeyPrefix.ACCESS_TOKEN}:{access_token}"
+        )
         return None
 
-    async with redis_client.pipeline() as pipe:
-        await pipe.delete(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
-        await pipe.delete(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
-        await pipe.delete(f"{KeyPrefix.ACCESS_TOKEN}:{access_token}")
-        await pipe.execute()
+    await redis_client.delete(
+        f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}",
+        f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}",
+        f"{KeyPrefix.ACCESS_TOKEN}:{access_token}",
+    )
     return None
 
 

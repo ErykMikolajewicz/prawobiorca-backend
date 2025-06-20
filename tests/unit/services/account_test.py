@@ -11,6 +11,7 @@ from app.domain.services.accounts import create_account, log_user, logout_user, 
 from app.shared.enums import KeyPrefix, TokenType
 from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound
 from tests.test_consts import STRONG_PASSWORD, VALID_EMAIL
+from tests.unit.services.conftest import key_value_repository
 
 ACCESS_TOKEN_EXPIRATION_SECONDS = settings.app.ACCESS_TOKEN_EXPIRATION_SECONDS
 REFRESH_TOKEN_EXPIRATION_SECONDS = settings.app.REFRESH_TOKEN_EXPIRATION_SECONDS
@@ -62,7 +63,7 @@ async def test_create_account_hashing_and_argument_check(uow):
 
 
 async def test_log_user_success(user, uow, key_value_repository, mock_hash_password, bearer_token_generator):
-    key_value_repository, _ = key_value_repository
+    redis_client, _ = key_value_repository
     correct_password = SecretStr(STRONG_PASSWORD)
     access_token = next(bearer_token_generator)
     refresh_token = next(bearer_token_generator)
@@ -71,7 +72,7 @@ async def test_log_user_success(user, uow, key_value_repository, mock_hash_passw
         patch("app.domain.services.accounts.LoginOutput") as mock_login_output,
         patch("app.domain.services.accounts.generate_token", side_effect=[access_token, refresh_token]),
     ):
-        await log_user(VALID_EMAIL, correct_password, key_value_repository, uow)
+        await log_user(VALID_EMAIL, correct_password, redis_client, uow)
     mock_login_output.assert_called_once()
     called_kwargs = mock_login_output.call_args.kwargs
     assert called_kwargs["access_token"] == access_token
@@ -80,95 +81,97 @@ async def test_log_user_success(user, uow, key_value_repository, mock_hash_passw
 
 
 async def test_log_user_invalid_password(user, uow, key_value_repository):
-    key_value_repository, _ = key_value_repository
+    redis_client, _ = key_value_repository
     wrong_password = SecretStr(STRONG_PASSWORD)
     with patch("app.domain.services.accounts.verify_password", return_value=False):
         with pytest.raises(InvalidCredentials):
-            await log_user(VALID_EMAIL, wrong_password, key_value_repository, uow)
+            await log_user(VALID_EMAIL, wrong_password, redis_client, uow)
     uow.commit.assert_awaited_once()
 
 
 async def test_log_user_user_not_found(uow, key_value_repository):
-    key_value_repository, _ = key_value_repository
+    redis_client, _ = key_value_repository
     strong_password = SecretStr(STRONG_PASSWORD)
     email_without_user = VALID_EMAIL
     uow.users.get_by_email = AsyncMock(return_value=None)
     with patch("app.domain.services.accounts.verify_password", return_value=False):
         with pytest.raises(UserNotFound):
-            await log_user(email_without_user, strong_password, key_value_repository, uow)
+            await log_user(email_without_user, strong_password, redis_client, uow)
     uow.commit.assert_awaited_once()
 
 
 async def test_log_user_existing_refresh_token(
     user, uow, key_value_repository, mock_hash_password, bearer_token_generator
 ):
-    key_value_repository, pipeline = key_value_repository
+    redis_client, pipeline = key_value_repository
     strong_password = SecretStr(STRONG_PASSWORD)
     refresh_token = next(bearer_token_generator)
-    key_value_repository.get = AsyncMock(return_value=refresh_token)
+    redis_client.get = AsyncMock(return_value=refresh_token)
     user.is_email_verified = True
     uow.users.get_by_email = AsyncMock(return_value=user)
 
-    await log_user(VALID_EMAIL, strong_password, key_value_repository, uow)
-    pipeline.delete.assert_any_call(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
-    pipeline.delete.assert_any_call(f"{KeyPrefix.USER_REFRESH_TOKEN}:{str(user.id)}")
-    pipeline.execute.assert_awaited()
+    await log_user(VALID_EMAIL, strong_password, redis_client, uow)
+    redis_client.delete.assert_awaited_once_with(
+        f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}", f"{KeyPrefix.USER_REFRESH_TOKEN}:{str(user.id)}"
+    )
     uow.commit.assert_awaited_once()
 
 
 async def test_log_user_no_existing_refresh_token(user, uow, key_value_repository, mock_hash_password):
-    key_value_repository, pipeline = key_value_repository
+    redis_client, pipeline = key_value_repository
     strong_password = SecretStr(STRONG_PASSWORD)
-    key_value_repository.get = AsyncMock(return_value=None)
-    await log_user(VALID_EMAIL, strong_password, key_value_repository, uow)
+    redis_client.get = AsyncMock(return_value=None)
+    await log_user(VALID_EMAIL, strong_password, redis_client, uow)
     pipeline.delete.assert_not_called()
     uow.commit.assert_awaited_once()
 
 
 async def test_logout_user_success(key_value_repository, bearer_token_generator, uuid_generator):
-    key_value_repository, pipeline = key_value_repository
+    redis_client, pipeline = key_value_repository
     access_token = next(bearer_token_generator)
     refresh_token = next(bearer_token_generator)
     user_id = next(uuid_generator)
-    key_value_repository.get = AsyncMock(return_value=refresh_token)
+    redis_client.get = AsyncMock(return_value=refresh_token)
 
-    result = await logout_user(access_token, user_id, key_value_repository)
+    result = await logout_user(access_token, user_id, redis_client)
 
-    key_value_repository.get.assert_awaited_once_with(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
-    pipeline.delete.assert_any_await(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
-    pipeline.delete.assert_any_await(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
-    pipeline.delete.assert_any_await(f"{KeyPrefix.ACCESS_TOKEN}:{access_token}")
-    pipeline.execute.assert_awaited_once()
+    redis_client.get.assert_awaited_once_with(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
+    redis_client.delete.assert_awaited_once_with(
+        f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}",
+        f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}",
+        f"{KeyPrefix.ACCESS_TOKEN}:{access_token}",
+    )
     assert result is None
 
 
 async def test_logout_user_no_refresh_token(key_value_repository, bearer_token_generator, uuid_generator):
-    key_value_repository, pipeline = key_value_repository
+    redis_client, pipeline = key_value_repository
+    redis_client.get = AsyncMock(return_value=None)
     user_id = next(uuid_generator)
     access_token = next(bearer_token_generator)
 
-    await logout_user(access_token, user_id, key_value_repository)
+    await logout_user(access_token, user_id, redis_client)
 
-    key_value_repository.get.assert_awaited_once_with(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
-    pipeline.delete.assert_any_await(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
-    pipeline.delete.assert_any_await(f"{KeyPrefix.ACCESS_TOKEN}:{access_token}")
-    pipeline.execute.assert_awaited_once()
+    redis_client.get.assert_awaited_once_with(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
+    redis_client.delete.assert_awaited_once_with(
+        f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}", f"{KeyPrefix.ACCESS_TOKEN}:{access_token}"
+    )
 
 
 async def test_refresh_success(key_value_repository, bearer_token_generator, uuid_generator):
-    key_value_repository, pipeline = key_value_repository
+    redis_client, pipeline = key_value_repository
     user_id = next(uuid_generator)
-    key_value_repository.get = AsyncMock(return_value=user_id)
+    redis_client.get = AsyncMock(return_value=user_id)
 
     access_token = next(bearer_token_generator)
     refresh_token = next(bearer_token_generator)
     new_refresh_token = next(bearer_token_generator)
 
     with patch("app.domain.services.accounts.generate_token", side_effect=[access_token, new_refresh_token]):
-        result = await refresh(refresh_token, key_value_repository)
+        result = await refresh(refresh_token, redis_client)
 
-    key_value_repository.get.assert_awaited_once_with(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
-    pipeline.delete.assert_any_await(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
+    redis_client.get.assert_awaited_once_with(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
+    pipeline.delete.assert_awaited_once_with(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
     pipeline.set.assert_any_await(
         f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}", new_refresh_token, ex=REFRESH_TOKEN_EXPIRATION_SECONDS
     )
@@ -188,23 +191,23 @@ async def test_refresh_success(key_value_repository, bearer_token_generator, uui
 
 
 async def test_refresh_invalid_refresh_token(key_value_repository, bearer_token_generator):
-    key_value_repository, _ = key_value_repository
+    redis_client, _ = key_value_repository
     not_existing_token = next(bearer_token_generator)
-    key_value_repository.get = AsyncMock(return_value=None)
+    redis_client.get = AsyncMock(return_value=None)
 
     with pytest.raises(InvalidCredentials):
-        await refresh(not_existing_token, key_value_repository)
-    key_value_repository.get.assert_awaited_once_with(f"{KeyPrefix.REFRESH_TOKEN}:{not_existing_token}")
+        await refresh(not_existing_token, redis_client)
+    redis_client.get.assert_awaited_once_with(f"{KeyPrefix.REFRESH_TOKEN}:{not_existing_token}")
 
 
 async def test_refresh_user_not_found(key_value_repository, bearer_token_generator):
-    key_value_repository, _ = key_value_repository
+    redis_client, _ = key_value_repository
     expired_token = next(bearer_token_generator)
-    key_value_repository.get = AsyncMock(return_value=None)
+    redis_client.get = AsyncMock(return_value=None)
 
     with pytest.raises(InvalidCredentials):
-        await refresh(expired_token, key_value_repository)
-    key_value_repository.get.assert_awaited_once_with(f"{KeyPrefix.REFRESH_TOKEN}:{expired_token}")
+        await refresh(expired_token, redis_client)
+    redis_client.get.assert_awaited_once_with(f"{KeyPrefix.REFRESH_TOKEN}:{expired_token}")
 
 
 async def test_verify_account_email_success(key_value_repository, uow, email_token_generator, uuid_generator):
