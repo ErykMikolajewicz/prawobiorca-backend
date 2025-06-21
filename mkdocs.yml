@@ -1,0 +1,16 @@
+site_name: Prawobiorca developer documentation
+site_description: Basic information about the architecture of the Prawobiorca application, its tests, and CI/CD
+site_author: Eryk Antoni Mikołajewicz
+nav:
+  - Home: index.md
+  - Workflow: workflow.md
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [app, tests]
+
+theme:
+  name: material
