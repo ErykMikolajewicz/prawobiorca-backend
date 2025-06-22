@@ -65,7 +65,7 @@ The repository maintains the following main branches:
 
 **Format:**
 
-<type>[scope]: <short description>
+`<type>[scope]: <short description>`
 
 [longer description]
 

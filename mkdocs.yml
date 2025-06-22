@@ -3,6 +3,9 @@ site_description: Basic information about the architecture of the Prawobiorca ap
 site_author: Eryk Antoni Mikołajewicz
 nav:
   - Home: index.md
+  - Tests:
+    - General information: tests.md
+    - Main Fixtures: tests/fixtures.md
   - Workflow: workflow.md
 
 plugins:
@@ -14,3 +17,27 @@ plugins:
 
 theme:
   name: material
+  language: en
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+      media: "(prefers-color-scheme: light)"
+    - scheme: slate
+      primary: blue
+      accent: orange
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+      media: "(prefers-color-scheme: dark)"
+
+
+  features:
+      - navigation.instant
+      - navigation.tabs
+      - navigation.expand
+      - toc.integrate
+      - search.suggest
