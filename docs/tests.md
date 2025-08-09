@@ -26,7 +26,6 @@ Currently, there are **no plans to use plugins** for test parallelization or dat
 
 ### Key files include:
 - `tests/conftest.py`
-- `tests/unit/conftest.py`
 - `tests/integration/conftest.py`
 
 Detailed documentation for these files can be found on separate documentation pages.  
