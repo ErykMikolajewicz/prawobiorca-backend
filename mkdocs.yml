@@ -5,7 +5,8 @@ nav:
   - Home: index.md
   - Business logic: business_logic.md
   - Workflow: workflow.md
-  - Application architecture: application_architecture.md
+  - Application architecture:
+    - architecture/external_services.md
   - Tests:
     - General information: tests.md
     - Main fixtures: tests/main_fixtures.md
