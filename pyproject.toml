@@ -1,6 +1,6 @@
 [project]
 name = "prawobiorca-backend"
-version = "0.23.3"
+version = "0.23.4"
 description = "Backend for law acts search engine with AI features."
 readme = "README.md"
 requires-python = ">=3.13"
