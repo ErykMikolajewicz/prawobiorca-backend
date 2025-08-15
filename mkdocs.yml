@@ -8,6 +8,7 @@ nav:
   - Application architecture:
     - General information: architecture/architecture.md
     - Coding Rules: architecture/coding_rules.md
+    - Library Overview: architecture/libraries.md
     - External services: architecture/external_services.md
   - Tests:
     - General information: tests/tests.md
