@@ -113,4 +113,74 @@ Cons:
 - steep learning curve,  
 - documentation covers both legacy (1.4) and modern (2.x) versions, which can be confusing.  
 
-Alternative: **Tortoise ORM** — natively asynchronous and simpler to use, though less popular.
+Alternative: **[Tortoise ORM](https://tortoise.github.io/){target=_blank}** — natively asynchronous and simpler to use, though less popular.
+
+
+## Dev/Test Dependencies
+
+Dependencies required during the development process, writing tests, or debugging. Unlike the main dependencies section, they are not required to run the application in a production environment.
+
+---
+
+### Alembic
+A tool for performing database migrations. Especially useful in tests, as it allows initializing tables and schemas in the database. Works in tandem with [SQLAlchemy](#sqlalchemyasyncio) and is essentially irreplaceable when using this ORM.
+
+---
+
+### Bandit
+A security scanner for detecting basic vulnerabilities. It has to be run before committing. Alternatively, one could consider [SonarQube](https://www.sonarsource.com/knowledge/languages/python/){target=_blank}, although it hasn’t been thoroughly evaluated.
+
+---
+
+### Black
+An automatic code formatter. Helps maintain a consistent coding style across the team. It has to be run before every commit.
+
+---
+
+### granian[reload]
+An extension of [Granian](#granian) that enables automatic reload when code changes. Used during debugging when running the application via a bash script.
+
+---
+
+### isort
+A tool for organizing imports. Groups them by source, improving readability and consistency of the code. It has to be run before committing.
+
+---
+
+### MkDocs
+A documentation generator that outputs a website. You are most likely reading documentation generated with it right now.
+
+---
+
+### mkdocs-material
+A visual theme for documentation generated with [MkDocs](#mkdocs).
+
+---
+
+### mkdocstrings[python]
+A plugin that integrates Python docstrings into documentation generated with [MkDocs](#mkdocs).
+
+---
+
+### psycopg
+PostgreSQL driver (version 3, despite the name not indicating it). Supports both synchronous and asynchronous connections. Required by [Alembic](#alembic), which needs a synchronous connection.
+
+---
+
+### Pytest
+The most popular testing framework in Python. Significantly extends the capabilities of the built-in `unittest` module. Alternative testing frameworks were not considered.
+
+---
+
+### pytest-asyncio
+A [Pytest](#pytest) plugin that enables testing asynchronous code. It has some limitations—tests are executed in a simulated asynchronous manner (each in a separate thread), which makes sharing the event loop with the application difficult and prevents speeding up tests by skipping the wait for asynchronous operations to complete.
+
+---
+
+### testcontainers[postgres,redis]
+A library for easily creating containers during integration tests. Officially works only with Docker, but Podman can be configured to cooperate with it by emulating Docker.
+
+---
+
+### Uvicorn
+A lightweight HTTP server, often used during development for debugging due to its ease of execution from a Python script. Likely to be removed eventually, once running the [Granian](#granianreload) server directly from Python (instead of as a separate console application) is fully refined.

@@ -49,3 +49,6 @@ theme:
       - navigation.expand
       - toc.integrate
       - search.suggest
+
+markdown_extensions:
+  - attr_list
