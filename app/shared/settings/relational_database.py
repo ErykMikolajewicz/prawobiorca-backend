@@ -2,21 +2,22 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-RELATIONAL_DB_SETTINGS_FILE_PATH = Path("config") / "relational_db.env"
-
 
 class RelationalDatabaseSettings(BaseSettings):
-    DRIVER: str
-    DB_USER: str
-    PASSWORD: str
-    HOST: str
-    PORT: int
-    DB_NAME: str
-    POOL_SIZE: int
-    MAX_OVERFLOW: int
-    POOL_TIMEOUT: int
-    POOL_RECYCLE: int
+    RELATIONAL_DB_DRIVER: str = ...
+    RELATIONAL_DB_DB_USER: str = ...
+    RELATIONAL_DB_PASSWORD: str = ...
+    RELATIONAL_DB_HOST: str = ...
+    RELATIONAL_DB_PORT: int = ...
+    RELATIONAL_DB_DB_NAME: str = ...
+    RELATIONAL_DB_POOL_SIZE: int = ...
+    RELATIONAL_DB_MAX_OVERFLOW: int = ...
+    RELATIONAL_DB_POOL_TIMEOUT: int = ...
+    RELATIONAL_DB_POOL_RECYCLE: int = ...
 
     model_config = SettingsConfigDict(
-        env_file=RELATIONAL_DB_SETTINGS_FILE_PATH, env_file_encoding="utf-8", case_sensitive=True, frozen=True
+        env_file=Path(".env"), extra='ignore', case_sensitive=True, frozen=True, env_prefix='RELATIONAL_DB_'
     )
+
+
+relational_db_settings = RelationalDatabaseSettings()

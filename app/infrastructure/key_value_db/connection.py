@@ -1,12 +1,12 @@
 import redis.asyncio as redis
 
-from app.shared.config import settings
+from app.shared.settings.key_value_database import redis_settings
 
 redis_pool = redis.ConnectionPool(
-    host=settings.key_value_db.HOST,
-    port=settings.key_value_db.PORT,
-    db=settings.key_value_db.DB_NUMBER,
-    max_connections=settings.key_value_db.MAX_CONNECTIONS,
+    host=redis_settings.HOST,
+    port=redis_settings.PORT,
+    db=redis_settings.DB_NUMBER,
+    max_connections=redis_settings.MAX_CONNECTIONS,
     decode_responses=True,
 )
 

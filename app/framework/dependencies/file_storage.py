@@ -1,10 +1,10 @@
 from app.infrastructure.file_storage.repository import GCSStorageRepository
-from app.shared.config import settings
+from app.shared.settings.file_storage import gc_file_storage_settings
 
 
 def storage_repo_factory(is_public: bool):
-    public_collection = settings.file_storage.PUBLIC_COLLECTION
-    private_collection = settings.file_storage.PRIVATE_COLLECTION
+    public_collection = gc_file_storage_settings.PUBLIC_COLLECTION
+    private_collection = gc_file_storage_settings.PRIVATE_COLLECTION
 
     def _get_storage_repo():
         if is_public:

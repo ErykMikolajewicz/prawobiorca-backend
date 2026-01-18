@@ -2,9 +2,9 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
-from app.shared.config import settings
+from app.shared.settings.relational_database import relational_db_settings
 
-db_settings = settings.relational_db
+db_settings = relational_db_settings
 DATABASE_URL = (
     f"{db_settings.DRIVER}://{db_settings.DB_USER}:{db_settings.PASSWORD}@"
     f"{db_settings.HOST}:{db_settings.PORT}/{db_settings.DB_NAME}"

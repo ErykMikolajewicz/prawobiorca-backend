@@ -6,11 +6,11 @@ from redis.asyncio import Redis
 from app.application.dtos.account import LoginData
 from app.domain.services.security import verify_password
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
-from app.shared.config import settings
 from app.shared.enums import KeyPrefix
+from app.shared.settings.application import app_settings
 
-access_token_expiration_seconds = settings.app.ACCESS_TOKEN_EXPIRATION_SECONDS
-refresh_token_expiration_seconds = settings.app.REFRESH_TOKEN_EXPIRATION_SECONDS
+access_token_expiration_seconds = app_settings.ACCESS_TOKEN_EXPIRATION_SECONDS
+refresh_token_expiration_seconds = app_settings.REFRESH_TOKEN_EXPIRATION_SECONDS
 
 logger = logging.getLogger(__name__)
 
