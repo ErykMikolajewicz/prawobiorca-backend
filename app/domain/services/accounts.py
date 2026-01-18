@@ -5,10 +5,10 @@ from pydantic import SecretStr
 from redis.asyncio import Redis
 from sqlalchemy.exc import IntegrityError
 
-from app.config import settings
 from app.domain.models.account import AccountCreate, LoginOutput
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 from app.infrastructure.utilities.security import generate_token, hash_password, verify_password
+from app.shared.config import settings
 from app.shared.enums import KeyPrefix, TokenType
 from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound, UserNotVerified
 

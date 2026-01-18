@@ -1,6 +1,6 @@
 import redis.asyncio as redis
 
-from app.config import settings
+from app.shared.config import settings
 
 redis_pool = redis.ConnectionPool(
     host=settings.key_value_db.HOST,

@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.concurrency import run_in_threadpool
 
-from app.api.router import include_all_routers
+from app.framework.api.router import include_all_routers
 from app.infrastructure.file_storage.connection import check_file_storage_connection, storage_client
 from app.infrastructure.key_value_db.connection import check_redis_connection, redis_pool
 from app.infrastructure.relational_db.connection import check_relational_db_connection, engine

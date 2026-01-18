@@ -4,10 +4,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
 
 import app.domain.services.user_files as files_services
-from app.dependencies.authentication import validate_token
-from app.dependencies.file_storage import storage_repo_factory
-from app.dependencies.units_of_work import get_users_unit_of_work
 from app.domain.interfaces.file_storage import StorageRepository
+from app.framework.dependencies.authentication import validate_token
+from app.framework.dependencies.file_storage import storage_repo_factory
+from app.framework.dependencies.units_of_work import get_users_unit_of_work
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 from app.shared.exceptions import EmptyFileException, FileNameExist
 

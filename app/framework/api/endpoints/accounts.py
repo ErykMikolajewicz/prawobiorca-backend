@@ -8,10 +8,10 @@ from pydantic import SecretStr
 from redis.asyncio import Redis
 
 import app.domain.services.accounts as account_services
-from app.dependencies.authentication import validate_token
-from app.dependencies.key_value_repository import get_key_value_repository
-from app.dependencies.units_of_work import get_users_unit_of_work
 from app.domain.models.account import AccountCreate, LoginOutput
+from app.framework.dependencies.authentication import validate_token
+from app.framework.dependencies.key_value_repository import get_key_value_repository
+from app.framework.dependencies.units_of_work import get_users_unit_of_work
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 from app.infrastructure.utilities.security import url_safe_bearer_token_length, url_safe_email_verification_token_length
 from app.shared.consts import SECURITY_MIN_RESPONSE_TIME

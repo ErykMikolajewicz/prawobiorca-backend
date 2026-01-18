@@ -3,7 +3,7 @@ import os
 from google.cloud import storage
 from google.cloud.storage import Client as StorageClient
 
-from app.config import settings
+from app.shared.config import settings
 
 credentials_path = settings.file_storage.STORAGE_CREDENTIALS
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(credentials_path.absolute())

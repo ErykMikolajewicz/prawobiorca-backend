@@ -1,5 +1,5 @@
-from app.config import settings
 from app.infrastructure.file_storage.repository import GCSStorageRepository
+from app.shared.config import settings
 
 
 def storage_repo_factory(is_public: bool):

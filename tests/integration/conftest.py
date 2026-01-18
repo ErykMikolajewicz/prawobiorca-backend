@@ -17,7 +17,7 @@ from testcontainers.redis import RedisContainer
 
 import alembic.command
 import alembic.config
-from app.dependencies.key_value_repository import get_key_value_repository
+from app.framework.dependencies.key_value_repository import get_key_value_repository
 from app.infrastructure.relational_db.connection import get_relational_session
 from app.main import app
 

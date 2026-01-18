@@ -4,8 +4,8 @@ import pytest
 from fastapi import status
 from pydantic import SecretStr
 
-from app.config import settings
 from app.infrastructure.utilities.security import url_safe_bearer_token_length
+from app.shared.config import settings
 from app.shared.enums import TokenType
 from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound
 from tests.test_consts import STRONG_PASSWORD, VALID_EMAIL

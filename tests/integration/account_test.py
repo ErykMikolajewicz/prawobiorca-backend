@@ -4,9 +4,9 @@ from uuid import UUID
 from fastapi import status
 from pydantic import SecretStr
 
-from app.config import settings
 from app.infrastructure.relational_db.repositories.users import UsersRepository
 from app.infrastructure.utilities.security import hash_password
+from app.shared.config import settings
 from app.shared.enums import KeyPrefix, TokenType
 from tests.test_consts import STRONG_PASSWORD, VALID_EMAIL
 
