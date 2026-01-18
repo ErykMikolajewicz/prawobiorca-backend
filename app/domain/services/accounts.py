@@ -3,33 +3,18 @@ from uuid import UUID
 
 from pydantic import SecretStr
 from redis.asyncio import Redis
-from sqlalchemy.exc import IntegrityError
 
-from app.domain.models.account import AccountCreate, LoginOutput
+from app.framework.models.auth import LoginOutput
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
-from app.infrastructure.utilities.security import generate_token, hash_password, verify_password
+from app.domain.services.security import generate_token, verify_password
 from app.shared.config import settings
 from app.shared.enums import KeyPrefix, TokenType
-from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound, UserNotVerified
+from app.shared.exceptions import InvalidCredentials, UserNotFound, UserNotVerified
 
 logger = logging.getLogger(__name__)
 
 access_token_expiration_seconds = settings.app.ACCESS_TOKEN_EXPIRATION_SECONDS
 refresh_token_expiration_seconds = settings.app.REFRESH_TOKEN_EXPIRATION_SECONDS
-
-
-async def create_account(users_unit_of_work: UsersUnitOfWork, account_data: AccountCreate):
-    email = account_data.email
-    password = account_data.password
-
-    hashed_password = hash_password(password)
-    account_hashed = {"email": email, "hashed_password": hashed_password}
-
-    async with users_unit_of_work as uof:
-        try:
-            await uof.users.add(account_hashed)
-        except IntegrityError:
-            raise UserExists
 
 
 # noinspection DuplicatedCode
@@ -96,41 +81,3 @@ async def logout_user(access_token: str, user_id: str, redis_client: Redis):
         f"{KeyPrefix.ACCESS_TOKEN}:{access_token}",
     )
     return None
-
-
-# noinspection DuplicatedCode
-async def refresh(refresh_token: str, redis_client: Redis) -> LoginOutput:
-    user_id = await redis_client.get(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
-    if not user_id:
-        raise InvalidCredentials()
-
-    access_token = generate_token()
-    new_refresh_token = generate_token()
-
-    async with redis_client.pipeline() as pipe:
-        await pipe.delete(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
-        await pipe.set(
-            f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}", new_refresh_token, ex=refresh_token_expiration_seconds
-        )
-        await pipe.set(f"{KeyPrefix.REFRESH_TOKEN}:{new_refresh_token}", user_id, ex=refresh_token_expiration_seconds)
-        await pipe.set(f"{KeyPrefix.ACCESS_TOKEN}:{access_token}", user_id, ex=access_token_expiration_seconds)
-        await pipe.execute()
-
-    return LoginOutput(
-        access_token=access_token,
-        refresh_token=new_refresh_token,
-        expires_in=access_token_expiration_seconds,
-        token_type=TokenType.BEARER,
-    )
-
-
-async def verify_account_email(token: str, redis_client: Redis, users_unit_of_work: UsersUnitOfWork):
-    email_verification_key = f"{KeyPrefix.EMAIL_VERIFICATION_TOKEN}:{token}"
-    user_id = await redis_client.get(email_verification_key)
-    if not user_id:
-        raise InvalidCredentials("Invalid verification token!")
-
-    async with users_unit_of_work as uow:
-        await uow.users.verify_email(user_id)
-
-    await redis_client.delete(email_verification_key)

@@ -1,11 +1,7 @@
 import re
 from string import punctuation
-from typing import Annotated
 
-from pydantic import BaseModel, EmailStr, Field, SecretStr, StringConstraints, field_validator
-
-from app.infrastructure.utilities.security import url_safe_bearer_token_length
-from app.shared.enums import TokenType
+from pydantic import BaseModel, EmailStr, Field, SecretStr, field_validator
 
 
 class AccountCreate(BaseModel):
@@ -25,14 +21,3 @@ class AccountCreate(BaseModel):
         if not re.search(f"[{re.escape(punctuation)}]", password_str):
             raise ValueError("Password must contain at least one special character.")
         return value
-
-
-class LoginOutput(BaseModel):
-    access_token: Annotated[
-        str, StringConstraints(min_length=url_safe_bearer_token_length, max_length=url_safe_bearer_token_length)
-    ]
-    expires_in: int
-    token_type: TokenType
-    refresh_token: Annotated[
-        str, StringConstraints(min_length=url_safe_bearer_token_length, max_length=url_safe_bearer_token_length)
-    ]

@@ -1,21 +1,13 @@
-import asyncio
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Path, status
-from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import SecretStr
-from redis.asyncio import Redis
+from fastapi import APIRouter, Depends, HTTPException, status
 
-import app.domain.services.accounts as account_services
-from app.domain.models.account import AccountCreate, LoginOutput
-from app.framework.dependencies.authentication import validate_token
-from app.framework.dependencies.key_value_repository import get_key_value_repository
-from app.framework.dependencies.units_of_work import get_users_unit_of_work
-from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
-from app.infrastructure.utilities.security import url_safe_bearer_token_length, url_safe_email_verification_token_length
-from app.shared.consts import SECURITY_MIN_RESPONSE_TIME
-from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound, UserNotVerified
+from app.shared.exceptions import InvalidCredentials, UserExists
+from app.framework.dependencies.accounts import get_create_account
+from app.application.use_cases.account import CreateAccount
+from app.framework.dependencies.accounts import get_verify_account
+from app.application.use_cases.account import VerifyAccount
 
 logger = logging.getLogger(__name__)
 
@@ -27,94 +19,20 @@ account_router = APIRouter(tags=["account"])
     status_code=status.HTTP_201_CREATED,
     responses={status.HTTP_409_CONFLICT: {"description": "User with that login already exist!"}},
 )
-async def create_account(
-    account_data: AccountCreate, users_unit_of_work: UsersUnitOfWork = Depends(get_users_unit_of_work)
-):
+async def create_account(create_account_: Annotated[CreateAccount, Depends(get_create_account)]):
     try:
-        await account_services.create_account(users_unit_of_work, account_data)
+        await create_account_.execute()
     except UserExists:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User with that email already exist!")
 
 
 @account_router.post(
-    "/auth/login",
-    responses={status.HTTP_401_UNAUTHORIZED: {"description": "Invalid credentials!" " Bad login or password."}},
-)
-async def log_user(
-    authentication_data: Annotated[OAuth2PasswordRequestForm, Depends(OAuth2PasswordRequestForm)],
-    key_value_repo: Annotated[Redis, Depends(get_key_value_repository)],
-    users_unit_of_work: UsersUnitOfWork = Depends(get_users_unit_of_work),
-) -> LoginOutput:
-    execution_start_time = asyncio.get_event_loop().time()
-
-    email = authentication_data.username
-    password = SecretStr(authentication_data.password)
-
-    try:
-        tokens = await account_services.log_user(email, password, key_value_repo, users_unit_of_work)
-    except UserNotFound:
-        logger.warning(f"Failed login attempt. User not found!")
-    except InvalidCredentials:
-        logger.warning(f"Failed login attempt. Invalid password!")
-    except UserNotVerified:
-        logger.warning(f"User with not verified email attempt to log!")
-    else:
-        return tokens
-
-    # To prevent timeing attacks
-    elapsed_execution_time = asyncio.get_event_loop().time() - execution_start_time
-    delay = max(0.0, SECURITY_MIN_RESPONSE_TIME - elapsed_execution_time)
-    await asyncio.sleep(delay)
-    raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials!")
-
-
-@account_router.post(
-    "/auth/logout",
-    status_code=status.HTTP_204_NO_CONTENT,
-    responses={status.HTTP_401_UNAUTHORIZED: {"description": "Invalid access token!"}},
-)
-async def logout_user(
-    key_value_repo: Annotated[Redis, Depends(get_key_value_repository)],
-    login_data: Annotated[tuple[str, str], Depends(validate_token)],
-):
-    token, user_id = login_data
-    await account_services.logout_user(token, user_id, key_value_repo)
-    return None
-
-
-@account_router.post(
-    "/auth/refresh", responses={status.HTTP_401_UNAUTHORIZED: {"description": "Invalid refresh token!"}}
-)
-async def refresh(
-    key_value_repo: Annotated[Redis, Depends(get_key_value_repository)],
-    refresh_token: str = Header(
-        alias="X-Refresh-Token", min_length=url_safe_bearer_token_length, max_length=url_safe_bearer_token_length
-    ),
-) -> LoginOutput:
-    try:
-        tokens = await account_services.refresh(refresh_token, key_value_repo)
-    except InvalidCredentials:
-        logger.warning("Invalid refresh token!")
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token!")
-    return tokens
-
-
-@account_router.get(
     "/accounts/verify/{verificationToken}",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={status.HTTP_400_BAD_REQUEST: {"description": "Invalid or expired verification token!"}},
 )
-async def verify_account(
-    key_value_repo: Annotated[Redis, Depends(get_key_value_repository)],
-    users_unit_of_work: UsersUnitOfWork = Depends(get_users_unit_of_work),
-    verification_token: str = Path(
-        min_length=url_safe_email_verification_token_length,
-        max_length=url_safe_email_verification_token_length,
-        alias="verificationToken",
-    ),
-):
+async def verify_account(verify_account_: Annotated[VerifyAccount ,Depends(get_verify_account)]):
     try:
-        await account_services.verify_account_email(verification_token, key_value_repo, users_unit_of_work)
+        await verify_account_.execute()
     except InvalidCredentials:
-        logger.warning("Invalid email verification token!")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid verification token!")

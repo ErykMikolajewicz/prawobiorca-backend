@@ -20,3 +20,7 @@ class EmptyFileException(Exception):
 
 class UserNotVerified(Exception):
     pass
+
+
+class RelationalDbIntegrityError(Exception):
+    pass

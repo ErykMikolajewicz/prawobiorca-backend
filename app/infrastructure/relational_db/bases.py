@@ -3,8 +3,10 @@ from uuid import UUID
 
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 from app.infrastructure.relational_db.schemas.mixins import IntIdMixin, UuidIdMixin
+from app.shared.exceptions import RelationalDbIntegrityError
 
 ModelWithId = TypeVar("ModelWithId", bound=UuidIdMixin | IntIdMixin)
 
@@ -41,7 +43,10 @@ class CrudRepository(Generic[ModelWithId]):
 
     async def add(self, data: dict[str, Any]) -> ModelWithId:
         insert_stmt = insert(self.model).values(data).returning(self.model)
-        result = await self.session.scalar(insert_stmt)
+        try:
+            result = await self.session.scalar(insert_stmt)
+        except IntegrityError:
+            raise RelationalDbIntegrityError
         await self.session.flush()
         return result
 
