@@ -9,7 +9,7 @@ Prawobiorca is a web application for searching law acts, and courts judgments, b
 
 ## What will you find in this documentation?
 
-* **[Business logic explanation](business_logic.md)**: What is the purpose of the app and how should it behave.
+* **[Application logic explanation](app_logic.md)**: What is the purpose of the app and how should it behave.
 * **[Workflow](workflow.md)**: General information about team workflow and CI/CD.
 * **API Reference**: Swagger documentation for frontend developers.
 * **[Application architecture](architecture/architecture.md)**: Reference for backend developers.

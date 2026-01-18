@@ -1,20 +1,15 @@
 # Project Workflow
 
-## 1. Current Stage – Solo Development
-
-At this stage, no advanced project management or formal processes are applied.
-
-## 2. Scaling – Team Collaboration
+## 1. Team Collaboration
 
 When additional team members join the project:
 
-- **Jira** is introduced for task and story management.
-- The team works in **Scrum** with 2- or 3-week sprints.
-- **Definition of Done:**  
-    - A story is considered complete when its status is changed in Jira by a tester/client,  
+- **Taiga** is introduced for task and story management.
+- **Definition of Done:**
+    - A story is considered complete when its status is changed in Taiga by project manager, 
     - or after passing code review and integration tests (for backend-only features).
 
-## 3. Branching Model (Git)
+## 2. Branching Model (Git)
 
 The repository maintains the following main branches:
 
@@ -23,10 +18,10 @@ The repository maintains the following main branches:
 - `test` – Branch used for automatic deployment to the test environment; accessible to manual testers, clients, and beta testers.
 - `main` – Main production branch for production releases.
 
-## 4. Workflow
+## 3. Workflow
 
-- **Task Creation in Jira**  
-    Developer creates a new story (feature/task) in Jira.
+- **Task Creation in Taiga**  
+    Project Manager creates a new story (feature/task) in Taiga.
 
 - **Working on the Task**  
     A branch `feature/<story-name>` is created.  
@@ -48,12 +43,12 @@ The repository maintains the following main branches:
 - **Production Release**  
     Code from `main` is deployed to the production environment according to business needs (e.g., new features, critical fixes).
 
-### 4.1 Exceptions
+### 3.1 Exceptions
 
 - Branches may be created directly from `main`, and dedicated test branches may be used for urgent fixes observed in production; however, all changes must undergo full testing and code review before merging.
 - Optionally, Test Driven Development (TDD) can be applied—writing tests before code—though not required for every task.
 
-## 5. Additional Guidelines
+## 4. Additional Guidelines
 
 - Every change must undergo code review (including test quality).
 - Automated tests run on every PR to `dev` and `main`.
@@ -61,7 +56,7 @@ The repository maintains the following main branches:
 - Every feature branch is named according to the Jira task number and description.
 - Documentation is updated as needed, at the latest in the sprint following feature implementation.
 
-## 6. Commit Standard: Conventional Commits
+## 5. Commit Standard: Conventional Commits
 
 **Format:**
 

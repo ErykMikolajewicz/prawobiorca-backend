@@ -3,7 +3,7 @@ site_description: Basic information about the architecture of the Prawobiorca ap
 site_author: Eryk Antoni Mikołajewicz
 nav:
   - Home: index.md
-  - Business logic: business_logic.md
+  - Application logic: app_logic.md
   - Workflow: workflow.md
   - Application architecture:
     - General information: architecture/architecture.md
