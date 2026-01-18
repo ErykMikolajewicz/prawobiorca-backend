@@ -1,14 +1,16 @@
 from typing import Optional
 
 from redis.asyncio import Redis
-from app.shared.enums import KeyPrefix, TokenType
+from redis.asyncio.client import Pipeline
+
 from app.domain.entities.tokens import RefreshTokenData
 from app.domain.services.security import generate_token
 from app.shared.config import settings
-from redis.asyncio.client import Pipeline
+from app.shared.enums import KeyPrefix, TokenType
 
 access_token_expiration_seconds = settings.app.ACCESS_TOKEN_EXPIRATION_SECONDS
 refresh_token_expiration_seconds = settings.app.REFRESH_TOKEN_EXPIRATION_SECONDS
+
 
 class AccessTokenManager:
     def __init__(self, key_value_session: Pipeline):
@@ -18,21 +20,30 @@ class AccessTokenManager:
         user_id = await self._key_value_session.get(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
         return user_id
 
-    async def refresh_tokens(self, refresh_token: str, user_id: str) -> RefreshTokenData:
-        access_token = generate_token()
-        new_refresh_token = generate_token()
+    async def get_refresh_token_by_user(self, user_id: str) -> str:
+        refresh_token = await self._key_value_session.get(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
+        return refresh_token
 
-        self._key_value_session.delete(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
-        self._key_value_session.set(
-            f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}", new_refresh_token, ex=refresh_token_expiration_seconds
+    async def invalidate_refresh_token(self, refresh_token: str):
+        await self._key_value_session.delete(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
+
+    async def refresh_tokens(self, user_id: str) -> RefreshTokenData:
+        access_token = generate_token()
+        refresh_token = generate_token()
+
+        await self._key_value_session.set(
+            f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}", refresh_token, ex=refresh_token_expiration_seconds
         )
-        self._key_value_session.set(f"{KeyPrefix.REFRESH_TOKEN}:{new_refresh_token}", user_id,
-                       ex=refresh_token_expiration_seconds)
-        self._key_value_session.set(f"{KeyPrefix.ACCESS_TOKEN}:{access_token}", user_id, ex=access_token_expiration_seconds)
+        await self._key_value_session.set(
+            f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}", user_id, ex=refresh_token_expiration_seconds
+        )
+        await self._key_value_session.set(
+            f"{KeyPrefix.ACCESS_TOKEN}:{access_token}", user_id, ex=access_token_expiration_seconds
+        )
 
         return RefreshTokenData(
             access_token=access_token,
-            refresh_token=new_refresh_token,
+            refresh_token=refresh_token,
             expires_in=access_token_expiration_seconds,
             token_type=TokenType.BEARER,
         )

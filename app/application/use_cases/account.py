@@ -1,12 +1,11 @@
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
 
-from app.application.dtos.account import AccountData
-from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
+from app.application.dtos.account import LoginData
 from app.domain.services.security import hash_password
 from app.domain.services.tokens import EmailTokenVerifier
-from app.shared.exceptions import UserExists, RelationalDbIntegrityError
-from app.shared.exceptions import InvalidCredentials
+from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
+from app.shared.exceptions import InvalidCredentials, RelationalDbIntegrityError, UserExists
 
 logger = logging.getLogger(__name__)
 
@@ -14,11 +13,11 @@ logger = logging.getLogger(__name__)
 @dataclass
 class CreateAccount:
     users_unit_of_work: UsersUnitOfWork
-    account_data: AccountData
+    account_data: LoginData
 
     async def execute(self):
         hashed_password = hash_password(self.account_data.password)
-        account_hashed = {"email":self.account_data.email, "hashed_password": hashed_password}
+        account_hashed = {"email": self.account_data.email, "hashed_password": hashed_password}
 
         async with self.users_unit_of_work as uof:
             try:

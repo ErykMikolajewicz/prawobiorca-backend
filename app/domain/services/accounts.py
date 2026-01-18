@@ -1,68 +1,39 @@
 import logging
-from uuid import UUID
+from typing import Optional
 
-from pydantic import SecretStr
 from redis.asyncio import Redis
 
-from app.framework.models.auth import LoginOutput
+from app.application.dtos.account import LoginData
+from app.domain.services.security import verify_password
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
-from app.domain.services.security import generate_token, verify_password
 from app.shared.config import settings
-from app.shared.enums import KeyPrefix, TokenType
-from app.shared.exceptions import InvalidCredentials, UserNotFound, UserNotVerified
-
-logger = logging.getLogger(__name__)
+from app.shared.enums import KeyPrefix
 
 access_token_expiration_seconds = settings.app.ACCESS_TOKEN_EXPIRATION_SECONDS
 refresh_token_expiration_seconds = settings.app.REFRESH_TOKEN_EXPIRATION_SECONDS
 
+logger = logging.getLogger(__name__)
 
-# noinspection DuplicatedCode
-async def log_user(
-    email: str, password: SecretStr, redis_client: Redis, users_unit_of_work: UsersUnitOfWork
-) -> LoginOutput:
+
+async def check_user_can_log(users_unit_of_work: UsersUnitOfWork, login_data: LoginData) -> Optional[str]:
+    email = login_data.email
     async with users_unit_of_work as uof:
         user = await uof.users.get_by_email(email)
     if user is None:
-        raise UserNotFound("No user with that email!")
+        logger.warning(f"Failed login attempt. User not found!")
+        return None
 
     if not user.is_email_verified:
-        raise UserNotVerified
+        logger.warning(f"Failed login attempt. Invalid password!")
+        return None
 
+    password = login_data.password
     hashed_password = user.hashed_password
     if not verify_password(password, hashed_password):
-        raise InvalidCredentials("Invalid password!")
+        logger.warning(f"User with not verified email attempt to log!")
 
-    user_id: UUID = user.id
-    # To ensure exist only one refresh token
-    previous_refresh_token = await redis_client.get(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
-    if previous_refresh_token is not None:
-        logger.warning("User with existing refresh token logging.")
-        await redis_client.delete(
-            f"{KeyPrefix.REFRESH_TOKEN}:{previous_refresh_token}", f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}"
-        )
-
-    access_token = generate_token()
-    refresh_token = generate_token()
-    user_id_string = str(user_id)
-
-    async with redis_client.pipeline() as pipe:
-        await pipe.set(
-            f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id_string}", refresh_token, ex=refresh_token_expiration_seconds
-        )
-        await pipe.set(
-            f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}", user_id_string, ex=refresh_token_expiration_seconds
-        )
-        await pipe.set(f"{KeyPrefix.ACCESS_TOKEN}:{access_token}", user_id_string, ex=access_token_expiration_seconds)
-        await pipe.execute()
-
-    token = LoginOutput(
-        access_token=access_token,
-        token_type=TokenType.BEARER,
-        expires_in=access_token_expiration_seconds,
-        refresh_token=refresh_token,
-    )
-    return token
+    user_id = user.id
+    return user_id
 
 
 async def logout_user(access_token: str, user_id: str, redis_client: Redis):

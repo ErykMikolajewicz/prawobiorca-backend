@@ -18,9 +18,9 @@ class EmptyFileException(Exception):
     pass
 
 
-class UserNotVerified(Exception):
+class RelationalDbIntegrityError(Exception):
     pass
 
 
-class RelationalDbIntegrityError(Exception):
+class UserCantLog(Exception):
     pass

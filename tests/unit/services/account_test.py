@@ -5,8 +5,8 @@ import pytest
 from pydantic import EmailStr, SecretStr
 from sqlalchemy.exc import IntegrityError
 
-from app.framework.models.account import AccountCreate, LoginOutput
 from app.domain.services.accounts import create_account, log_user, logout_user, refresh, verify_account_email
+from app.framework.models.account import AccountCreate, LoginOutput
 from app.shared.config import settings
 from app.shared.enums import KeyPrefix, TokenType
 from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound

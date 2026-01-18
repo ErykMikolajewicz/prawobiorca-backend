@@ -1,15 +1,10 @@
-import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.application.use_cases.account import CreateAccount, VerifyAccount
+from app.framework.dependencies.accounts import get_create_account, get_verify_account
 from app.shared.exceptions import InvalidCredentials, UserExists
-from app.framework.dependencies.accounts import get_create_account
-from app.application.use_cases.account import CreateAccount
-from app.framework.dependencies.accounts import get_verify_account
-from app.application.use_cases.account import VerifyAccount
-
-logger = logging.getLogger(__name__)
 
 account_router = APIRouter(tags=["account"])
 
@@ -31,7 +26,7 @@ async def create_account(create_account_: Annotated[CreateAccount, Depends(get_c
     status_code=status.HTTP_204_NO_CONTENT,
     responses={status.HTTP_400_BAD_REQUEST: {"description": "Invalid or expired verification token!"}},
 )
-async def verify_account(verify_account_: Annotated[VerifyAccount ,Depends(get_verify_account)]):
+async def verify_account(verify_account_: Annotated[VerifyAccount, Depends(get_verify_account)]):
     try:
         await verify_account_.execute()
     except InvalidCredentials:

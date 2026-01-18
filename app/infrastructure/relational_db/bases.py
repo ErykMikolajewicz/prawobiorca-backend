@@ -2,8 +2,8 @@ from typing import Any, Generic, Optional, Type, TypeVar
 from uuid import UUID
 
 from sqlalchemy import delete, insert, select, update
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.infrastructure.relational_db.schemas.mixins import IntIdMixin, UuidIdMixin
 from app.shared.exceptions import RelationalDbIntegrityError
