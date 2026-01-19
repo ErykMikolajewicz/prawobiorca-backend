@@ -10,7 +10,8 @@ class RedisSettings(BaseSettings):
     MAX_CONNECTIONS: int = ...
 
     model_config = SettingsConfigDict(
-        env_file=Path(".env"), extra='ignore', case_sensitive=True, frozen=True, env_prefix='REDIS_'
+        env_file=Path(".env"), extra="ignore", case_sensitive=True, frozen=True, env_prefix="REDIS_"
     )
+
 
 redis_settings = RedisSettings()

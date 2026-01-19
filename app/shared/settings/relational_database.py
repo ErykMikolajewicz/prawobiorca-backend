@@ -16,7 +16,7 @@ class RelationalDatabaseSettings(BaseSettings):
     RELATIONAL_DB_POOL_RECYCLE: int = ...
 
     model_config = SettingsConfigDict(
-        env_file=Path(".env"), extra='ignore', case_sensitive=True, frozen=True, env_prefix='RELATIONAL_DB_'
+        env_file=Path(".env"), extra="ignore", case_sensitive=True, frozen=True, env_prefix="RELATIONAL_DB_"
     )
 
 

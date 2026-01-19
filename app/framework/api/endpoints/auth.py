@@ -1,14 +1,11 @@
 from typing import Annotated
 
 from fastapi import Depends, HTTPException
-from redis.asyncio import Redis
 from starlette import status
 
-from app.application.use_cases.auth import LogUser, RefreshTokens
-from app.domain.services import accounts as account_services
+from app.application.use_cases.auth import LogoutUser, LogUser, RefreshTokens
 from app.framework.api.endpoints.accounts import account_router
-from app.framework.dependencies.authentication import get_log_user, get_refresh_tokens, validate_token
-from app.framework.dependencies.key_value_repository import get_key_value_repository
+from app.framework.dependencies.authentication import get_log_user, get_logout_user, get_refresh_tokens, validate_token
 from app.framework.models.auth import LoginOutput
 from app.shared.exceptions import InvalidCredentials, UserCantLog
 
@@ -30,14 +27,10 @@ async def log_user(log_user_: Annotated[LogUser, Depends(get_log_user)]) -> Logi
     "/auth/logout",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={status.HTTP_401_UNAUTHORIZED: {"description": "Invalid access token!"}},
+    dependencies=[Depends(validate_token)],
 )
-async def logout_user(
-    key_value_repo: Annotated[Redis, Depends(get_key_value_repository)],
-    login_data: Annotated[tuple[str, str], Depends(validate_token)],
-):
-    token, user_id = login_data
-    await account_services.logout_user(token, user_id, key_value_repo)
-    return None
+async def logout_user(logout_user_: Annotated[LogoutUser, Depends(get_logout_user)]):
+    await logout_user_.execute()
 
 
 @account_router.post(

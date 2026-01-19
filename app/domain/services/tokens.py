@@ -5,27 +5,42 @@ from redis.asyncio.client import Pipeline
 
 from app.domain.entities.tokens import RefreshTokenData
 from app.domain.services.security import generate_token
-from app.shared.settings.application import app_settings
 from app.shared.enums import KeyPrefix, TokenType
+from app.shared.settings.application import app_settings
 
 access_token_expiration_seconds = app_settings.ACCESS_TOKEN_EXPIRATION_SECONDS
 refresh_token_expiration_seconds = app_settings.REFRESH_TOKEN_EXPIRATION_SECONDS
 
 
-class AccessTokenManager:
-    def __init__(self, key_value_session: Pipeline):
-        self._key_value_session = key_value_session
+class AccessTokensReader:
+    def __init__(self, key_value_repo: Redis):
+        self._key_value_repo = key_value_repo
+
+    async def get_user_by_access_token(self, access_token: str) -> Optional[str]:
+        user_id = await self._key_value_repo.get(f"{KeyPrefix.ACCESS_TOKEN}:{access_token}")
+        return user_id
 
     async def get_user_by_refresh_token(self, refresh_token) -> Optional[str]:
-        user_id = await self._key_value_session.get(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
+        user_id = await self._key_value_repo.get(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
         return user_id
 
     async def get_refresh_token_by_user(self, user_id: str) -> str:
-        refresh_token = await self._key_value_session.get(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
+        refresh_token = await self._key_value_repo.get(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
         return refresh_token
+
+
+class AccessTokensManager:
+    def __init__(self, key_value_session: Pipeline):
+        self._key_value_session = key_value_session
 
     async def invalidate_refresh_token(self, refresh_token: str):
         await self._key_value_session.delete(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}")
+
+    async def invalidate_refresh_token_user(self, user_id: str):
+        await self._key_value_session.delete(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
+
+    async def invalidate_access_token(self, access_token: str):
+        await self._key_value_session.delete(f"{KeyPrefix.ACCESS_TOKEN}:{access_token}")
 
     async def refresh_tokens(self, user_id: str) -> RefreshTokenData:
         access_token = generate_token()

@@ -1,12 +1,9 @@
 import logging
 from typing import Optional
 
-from redis.asyncio import Redis
-
 from app.application.dtos.account import LoginData
 from app.domain.services.security import verify_password
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
-from app.shared.enums import KeyPrefix
 from app.shared.settings.application import app_settings
 
 access_token_expiration_seconds = app_settings.ACCESS_TOKEN_EXPIRATION_SECONDS
@@ -34,21 +31,3 @@ async def check_user_can_log(users_unit_of_work: UsersUnitOfWork, login_data: Lo
 
     user_id = user.id
     return user_id
-
-
-async def logout_user(access_token: str, user_id: str, redis_client: Redis):
-    refresh_token = await redis_client.get(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}")
-
-    if refresh_token is None:
-        logger.error("Invalid application state, no refresh token for user!")
-        await redis_client.delete(
-            f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}", f"{KeyPrefix.ACCESS_TOKEN}:{access_token}"
-        )
-        return None
-
-    await redis_client.delete(
-        f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}",
-        f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}",
-        f"{KeyPrefix.ACCESS_TOKEN}:{access_token}",
-    )
-    return None

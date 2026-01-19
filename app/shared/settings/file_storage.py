@@ -9,7 +9,7 @@ class GCFileStorageSettings(BaseSettings):
     PUBLIC_COLLECTION: str = ...
 
     model_config = SettingsConfigDict(
-        env_file=Path(".env"), extra='ignore', case_sensitive=True, frozen=True, env_prefix='GC_'
+        env_file=Path(".env"), extra="ignore", case_sensitive=True, frozen=True, env_prefix="GC_"
     )
 
 
