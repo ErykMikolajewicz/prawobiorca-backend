@@ -1,20 +1,14 @@
-import os
-
-from google.cloud import storage
-from google.cloud.storage import Client as StorageClient
-
-from app.shared.config import settings
-
-credentials_path = settings.file_storage.STORAGE_CREDENTIALS
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(credentials_path.absolute())
-
-storage_client = storage.Client()
-bucket_name = settings.file_storage.PRIVATE_COLLECTION
+from app.infrastructure.enums import FileStorageType
+from app.shared.settings.application import app_settings
 
 
 def check_file_storage_connection():
-    storage_client.list_buckets()
+    match app_settings.FILE_STORAGE:
+        case FileStorageType.LOCAL_FILES:
+            pass
+        case FileStorageType.GOOGLE_CLOUD:
+            from app.infrastructure.file_storage.gc.repository import storage_client
 
-
-def get_storage_client() -> StorageClient:
-    return storage_client
+            storage_client.list_buckets()
+        case _:
+            raise Exception(f"Invalid storage configuration {app_settings.FILE_STORAGE} !")

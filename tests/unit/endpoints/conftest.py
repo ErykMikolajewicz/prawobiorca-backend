@@ -6,7 +6,7 @@ from fastapi import HTTPException, Request, status
 from app.framework.dependencies.authentication import validate_token
 from app.infrastructure.file_storage.connection import get_storage_client
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
-from app.main import app
+from main import app
 
 
 @pytest.fixture

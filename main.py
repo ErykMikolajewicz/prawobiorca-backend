@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.concurrency import run_in_threadpool
 
 from app.framework.api.router import include_all_routers
-from app.infrastructure.file_storage.connection import check_file_storage_connection, storage_client
+from app.infrastructure.file_storage.connection import check_file_storage_connection
 from app.infrastructure.key_value_db.connection import check_redis_connection, redis_pool
 from app.infrastructure.relational_db.connection import check_relational_db_connection, engine
 from app.infrastructure.vector_db import check_vector_db_connection, qdrant_client
@@ -33,7 +33,7 @@ async def lifespan(_: FastAPI):
     await qdrant_client.close()
     await redis_pool.disconnect()
     await engine.dispose()
-    storage_client.close()
+    # storage_client.close()
 
 
 app = FastAPI(lifespan=lifespan, title="PRAWOBIORCA", version=version)

@@ -5,16 +5,11 @@ import pytest
 from pydantic import EmailStr, SecretStr
 from sqlalchemy.exc import IntegrityError
 
-from app.domain.services.accounts import create_account, log_user, logout_user, refresh, verify_account_email
-from app.framework.models.account import AccountCreate, LoginOutput
-from app.shared.config import settings
+from app.framework.models.account import AccountCreate
 from app.shared.enums import KeyPrefix, TokenType
 from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound
 from tests.test_consts import STRONG_PASSWORD, VALID_EMAIL
 from tests.unit.services.conftest import key_value_repository
-
-ACCESS_TOKEN_EXPIRATION_SECONDS = settings.app.ACCESS_TOKEN_EXPIRATION_SECONDS
-REFRESH_TOKEN_EXPIRATION_SECONDS = settings.app.REFRESH_TOKEN_EXPIRATION_SECONDS
 
 
 @pytest.fixture

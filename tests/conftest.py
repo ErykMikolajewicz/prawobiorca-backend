@@ -11,7 +11,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.domain.services.security import url_safe_bearer_token_length, url_safe_email_verification_token_length
-from app.main import app
+from main import app
 
 
 @pytest.fixture

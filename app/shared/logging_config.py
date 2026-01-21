@@ -1,9 +1,9 @@
 import logging
 import logging.config
 
-from app.shared.config import settings
+from app.shared.settings.application import app_settings
 
-global_logging_level = settings.app.LOGGING_LEVEL
+global_logging_level = app_settings.LOGGING_LEVEL
 
 
 def setup_logging():

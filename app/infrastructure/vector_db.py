@@ -1,9 +1,9 @@
 from qdrant_client import AsyncQdrantClient
 
-from app.shared.config import settings
+from app.shared.settings.vector_database import qdrant_settings
 
 qdrant_client: AsyncQdrantClient = AsyncQdrantClient(
-    host=settings.vector_db.HOST, grpc_port=settings.vector_db.GRPC_PORT, prefer_grpc=True, https=False
+    host=qdrant_settings.HOST, grpc_port=qdrant_settings.GRPC_PORT, prefer_grpc=True, https=False
 )
 
 

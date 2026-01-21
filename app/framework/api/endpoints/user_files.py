@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, stat
 import app.domain.services.user_files as files_services
 from app.domain.interfaces.file_storage import StorageRepository
 from app.framework.dependencies.authentication import validate_token
-from app.framework.dependencies.file_storage import storage_repo_factory
+from app.framework.dependencies.file_storage import get_file_storage
 from app.framework.dependencies.units_of_work import get_users_unit_of_work
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 from app.shared.exceptions import EmptyFileException, FileNameExist
@@ -27,7 +27,7 @@ user_files_router = APIRouter(prefix="/user", tags=["user files"], dependencies=
 async def add_user_file(
     user_file: UploadFile,
     request: Request,
-    storage_repository: Annotated[StorageRepository, Depends(storage_repo_factory(is_public=False))],
+    storage_repository: Annotated[StorageRepository, Depends(get_file_storage)],
     users_unit_of_work: UsersUnitOfWork = Depends(get_users_unit_of_work),
 ):
     user_id = request.state.user_id

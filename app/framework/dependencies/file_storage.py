@@ -1,19 +1,17 @@
-from app.infrastructure.file_storage.repository import GCSStorageRepository
-from app.shared.settings.file_storage import gc_file_storage_settings
+from app.domain.interfaces.file_storage import StorageRepository
+from app.infrastructure.enums import FileStorageType
+from app.shared.settings.application import app_settings
 
 
-def storage_repo_factory(is_public: bool):
-    public_collection = gc_file_storage_settings.PUBLIC_COLLECTION
-    private_collection = gc_file_storage_settings.PRIVATE_COLLECTION
+def get_file_storage() -> StorageRepository:
+    match app_settings.FILE_STORAGE:
+        case FileStorageType.LOCAL_FILES:
+            from app.infrastructure.file_storage.local.repository import LocalFileStorage
 
-    def _get_storage_repo():
-        if is_public:
-            bucket_name = public_collection
-        else:
-            bucket_name = private_collection
-        return GCSStorageRepository(
-            bucket_name=bucket_name,
-            is_public=is_public,
-        )
+            return LocalFileStorage()
+        case FileStorageType.GOOGLE_CLOUD:
+            from app.infrastructure.file_storage.gc.repository import GCSStorageRepository
 
-    return _get_storage_repo
+            return GCSStorageRepository()
+        case _:
+            raise Exception(f"Invalid storage configuration {app_settings.FILE_STORAGE} !")
