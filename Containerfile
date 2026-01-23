@@ -8,7 +8,7 @@ WORKDIR /prawobiorca
 
 COPY --chown=prawobiorca_app:prawobiorca_app pyproject.toml pyproject.toml
 COPY uv.lock uv.lock
-RUN uv sync --compile-bytecode
+RUN uv sync --compile-bytecode --no-cache
 
 USER prawobiorca_app
 
