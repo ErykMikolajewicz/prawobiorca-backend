@@ -7,9 +7,5 @@ qdrant_client: AsyncQdrantClient = AsyncQdrantClient(
 )
 
 
-async def check_vector_db_connection():
-    await qdrant_client.get_collections()
-
-
 async def get_qdrant_client():
     return qdrant_client

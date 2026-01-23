@@ -6,7 +6,7 @@ from grpc import RpcError
 from sqlalchemy.exc import InterfaceError
 
 from app.infrastructure.relational_db.connection import check_relational_db_connection
-from app.infrastructure.vector_db import check_vector_db_connection
+from app.infrastructure.vector_db.connection import check_vector_db_connection
 
 logger = logging.getLogger(__name__)
 
