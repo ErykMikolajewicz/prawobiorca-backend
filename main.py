@@ -62,6 +62,11 @@ include_all_routers(app)
 
 
 if __name__ == "__main__":
-    import uvicorn
+    from granian.server.embed import Server
+    from granian.constants import Interfaces
 
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    async def launch_granian():
+        server = Server(app, interface=Interfaces.ASGI)
+        await server.serve()
+
+    asyncio.run(launch_granian())
