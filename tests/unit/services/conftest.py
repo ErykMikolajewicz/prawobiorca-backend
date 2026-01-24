@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from tests.test_consts import VALID_EMAIL
+from tests.consts import VALID_EMAIL
 
 
 class DummyUser:

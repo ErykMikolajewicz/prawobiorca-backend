@@ -8,7 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from app.framework.models.account import AccountCreate
 from app.shared.enums import KeyPrefix, TokenType
 from app.shared.exceptions import InvalidCredentials, UserExists, UserNotFound
-from tests.test_consts import STRONG_PASSWORD, VALID_EMAIL
+from tests.consts import STRONG_PASSWORD, VALID_EMAIL
 from tests.unit.services.conftest import key_value_repository
 
 

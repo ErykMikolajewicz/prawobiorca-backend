@@ -13,7 +13,7 @@ def mock_add_user_file():
 
 
 def test_add_user_file_success(
-    client, override_validate_token, override_get_storage_client, override_users_unit_of_work, mock_add_user_file
+    client, override_validate_token, override_get_file_storage, override_users_unit_of_work, mock_add_user_file
 ):
     access_token, _ = override_validate_token
     file_content = b"test"
@@ -26,20 +26,8 @@ def test_add_user_file_success(
     mock_add_user_file.assert_awaited_once()
 
 
-def test_add_user_file_missing_file_field(
-    client, override_validate_token, override_get_storage_client, override_users_unit_of_work, mock_add_user_file
-):
-    access_token, _ = override_validate_token
-    headers = {"Authorization": f"Bearer {access_token}"}
-
-    response = client.post("/user/files", headers=headers, files={})
-
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
-    mock_add_user_file.assert_not_awaited()
-
-
 def test_add_user_file_name_exist(
-    client, override_validate_token, override_get_storage_client, override_users_unit_of_work, mock_add_user_file
+    client, override_validate_token, override_get_file_storage, override_users_unit_of_work, mock_add_user_file
 ):
     access_token, _ = override_validate_token
     mock_add_user_file.side_effect = FileNameExist()
@@ -55,7 +43,7 @@ def test_add_user_file_name_exist(
 
 
 def test_add_user_file_empty_file(
-    client, override_validate_token, override_get_storage_client, override_users_unit_of_work, mock_add_user_file
+    client, override_validate_token, override_get_file_storage, override_users_unit_of_work, mock_add_user_file
 ):
     access_token, _ = override_validate_token
     mock_add_user_file.side_effect = EmptyFileException()

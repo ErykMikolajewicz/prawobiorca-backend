@@ -7,7 +7,7 @@ from app.domain.services.security import hash_password
 from app.infrastructure.relational_db.repositories.users import UsersRepository
 from app.shared.settings.application import app_settings
 from app.shared.enums import KeyPrefix, TokenType
-from tests.test_consts import STRONG_PASSWORD, VALID_EMAIL
+from tests.consts import STRONG_PASSWORD, VALID_EMAIL
 from app.domain.services.security import Secret
 
 ACCESS_TOKEN_EXPIRATION_SECONDS = app_settings.ACCESS_TOKEN_EXPIRATION_SECONDS
