@@ -32,6 +32,7 @@ class RefreshTokens:
 
             await access_token_manager.invalidate_refresh_token(self.refresh_token)
             tokens = await access_token_manager.refresh_tokens(user_id)
+            await pipeline.execute()
         return tokens
 
 
@@ -61,6 +62,7 @@ class LogUser:
                 await access_token_manager.invalidate_refresh_token(previous_refresh_token)
 
             tokens = await access_token_manager.refresh_tokens(user_id)
+            await pipeline.execute()
         return tokens
 
 
@@ -85,3 +87,4 @@ class LogoutUser:
 
             await access_token_manager.invalidate_refresh_token_user(self.user_id)
             await access_token_manager.invalidate_access_token(self.access_token)
+            await pipeline.execute()

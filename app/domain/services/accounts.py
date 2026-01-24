@@ -30,4 +30,5 @@ async def check_user_can_log(users_unit_of_work: UsersUnitOfWork, login_data: Lo
         logger.warning(f"User with not verified email attempt to log!")
 
     user_id = user.id
+    user_id = str(user_id)
     return user_id

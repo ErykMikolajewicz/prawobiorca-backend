@@ -15,4 +15,3 @@ wheels/
 
 .idea
 /secrets/
-/alembic.ini

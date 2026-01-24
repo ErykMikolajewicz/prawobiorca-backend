@@ -5,7 +5,7 @@ Contains common fixtures used in tests, such as the FastAPI test client
 and generators for tokens and UUIDs.
 """
 
-from collections.abc import Generator
+from collections.abc import Iterator
 
 import pytest
 from fastapi.testclient import TestClient
@@ -14,8 +14,8 @@ from app.domain.services.security import url_safe_bearer_token_length, url_safe_
 from main import app
 
 
-@pytest.fixture
-def bearer_token_generator() -> Generator[str, None]:
+@pytest.fixture(scope='function')
+def bearer_token_generator() -> Iterator[str]:
     """
     Pytest fixture that generates a sequence of url-safe bearer tokens.
 
@@ -28,21 +28,19 @@ def bearer_token_generator() -> Generator[str, None]:
         str: The next bearer token from the predefined list.
     """
 
-    def get_token() -> Generator[str, None]:
-        tokens = (
-            "O8KwTwMvXTSn3VdWl6iZlNqmw39UvFRvIbeHfo-mykY",
-            "XzkNQQKM3CYn3ncRcs-c2txIxihTk_Mi126sebi06VA",
-            "CKIr3mwWTEXoMNaHl7Q4-jjz8oowSPBIayMSTe2UXxg",
-        )
-        for token in tokens:
-            assert len(token) == url_safe_bearer_token_length
-            yield token
+    tokens = (
+        "O8KwTwMvXTSn3VdWl6iZlNqmw39UvFRvIbeHfo-mykY",
+        "XzkNQQKM3CYn3ncRcs-c2txIxihTk_Mi126sebi06VA",
+        "CKIr3mwWTEXoMNaHl7Q4-jjz8oowSPBIayMSTe2UXxg",
+    )
+    for token in tokens:
+        assert len(token) == url_safe_bearer_token_length
 
-    return get_token()
+    return iter(tokens)
 
 
-@pytest.fixture
-def uuid_generator() -> Generator[str, None]:
+@pytest.fixture(scope='function')
+def uuid_generator() -> Iterator[str]:
     """
     Pytest fixture that generates a sequence of predefined UUIDs.
 
@@ -53,21 +51,17 @@ def uuid_generator() -> Generator[str, None]:
     Yields:
         str: The next UUID from the predefined list.
     """
+    uuids = (
+        "1b4a1b7a-dbd6-4be4-a52e-80fdd9ddbfb0",
+        "ad987bb3-cf5b-4d07-a23c-2e5f1221171a",
+        "4596f6de-d067-4e36-ad9f-a3b3959eee6b",
+    )
 
-    def get_uuid() -> Generator[str, None]:
-        uuids = (
-            "1b4a1b7a-dbd6-4be4-a52e-80fdd9ddbfb0",
-            "ad987bb3-cf5b-4d07-a23c-2e5f1221171a",
-            "4596f6de-d067-4e36-ad9f-a3b3959eee6b",
-        )
-        for uuid_ in uuids:
-            yield uuid_
-
-    return get_uuid()
+    return iter(uuids)
 
 
-@pytest.fixture
-def email_token_generator() -> Generator[str, None]:
+@pytest.fixture(scope='function')
+def email_token_generator() -> Iterator[str]:
     """
     Pytest fixture that generates a sequence of URL-safe email verification tokens.
 
@@ -79,14 +73,10 @@ def email_token_generator() -> Generator[str, None]:
     Yields:
         str: The next email verification token from the predefined list.
     """
+    tokens = ("csca-AVXPdclA0dJlSLhgGc1sWpaPOxVTiHjVfTLyog",)
+    assert len(tokens[0]) == url_safe_email_verification_token_length
 
-    def get_token() -> Generator[str, None]:
-        tokens = ("csca-AVXPdclA0dJlSLhgGc1sWpaPOxVTiHjVfTLyog",)
-        for token in tokens:
-            assert len(token) == url_safe_email_verification_token_length
-            yield token
-
-    return get_token()
+    return iter(tokens)
 
 
 @pytest.fixture(scope="session")

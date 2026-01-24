@@ -22,7 +22,7 @@ async def validate_token(
     token: Annotated[str, Depends(OAuth2PasswordBearer(tokenUrl="/auth/login"))],
     request: Request,
 ):
-    user_id = access_tokens_reader.get_user_by_access_token(token)
+    user_id = await access_tokens_reader.get_user_by_access_token(token)
     if user_id is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
@@ -48,7 +48,7 @@ def get_email_token_verifier(
         alias="verificationToken",
     ),
 ):
-    EmailTokenVerifier(key_value_repo, verification_token)
+    return EmailTokenVerifier(key_value_repo, verification_token)
 
 
 def get_log_user(

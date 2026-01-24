@@ -8,8 +8,6 @@ and dependency overrides for FastAPI, ensuring test isolation.
 from typing import AsyncGenerator, Generator
 
 import pytest
-from redis import ConnectionPool as SyncRedisPool
-from redis import Redis as SyncRedis
 from redis.asyncio import ConnectionPool, Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
@@ -152,8 +150,8 @@ async def override_get_key_value_repository(redis_container: RedisContainer) -> 
     app.dependency_overrides = {}
 
 
-@pytest.fixture(scope="session")
-def redis_client(redis_container: RedisContainer) -> Generator[SyncRedis, None]:
+@pytest.fixture
+async def redis_client(redis_container: RedisContainer) -> AsyncGenerator[Redis, None]:
     """Provide a synchronous Redis client for direct access.
 
     Requires manual cleanup of stored keys between tests.
@@ -164,13 +162,13 @@ def redis_client(redis_container: RedisContainer) -> Generator[SyncRedis, None]:
     Yields:
         SyncRedis: Synchronous Redis client instance.
     """
-    redis_pool = SyncRedisPool(
+    redis_pool = ConnectionPool(
         host=redis_container.get_container_host_ip(),
         port=redis_container.get_exposed_port(6379),
         decode_responses=True,
     )
-    redis_client = SyncRedis(connection_pool=redis_pool)
+    redis_client = Redis(connection_pool=redis_pool)
     try:
         yield redis_client
     finally:
-        redis_client.close()
+        await redis_client.aclose()
