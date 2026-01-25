@@ -11,11 +11,10 @@ When additional team members join the project:
 
 ## 2. Branching Model (Git)
 
-The repository maintains the following main branches:
+The repository maintains the following branches:
 
 - `dev` – Main development branch where developers merge their changes.
 - `feature/*` – Per-story (feature/task) branches for implementing individual functionalities.
-- `test` – Branch used for automatic deployment to the test environment; accessible to manual testers, clients, and beta testers.
 - `main` – Main production branch for production releases.
 
 ## 3. Workflow
@@ -32,10 +31,6 @@ The repository maintains the following main branches:
 
 - **Integration Testing**  
     A designated developer prepares integration tests for new or modified components.
-
-- **Merging to test**  
-    After successful integration tests and code review, code from `dev` is merged into `test`.  
-    The `test` branch is automatically deployed to the test environment.
 
 - **E2E/Manual Testing**  
     After successful E2E/manual testing, the approved code is merged into `main`.
