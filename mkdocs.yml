@@ -1,0 +1,54 @@
+site_name: Prawobiorca developer documentation
+site_description: Basic information about the architecture of the Prawobiorca application, its tests, and CI/CD
+site_author: Eryk Antoni Mikołajewicz
+nav:
+  - Home: index.md
+  - Application logic: app_logic.md
+  - Workflow: workflow.md
+  - Application architecture:
+    - General information: architecture/architecture.md
+    - Coding Rules: architecture/coding_rules.md
+    - Library Overview: architecture/libraries.md
+    - External services: architecture/external_services.md
+  - Tests:
+    - General information: tests/tests.md
+    - Main fixtures: tests/main_fixtures.md
+    - Integration fixtures: tests/integration_fixtures.md
+
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [app, tests]
+
+theme:
+  name: material
+  language: en
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+      media: "(prefers-color-scheme: light)"
+    - scheme: slate
+      primary: blue
+      accent: orange
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+      media: "(prefers-color-scheme: dark)"
+
+
+  features:
+      - navigation.instant
+      - navigation.tabs
+      - navigation.expand
+      - toc.integrate
+      - search.suggest
+
+markdown_extensions:
+  - attr_list
