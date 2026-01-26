@@ -24,3 +24,7 @@ class RelationalDbIntegrityError(Exception):
 
 class UserCantLog(Exception):
     pass
+
+
+class FileNameNotProvided(Exception):
+    pass

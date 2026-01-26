@@ -7,9 +7,9 @@ from app.framework.dependencies.authentication import validate_token
 from main import app
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def assure_use_case_not_executed():
-    mock =  AsyncMock()
+    mock = AsyncMock()
 
     def __overrider(use_case_getter):
         app.dependency_overrides[use_case_getter] = lambda: mock

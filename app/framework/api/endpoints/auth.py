@@ -1,7 +1,7 @@
-from typing import Annotated
 from dataclasses import asdict
+from typing import Annotated
 
-from fastapi import Depends, HTTPException, APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
 from app.application.use_cases.auth import LogoutUser, LogUser, RefreshTokens
@@ -35,9 +35,7 @@ async def logout_user(logout_user_: Annotated[LogoutUser, Depends(get_logout_use
     await logout_user_.execute()
 
 
-@auth_router.post(
-    "/auth/refresh", responses={status.HTTP_401_UNAUTHORIZED: {"description": "Invalid refresh token!"}}
-)
+@auth_router.post("/auth/refresh", responses={status.HTTP_401_UNAUTHORIZED: {"description": "Invalid refresh token!"}})
 async def refresh(refresh_tokens: Annotated[RefreshTokens, Depends(get_refresh_tokens)]) -> LoginOutput:
     try:
         tokens = await refresh_tokens.execute()

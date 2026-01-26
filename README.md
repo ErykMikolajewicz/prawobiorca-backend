@@ -31,3 +31,12 @@ python -m pytest tests/unit
 ```
 
 - If everything work push your code to repo, remember to do it on a feature branch, and call me (Eryk Mikołajewicz) about code review
+
+
+If you want check how application is working use 2 scripts to launch it:
+bash/run_external_services.sh
+bash/graian_run.sh
+Then go on:
+https://127.0.0.1:8000/docs#/
+to see app swagger
+You have to had podman installed, to it worked!

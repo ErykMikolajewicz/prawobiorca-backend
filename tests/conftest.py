@@ -14,7 +14,7 @@ from app.domain.services.security import url_safe_bearer_token_length, url_safe_
 from main import app
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def bearer_token_generator() -> Iterator[str]:
     """
     Pytest fixture that generates a sequence of url-safe bearer tokens.
@@ -39,7 +39,7 @@ def bearer_token_generator() -> Iterator[str]:
     return iter(tokens)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def uuid_generator() -> Iterator[str]:
     """
     Pytest fixture that generates a sequence of predefined UUIDs.
@@ -60,7 +60,7 @@ def uuid_generator() -> Iterator[str]:
     return iter(uuids)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def email_token_generator() -> Iterator[str]:
     """
     Pytest fixture that generates a sequence of URL-safe email verification tokens.

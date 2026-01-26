@@ -1,4 +1,4 @@
-from typing import Callable, Awaitable
+from typing import Awaitable, Callable
 
 from fastapi.concurrency import run_in_threadpool
 
@@ -9,8 +9,10 @@ from app.shared.settings.application import app_settings
 async def check_file_storage_connection() -> Callable[..., Awaitable[None]]:
     match app_settings.FILE_STORAGE:
         case FileStorageType.LOCAL_FILES:
+
             async def closing_callback():
                 pass
+
             return closing_callback
         case FileStorageType.GOOGLE_CLOUD:
             from app.infrastructure.file_storage.gc.repository import storage_client

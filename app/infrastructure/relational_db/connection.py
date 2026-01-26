@@ -1,4 +1,4 @@
-from typing import Callable, Awaitable
+from typing import Awaitable, Callable
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -33,7 +33,7 @@ async def get_relational_session() -> AsyncSession:
         yield session  # bad type hint from PyCharm
 
 
-async def check_relational_db_connection()  -> Callable[..., Awaitable[None]]:
+async def check_relational_db_connection() -> Callable[..., Awaitable[None]]:
     async with async_session_maker() as session:
         await session.execute(text("SELECT 1"))
     return engine.dispose
@@ -41,5 +41,6 @@ async def check_relational_db_connection()  -> Callable[..., Awaitable[None]]:
 
 class Base(DeclarativeBase):
     pass
+
 
 import time

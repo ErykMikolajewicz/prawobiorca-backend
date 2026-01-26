@@ -3,9 +3,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.application.dtos.account import LoginData
-from app.shared.exceptions import InvalidCredentials, UserExists, RelationalDbIntegrityError
 from app.application.use_cases.account import CreateAccount, VerifyAccount
 from app.domain.services.security import Secret
+from app.shared.exceptions import InvalidCredentials, RelationalDbIntegrityError, UserExists
 
 
 @pytest.fixture
@@ -37,9 +37,7 @@ async def test_create_account_success(uow_mock):
         await use_case.execute()
 
     hp.assert_called_once_with(data.password)
-    uow_mock.users.add.assert_awaited_once_with(
-        {"email": data.email, "hashed_password": "hashed"}
-    )
+    uow_mock.users.add.assert_awaited_once_with({"email": data.email, "hashed_password": "hashed"})
 
 
 async def test_create_account_conflict_raises_user_exists(uow_mock):
@@ -79,4 +77,3 @@ async def test_verify_account_invalid_token_raises_invalid_credentials(uow_mock,
 
     uow_mock.users.verify_email.assert_not_awaited()
     token_verifier_mock.invalidate_token.assert_not_awaited()
-

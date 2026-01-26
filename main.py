@@ -1,7 +1,7 @@
+import asyncio
 import logging
 import tomllib
 from contextlib import asynccontextmanager
-import asyncio
 
 from fastapi import FastAPI
 
@@ -37,7 +37,7 @@ async def lifespan(_: FastAPI):
         file_storage_closing_callback = await check_file_storage_connection()
         closing_callbacks.insert(0, file_storage_closing_callback)
     except Exception as e:
-        logger.critical(f'Can not connect to external service: {e}')
+        logger.critical(f"Can not connect to external service: {e}")
         raise
     else:
         app.state.ready = True
@@ -52,7 +52,7 @@ async def lifespan(_: FastAPI):
                 async with asyncio.timeout(30):
                     await callback()
             except Exception as e:
-                logger.error(f'Error during clean up: {e}')
+                logger.error(f"Error during clean up: {e}")
 
 
 app = FastAPI(lifespan=lifespan, title="PRAWOBIORCA", version=version)
@@ -62,8 +62,8 @@ include_all_routers(app)
 
 
 if __name__ == "__main__":
-    from granian.server.embed import Server
     from granian.constants import Interfaces
+    from granian.server.embed import Server
 
     async def launch_granian():
         server = Server(app, interface=Interfaces.ASGI)

@@ -3,12 +3,11 @@ from uuid import UUID
 
 from fastapi import status
 
-from app.domain.services.security import hash_password
+from app.domain.services.security import Secret, hash_password
 from app.infrastructure.relational_db.repositories.users import UsersRepository
-from app.shared.settings.application import app_settings
 from app.shared.enums import KeyPrefix, TokenType
+from app.shared.settings.application import app_settings
 from tests.consts import STRONG_PASSWORD, VALID_EMAIL
-from app.domain.services.security import Secret
 
 ACCESS_TOKEN_EXPIRATION_SECONDS = app_settings.ACCESS_TOKEN_EXPIRATION_SECONDS
 REFRESH_TOKEN_EXPIRATION_SECONDS = app_settings.REFRESH_TOKEN_EXPIRATION_SECONDS
@@ -113,12 +112,16 @@ async def test_login_success(
         )
 
 
-async def test_logout_user(client, override_get_key_value_repository, redis_client, uuid_generator, bearer_token_generator):
+async def test_logout_user(
+    client, override_get_key_value_repository, redis_client, uuid_generator, bearer_token_generator
+):
     user_id = next(uuid_generator)
     access_token = next(bearer_token_generator)
     refresh_token = next(bearer_token_generator)
 
-    await redis_client.set(f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}", refresh_token, ex=REFRESH_TOKEN_EXPIRATION_SECONDS)
+    await redis_client.set(
+        f"{KeyPrefix.USER_REFRESH_TOKEN}:{user_id}", refresh_token, ex=REFRESH_TOKEN_EXPIRATION_SECONDS
+    )
     await redis_client.set(f"{KeyPrefix.REFRESH_TOKEN}:{refresh_token}", user_id, ex=REFRESH_TOKEN_EXPIRATION_SECONDS)
     await redis_client.set(f"{KeyPrefix.ACCESS_TOKEN}:{access_token}", user_id, ex=ACCESS_TOKEN_EXPIRATION_SECONDS)
 
@@ -136,7 +139,9 @@ async def test_refresh_returns_new_tokens_and_invalidates_old(
     user_id = next(uuid_generator)
     old_refresh_token = next(bearer_token_generator)
 
-    await redis_client.set(f"{KeyPrefix.REFRESH_TOKEN}:{old_refresh_token}", user_id, ex=REFRESH_TOKEN_EXPIRATION_SECONDS)
+    await redis_client.set(
+        f"{KeyPrefix.REFRESH_TOKEN}:{old_refresh_token}", user_id, ex=REFRESH_TOKEN_EXPIRATION_SECONDS
+    )
 
     response = client.post("/auth/refresh", headers={"X-Refresh-Token": old_refresh_token})
     assert response.status_code == status.HTTP_200_OK

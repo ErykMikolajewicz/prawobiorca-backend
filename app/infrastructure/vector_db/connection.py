@@ -1,4 +1,4 @@
-from typing import Callable, Awaitable
+from typing import Awaitable, Callable
 
 from app.infrastructure.vector_db.qdrant_db import qdrant_client
 

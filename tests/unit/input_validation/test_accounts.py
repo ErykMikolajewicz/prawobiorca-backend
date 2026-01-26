@@ -1,8 +1,8 @@
 import pytest
 from fastapi import status
 
-from tests.consts import STRONG_PASSWORD
 from app.framework.dependencies.accounts import create_account_provider, verify_account_provider
+from tests.consts import STRONG_PASSWORD
 
 
 @pytest.mark.parametrize(

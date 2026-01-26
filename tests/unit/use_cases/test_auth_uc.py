@@ -1,11 +1,12 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+
 from app.application.dtos.account import LoginData
-from app.shared.exceptions import InvalidCredentials, UserCantLog
-from app.shared.enums import TokenType
-from app.application.use_cases.auth import LogUser, RefreshTokens, LogoutUser
+from app.application.use_cases.auth import LogoutUser, LogUser, RefreshTokens
 from app.domain.services.security import Secret
+from app.shared.enums import TokenType
+from app.shared.exceptions import InvalidCredentials, UserCantLog
 
 
 @pytest.fixture
@@ -119,8 +120,10 @@ async def test_log_user_success_no_previous_refresh(
 
     access_tokens_reader.get_refresh_token_by_user.return_value = None
 
-    with patch("app.application.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as check_can_log, \
-         patch("app.application.use_cases.auth.AccessTokensManager") as Manager:
+    with (
+        patch("app.application.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as check_can_log,
+        patch("app.application.use_cases.auth.AccessTokensManager") as Manager,
+    ):
 
         check_can_log.return_value = user_id
 
@@ -156,8 +159,10 @@ async def test_log_user_success_with_previous_refresh_invalidates_old_one(
 
     access_tokens_reader.get_refresh_token_by_user.return_value = previous_refresh
 
-    with patch("app.application.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as check_can_log, \
-         patch("app.application.use_cases.auth.AccessTokensManager") as Manager:
+    with (
+        patch("app.application.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as check_can_log,
+        patch("app.application.use_cases.auth.AccessTokensManager") as Manager,
+    ):
 
         check_can_log.return_value = user_id
 
@@ -184,8 +189,10 @@ async def test_log_user_success_with_previous_refresh_invalidates_old_one(
 async def test_log_user_user_cant_log_calls_prevent_timing_attack_and_raises(
     key_value_repo, access_tokens_reader, users_uow, login_data
 ):
-    with patch("app.application.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as check_can_log, \
-         patch("app.application.use_cases.auth.prevent_timing_attack", new_callable=AsyncMock) as prevent:
+    with (
+        patch("app.application.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as check_can_log,
+        patch("app.application.use_cases.auth.prevent_timing_attack", new_callable=AsyncMock) as prevent,
+    ):
 
         check_can_log.return_value = None
 
