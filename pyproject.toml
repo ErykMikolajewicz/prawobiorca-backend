@@ -1,6 +1,6 @@
 [project]
 name = "prawobiorca-backend"
-version = "0.2.0"
+version = "0.2.1"
 description = "Law acts search engine with AI features."
 readme = "README.md"
 requires-python = ">=3.13"
@@ -41,7 +41,8 @@ test = [
     "psycopg[binary]==3.3.*",
     "pytest==9.0.*",
     "pytest-asyncio==1.3.*",
-    "testcontainers[postgres,redis]==4.14.*"
+    "pytest-cov==7.0.*",
+    "testcontainers[postgres,redis]==4.14.*",
 ]
 
 [tool.pytest.ini_options]
