@@ -1,142 +1,267 @@
-from unittest.mock import ANY, AsyncMock, patch
-
 import pytest
-from fastapi import status
-from pydantic import SecretStr
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.domain.services.security import url_safe_bearer_token_length
+from app.application.dtos.account import LoginData
+from app.shared.exceptions import InvalidCredentials, UserCantLog
 from app.shared.enums import TokenType
-from app.shared.exceptions import InvalidCredentials, UserNotFound
-from tests.consts import STRONG_PASSWORD
-from app.shared.settings.application import app_settings
-
-ACCESS_TOKEN_EXPIRATION_SECONDS = app_settings.ACCESS_TOKEN_EXPIRATION_SECONDS
-REFRESH_TOKEN_EXPIRATION_SECONDS = app_settings.REFRESH_TOKEN_EXPIRATION_SECONDS
+from app.application.use_cases.auth import LogUser, RefreshTokens, LogoutUser
+from app.domain.services.security import Secret
 
 
 @pytest.fixture
-def mock_refresh_token():
-    with patch("app.domain.services.accounts.refresh", new_callable=AsyncMock) as mock:
-        yield mock
+def key_value_repo():
+    return MagicMock()
 
 
 @pytest.fixture
-def mock_log_user():
-    with patch("app.domain.services.accounts.log_user", new_callable=AsyncMock) as mock:
-        yield mock
+def pipeline():
+    p = AsyncMock()
+    p.execute = AsyncMock()
+    return p
 
 
 @pytest.fixture
-def mock_logout_user():
-    with patch("app.domain.services.accounts.logout_user", new_callable=AsyncMock) as mock:
-        yield mock
+def pipeline_context_manager(pipeline):
+    cm = AsyncMock()
+    cm.__aenter__.return_value = pipeline
+    cm.__aexit__.return_value = False
+    return cm
 
 
-def test_login_success(client, mock_log_user, bearer_token_generator):
-    access_token = next(bearer_token_generator)
-    refresh_token = next(bearer_token_generator)
-    mock_log_user.return_value = {
-        "access_token": access_token,
-        "expires_in": REFRESH_TOKEN_EXPIRATION_SECONDS,
+@pytest.fixture
+def key_value_repo_with_pipeline(pipeline_context_manager):
+    repo = MagicMock()
+    repo.pipeline.return_value = pipeline_context_manager
+    return repo
+
+
+@pytest.fixture
+def access_tokens_reader():
+    return AsyncMock()
+
+
+@pytest.fixture
+def users_uow():
+    return AsyncMock()
+
+
+@pytest.fixture
+def login_data():
+    return LoginData(email="example@example", password=Secret("StrongPassword!"))
+
+
+@pytest.fixture
+def tokens_payload():
+    return {
+        "access_token": "access_token_value",
+        "expires_in": 123,
         "token_type": TokenType.BEARER,
-        "refresh_token": refresh_token,
+        "refresh_token": "refresh_token_value",
     }
 
-    data = {"username": "test_user", "password": STRONG_PASSWORD}
-    response = client.post("/auth/login", data=data)
 
-    assert response.status_code == status.HTTP_200_OK
-    result = response.json()
-    assert "access_token" in result
-    assert "expires_in" in result
-    assert "token_type" in result
-    assert result["token_type"] == TokenType.BEARER
-    assert len(result["access_token"]) == url_safe_bearer_token_length
-    mock_log_user.assert_awaited_once_with("test_user", SecretStr(STRONG_PASSWORD), ANY, ANY)
+async def test_refresh_tokens_success(
+    key_value_repo_with_pipeline, pipeline, access_tokens_reader, tokens_payload, uuid_generator
+):
+    refresh_token = "refresh_token_value"
+    user_id = next(uuid_generator)
 
+    access_tokens_reader.get_user_by_refresh_token.return_value = user_id
 
-def test_login_user_not_found(client, mock_log_user):
-    mock_log_user.side_effect = UserNotFound()
+    with patch("app.application.use_cases.auth.AccessTokensManager") as Manager:
+        manager = AsyncMock()
+        Manager.return_value = manager
 
-    data = {"username": "no_user", "password": STRONG_PASSWORD}
-    with patch("asyncio.sleep", new=AsyncMock()) as mock_sleep:
-        response = client.post("/auth/login", data=data)
-        mock_sleep.assert_called()
+        manager.invalidate_refresh_token = AsyncMock()
+        manager.refresh_tokens = AsyncMock(return_value=tokens_payload)
 
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json() == {"detail": "Invalid credentials!"}
-    mock_log_user.assert_awaited_once_with("no_user", SecretStr(STRONG_PASSWORD), ANY, ANY)
+        uc = RefreshTokens(
+            key_value_repo=key_value_repo_with_pipeline,
+            access_tokens_reader=access_tokens_reader,
+            refresh_token=refresh_token,
+        )
 
+        result = await uc.execute()
 
-def test_login_invalid_password(client, mock_log_user):
-    mock_log_user.side_effect = InvalidCredentials()
-    wrong_password = STRONG_PASSWORD
+    assert result == tokens_payload
+    access_tokens_reader.get_user_by_refresh_token.assert_awaited_once_with(refresh_token)
 
-    data = {"username": "test_user", "password": wrong_password}
-    with patch("asyncio.sleep", new=AsyncMock()) as mock_sleep:
-        response = client.post("/auth/login", data=data)
-        mock_sleep.assert_called()
-
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json() == {"detail": "Invalid credentials!"}
-    mock_log_user.assert_awaited_once_with("test_user", SecretStr(wrong_password), ANY, ANY)
+    Manager.assert_called_once_with(pipeline)
+    manager.invalidate_refresh_token.assert_awaited_once_with(refresh_token)
+    manager.refresh_tokens.assert_awaited_once_with(user_id)
+    pipeline.execute.assert_awaited_once()
 
 
-def test_logout_success(client, override_validate_token, mock_logout_user, bearer_token_generator):
-    access_token, user_id = override_validate_token
-    headers = {"Authorization": f"Bearer {access_token}"}
-    response = client.post("/auth/logout", headers=headers)
+async def test_refresh_tokens_invalid_token_raises(key_value_repo, access_tokens_reader):
+    refresh_token = "bad_refresh"
+    key_value_repo.pipeline.assert_not_called()
 
-    assert response.status_code == status.HTTP_204_NO_CONTENT
-    mock_logout_user.assert_awaited_once_with(access_token, user_id, ANY)
+    access_tokens_reader.get_user_by_refresh_token.return_value = None
 
+    uc = RefreshTokens(
+        key_value_repo=key_value_repo,
+        access_tokens_reader=access_tokens_reader,
+        refresh_token=refresh_token,
+    )
 
-def test_logout_invalid_token(client, mock_logout_user, override_validate_token_unauthorized, bearer_token_generator):
-    invalid_access_token = next(bearer_token_generator)
-    headers = {"Authorization": f"Bearer {invalid_access_token}"}
-    response = client.post("/auth/logout", headers=headers)
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    mock_logout_user.assert_not_called()
+    with pytest.raises(InvalidCredentials) as exc:
+        await uc.execute()
 
-
-def test_logout_missing_authorization_header(client, mock_logout_user):
-    response = client.post("/auth/logout")
-
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    mock_logout_user.assert_not_called()
+    assert "Invalid refresh token" in str(exc.value)
+    access_tokens_reader.get_user_by_refresh_token.assert_awaited_once_with(refresh_token)
+    key_value_repo.pipeline.assert_not_called()
 
 
-def test_refresh_success(client, mock_refresh_token, bearer_token_generator):
-    refresh_token = next(bearer_token_generator)
-    headers = {"X-Refresh-Token": refresh_token}
+async def test_log_user_success_no_previous_refresh(
+    key_value_repo_with_pipeline, pipeline, access_tokens_reader, users_uow, login_data, tokens_payload, uuid_generator
+):
+    user_id = next(uuid_generator)
 
-    new_access_token = next(bearer_token_generator)
-    new_refresh_token = next(bearer_token_generator)
-    mock_refresh_token.return_value = {
-        "access_token": new_access_token,
-        "expires_in": REFRESH_TOKEN_EXPIRATION_SECONDS,
-        "token_type": TokenType.BEARER,
-        "refresh_token": new_refresh_token,
-    }
+    access_tokens_reader.get_refresh_token_by_user.return_value = None
 
-    response = client.post("/auth/refresh", headers=headers)
+    with patch("app.application.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as check_can_log, \
+         patch("app.application.use_cases.auth.AccessTokensManager") as Manager:
 
-    assert response.status_code == status.HTTP_200_OK
-    result = response.json()
-    assert set(result.keys()) == {"access_token", "expires_in", "token_type", "refresh_token"}
-    assert result["token_type"] == TokenType.BEARER
-    assert len(result["access_token"]) == url_safe_bearer_token_length
-    assert len(result["refresh_token"]) == url_safe_bearer_token_length
-    mock_refresh_token.assert_awaited_once_with(refresh_token, ANY)
+        check_can_log.return_value = user_id
+
+        manager = AsyncMock()
+        Manager.return_value = manager
+        manager.refresh_tokens = AsyncMock(return_value=tokens_payload)
+        manager.invalidate_refresh_token = AsyncMock()
+
+        uc = LogUser(
+            key_value_repo=key_value_repo_with_pipeline,
+            access_tokens_reader=access_tokens_reader,
+            users_unit_of_work=users_uow,
+            login_data=login_data,
+        )
+
+        result = await uc.execute()
+
+    assert result == tokens_payload
+    check_can_log.assert_awaited_once_with(users_uow, login_data)
+    access_tokens_reader.get_refresh_token_by_user.assert_awaited_once_with(user_id)
+
+    Manager.assert_called_once_with(pipeline)
+    manager.invalidate_refresh_token.assert_not_called()
+    manager.refresh_tokens.assert_awaited_once_with(user_id)
+    pipeline.execute.assert_awaited_once()
 
 
-def test_refresh_invalid_token(client, mock_refresh_token, bearer_token_generator):
-    invalid_refresh_token = next(bearer_token_generator)
-    mock_refresh_token.side_effect = InvalidCredentials()
-    headers = {"X-Refresh-Token": invalid_refresh_token}
+async def test_log_user_success_with_previous_refresh_invalidates_old_one(
+    key_value_repo_with_pipeline, pipeline, access_tokens_reader, users_uow, login_data, tokens_payload, uuid_generator
+):
+    user_id = next(uuid_generator)
+    previous_refresh = "old_refresh"
 
-    response = client.post("/auth/refresh", headers=headers)
+    access_tokens_reader.get_refresh_token_by_user.return_value = previous_refresh
 
-    assert response.status_code == status.HTTP_401_UNAUTHORIZED
-    assert response.json() == {"detail": "Invalid refresh token!"}
-    mock_refresh_token.assert_awaited_once_with(invalid_refresh_token, ANY)
+    with patch("app.application.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as check_can_log, \
+         patch("app.application.use_cases.auth.AccessTokensManager") as Manager:
+
+        check_can_log.return_value = user_id
+
+        manager = AsyncMock()
+        Manager.return_value = manager
+        manager.invalidate_refresh_token = AsyncMock()
+        manager.refresh_tokens = AsyncMock(return_value=tokens_payload)
+
+        uc = LogUser(
+            key_value_repo=key_value_repo_with_pipeline,
+            access_tokens_reader=access_tokens_reader,
+            users_unit_of_work=users_uow,
+            login_data=login_data,
+        )
+
+        result = await uc.execute()
+
+    assert result == tokens_payload
+    manager.invalidate_refresh_token.assert_awaited_once_with(previous_refresh)
+    manager.refresh_tokens.assert_awaited_once_with(user_id)
+    pipeline.execute.assert_awaited_once()
+
+
+async def test_log_user_user_cant_log_calls_prevent_timing_attack_and_raises(
+    key_value_repo, access_tokens_reader, users_uow, login_data
+):
+    with patch("app.application.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as check_can_log, \
+         patch("app.application.use_cases.auth.prevent_timing_attack", new_callable=AsyncMock) as prevent:
+
+        check_can_log.return_value = None
+
+        uc = LogUser(
+            key_value_repo=key_value_repo,
+            access_tokens_reader=access_tokens_reader,
+            users_unit_of_work=users_uow,
+            login_data=login_data,
+        )
+
+        with pytest.raises(UserCantLog):
+            await uc.execute()
+
+    check_can_log.assert_awaited_once_with(users_uow, login_data)
+    prevent.assert_awaited_once()
+    key_value_repo.pipeline.assert_not_called()
+
+
+async def test_logout_user_success_with_refresh_token(
+    key_value_repo_with_pipeline, pipeline, access_tokens_reader, uuid_generator
+):
+    access_token = "access_token"
+    user_id = next(uuid_generator)
+    refresh_token = "refresh_token"
+
+    access_tokens_reader.get_refresh_token_by_user.return_value = refresh_token
+
+    with patch("app.application.use_cases.auth.AccessTokensManager") as Manager:
+        manager = AsyncMock()
+        Manager.return_value = manager
+        manager.invalidate_refresh_token = AsyncMock()
+        manager.invalidate_refresh_token_user = AsyncMock()
+        manager.invalidate_access_token = AsyncMock()
+
+        use_case = LogoutUser(
+            key_value_repo=key_value_repo_with_pipeline,
+            access_tokens_reader=access_tokens_reader,
+            access_token=access_token,
+            user_id=user_id,
+        )
+
+        await use_case.execute()
+
+    access_tokens_reader.get_refresh_token_by_user.assert_awaited_once_with(user_id)
+    Manager.assert_called_once_with(pipeline)
+
+    manager.invalidate_refresh_token.assert_awaited_once_with(refresh_token)
+    manager.invalidate_refresh_token_user.assert_awaited_once_with(user_id)
+    manager.invalidate_access_token.assert_awaited_once_with(access_token)
+    pipeline.execute.assert_awaited_once()
+
+
+async def test_logout_user_no_refresh_token_still_invalidates_user_and_access(
+    key_value_repo_with_pipeline, pipeline, access_tokens_reader, uuid_generator
+):
+    access_token = "access_token"
+    user_id = next(uuid_generator)
+
+    access_tokens_reader.get_refresh_token_by_user.return_value = None
+
+    with patch("app.application.use_cases.auth.AccessTokensManager"):
+        manager = AsyncMock()
+        manager.invalidate_refresh_token = AsyncMock()
+        manager.invalidate_refresh_token_user = AsyncMock()
+        manager.invalidate_access_token = AsyncMock()
+
+        use_case = LogoutUser(
+            key_value_repo=key_value_repo_with_pipeline,
+            access_tokens_reader=access_tokens_reader,
+            access_token=access_token,
+            user_id=next(uuid_generator),
+        )
+
+        await use_case.execute()
+
+    manager.invalidate_refresh_token.assert_not_called()
+    manager.invalidate_refresh_token_user.assert_awaited_once_with(user_id)
+    manager.invalidate_access_token.assert_awaited_once_with(access_token)
+    pipeline.execute.assert_awaited_once()

@@ -1,57 +1,82 @@
-from unittest.mock import ANY, AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi import status
 
-from app.shared.exceptions import InvalidCredentials, UserExists
-from tests.consts import STRONG_PASSWORD, VALID_EMAIL
-from app.shared.settings.application import app_settings
-
-ACCESS_TOKEN_EXPIRATION_SECONDS = app_settings.ACCESS_TOKEN_EXPIRATION_SECONDS
-REFRESH_TOKEN_EXPIRATION_SECONDS = app_settings.REFRESH_TOKEN_EXPIRATION_SECONDS
+from app.application.dtos.account import LoginData
+from app.shared.exceptions import InvalidCredentials, UserExists, RelationalDbIntegrityError
+from app.application.use_cases.account import CreateAccount, VerifyAccount
+from app.domain.services.security import Secret
 
 
 @pytest.fixture
-def mock_create_account():
-    with patch("app.domain.services.accounts.create_account", new_callable=AsyncMock) as mock_create_account:
-        yield mock_create_account
+def uow_mock():
+    uow = MagicMock()
+    uow.__aenter__ = AsyncMock(return_value=uow)
+    uow.__aexit__ = AsyncMock(return_value=None)
+
+    uow.users = MagicMock()
+    uow.users.add = AsyncMock()
+    uow.users.verify_email = AsyncMock()
+    return uow
 
 
-def test_create_account_success(client, mock_create_account):
-    payload = {"email": VALID_EMAIL, "password": STRONG_PASSWORD}
-
-    response = client.post("/accounts", json=payload)
-
-    assert response.status_code == status.HTTP_201_CREATED
-    mock_create_account.assert_awaited_once()
-
-
-def test_create_account_conflict(client, mock_create_account):
-    mock_create_account.side_effect = UserExists()
-    existing_email = VALID_EMAIL
-    payload = {"email": existing_email, "password": STRONG_PASSWORD}
-
-    response = client.post("/accounts", json=payload)
-
-    assert response.status_code == status.HTTP_409_CONFLICT
-    assert response.json() == {"detail": "User with that email already exist!"}
-    mock_create_account.assert_awaited_once()
+@pytest.fixture
+def token_verifier_mock():
+    verifier = MagicMock()
+    verifier.get_user_id_by_token = AsyncMock()
+    verifier.invalidate_token = AsyncMock()
+    return verifier
 
 
-async def test_verify_account_success(client, mock_verify_account_email, email_token_generator):
-    verification_token = next(email_token_generator)
-    response = client.get(f"/accounts/verify/{verification_token}")
+async def test_create_account_success(uow_mock):
+    password = Secret("StrongPass123!")
+    data = LoginData(email="test@example.com", password=password)
 
-    assert response.status_code == status.HTTP_204_NO_CONTENT
-    mock_verify_account_email.assert_awaited_once_with(verification_token, ANY, ANY)
+    with patch("app.application.use_cases.account.hash_password", return_value="hashed") as hp:
+        use_case = CreateAccount(users_unit_of_work=uow_mock, account_data=data)
+        await use_case.execute()
+
+    hp.assert_called_once_with(data.password)
+    uow_mock.users.add.assert_awaited_once_with(
+        {"email": data.email, "hashed_password": "hashed"}
+    )
 
 
-async def test_verify_account_invalid_token(client, mock_verify_account_email, email_token_generator):
-    verification_token = next(email_token_generator)
-    mock_verify_account_email.side_effect = InvalidCredentials()
+async def test_create_account_conflict_raises_user_exists(uow_mock):
+    password = Secret("StrongPass123!")
+    data = LoginData(email="test@example.com", password=password)
+    uow_mock.users.add.side_effect = RelationalDbIntegrityError()
 
-    response = client.get(f"/accounts/verify/{verification_token}")
+    with patch("app.application.use_cases.account.hash_password", return_value="hashed"):
+        use_case = CreateAccount(users_unit_of_work=uow_mock, account_data=data)
 
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.json() == {"detail": "Invalid verification token!"}
-    mock_verify_account_email.assert_awaited_once_with(verification_token, ANY, ANY)
+        with pytest.raises(UserExists):
+            await use_case.execute()
+
+    uow_mock.users.add.assert_awaited_once()
+
+
+async def test_verify_account_success(uow_mock, token_verifier_mock):
+    token_verifier_mock.get_user_id_by_token.return_value = 123
+
+    use_case = VerifyAccount(email_token_verifier=token_verifier_mock, users_unit_of_work=uow_mock)
+    await use_case.execute()
+
+    token_verifier_mock.get_user_id_by_token.assert_awaited_once()
+    uow_mock.users.verify_email.assert_awaited_once_with(123)
+    token_verifier_mock.invalidate_token.assert_awaited_once()
+
+
+async def test_verify_account_invalid_token_raises_invalid_credentials(uow_mock, token_verifier_mock):
+    token_verifier_mock.get_user_id_by_token.return_value = None
+
+    use_case = VerifyAccount(email_token_verifier=token_verifier_mock, users_unit_of_work=uow_mock)
+
+    with pytest.raises(InvalidCredentials) as exc:
+        await use_case.execute()
+
+    assert "Invalid email verification token!" in str(exc.value)
+
+    uow_mock.users.verify_email.assert_not_awaited()
+    token_verifier_mock.invalidate_token.assert_not_awaited()
+
