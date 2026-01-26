@@ -13,4 +13,4 @@ def test_add_user_file_missing_file_field(
 
     response = client.post("/user/files", headers=headers, files={})
 
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT

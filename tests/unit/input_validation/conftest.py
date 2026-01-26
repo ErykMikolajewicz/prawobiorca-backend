@@ -1,11 +1,9 @@
 from unittest.mock import AsyncMock
 
 import pytest
-from fastapi import HTTPException, Request, status
+from fastapi import Request
 
 from app.framework.dependencies.authentication import validate_token
-from app.framework.dependencies.file_storage import get_file_storage
-from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 from main import app
 
 

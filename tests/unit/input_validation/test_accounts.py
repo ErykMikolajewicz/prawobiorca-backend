@@ -21,7 +21,7 @@ def test_create_account_weak_passwords(client, assure_use_case_not_executed, pas
 
     response = client.post("/accounts", json=payload)
 
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     assert error_detail in response.text
 
 
@@ -46,7 +46,7 @@ def test_create_account_invalid_email(client, assure_use_case_not_executed, emai
 
     response = client.post("/accounts", json=payload)
 
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
     assert '"detail":[{"type":"value_error","loc":["body","email"]' in response.text
 
 
@@ -59,4 +59,4 @@ async def test_verify_account_invalid_token_length(client, assure_use_case_not_e
 
     response = client.post(f"/accounts/verify/{verification_token}")
 
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT

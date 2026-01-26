@@ -8,7 +8,7 @@ def test_refresh_missing_header(client, assure_use_case_not_executed):
 
     response = client.post("/auth/refresh")
 
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
 
 def test_refresh_empty_token(client, assure_use_case_not_executed):
@@ -17,4 +17,4 @@ def test_refresh_empty_token(client, assure_use_case_not_executed):
     headers = {"X-Refresh-Token": ""}
     response = client.post("/auth/refresh", headers=headers)
 
-    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT

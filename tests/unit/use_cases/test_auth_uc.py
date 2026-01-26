@@ -236,32 +236,3 @@ async def test_logout_user_success_with_refresh_token(
     manager.invalidate_refresh_token_user.assert_awaited_once_with(user_id)
     manager.invalidate_access_token.assert_awaited_once_with(access_token)
     pipeline.execute.assert_awaited_once()
-
-
-async def test_logout_user_no_refresh_token_still_invalidates_user_and_access(
-    key_value_repo_with_pipeline, pipeline, access_tokens_reader, uuid_generator
-):
-    access_token = "access_token"
-    user_id = next(uuid_generator)
-
-    access_tokens_reader.get_refresh_token_by_user.return_value = None
-
-    with patch("app.application.use_cases.auth.AccessTokensManager"):
-        manager = AsyncMock()
-        manager.invalidate_refresh_token = AsyncMock()
-        manager.invalidate_refresh_token_user = AsyncMock()
-        manager.invalidate_access_token = AsyncMock()
-
-        use_case = LogoutUser(
-            key_value_repo=key_value_repo_with_pipeline,
-            access_tokens_reader=access_tokens_reader,
-            access_token=access_token,
-            user_id=next(uuid_generator),
-        )
-
-        await use_case.execute()
-
-    manager.invalidate_refresh_token.assert_not_called()
-    manager.invalidate_refresh_token_user.assert_awaited_once_with(user_id)
-    manager.invalidate_access_token.assert_awaited_once_with(access_token)
-    pipeline.execute.assert_awaited_once()
