@@ -18,8 +18,8 @@ def create_account_provider() -> type[CreateAccount]:
 
 def get_create_account(
     account_data: AccountCreate,
-    users_unit_of_work: UsersUnitOfWork = Depends(get_users_unit_of_work),
-    create_account: type[CreateAccount] = Depends(create_account_provider),
+    users_unit_of_work: Annotated[UsersUnitOfWork, Depends(get_users_unit_of_work)],
+    create_account: Annotated[type[CreateAccount], Depends(create_account_provider)],
 ) -> CreateAccount:
     email = account_data.email
     email = str(email)
@@ -39,6 +39,6 @@ def verify_account_provider() -> type[VerifyAccount]:
 def get_verify_account(
     email_token_verifier: Annotated[EmailTokenVerifier, Depends(get_email_token_verifier)],
     users_unit_of_work: Annotated[UsersUnitOfWork, Depends(get_users_unit_of_work)],
-    verify_account: type[VerifyAccount] = Depends(verify_account_provider),
+    verify_account: Annotated[type[VerifyAccount], Depends(verify_account_provider)],
 ):
     return verify_account(email_token_verifier, users_unit_of_work)

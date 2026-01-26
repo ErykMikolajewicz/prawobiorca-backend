@@ -137,8 +137,11 @@ else:
 ---
 
 ## Formatting Tools
-Before every commit, first run isort to arrange imports in alphabetical order, then black
-to ensure proper formatting.
+Before every commit, first run script before_mmit.sh
+It will:
+- Check for security vulnerability with bandit;
+- Use ruff, to format your code, and check some writing rules;
+- Run unit tests.
 
 ---
 

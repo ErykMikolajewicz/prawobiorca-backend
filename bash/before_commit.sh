@@ -1,5 +1,4 @@
 bandit -r app/
 read -p "Press Enter, to continue."
-isort .
-black .
+ruff check .
 python -m pytest tests/unit

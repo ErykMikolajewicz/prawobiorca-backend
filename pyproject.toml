@@ -1,6 +1,6 @@
 [project]
 name = "prawobiorca-backend"
-version = "0.2.1"
+version = "0.3.0"
 description = "Law acts search engine with AI features."
 readme = "README.md"
 requires-python = ">=3.13"
@@ -23,6 +23,7 @@ dev = [
     "black==26.1.*",
     "granian[reload]==2.6.*",
     "isort==7.0.*",
+    "ruff==0.14.*",
 ]
 docs = [
     "mkdocs==1.6.*",
@@ -68,3 +69,16 @@ exclude = '''
 
 [tool.isort]
 skip = ["alembic", ".venv"]
+
+
+[tool.ruff]
+line-length = 120
+target-version = "py313"
+
+exclude = [
+    "alembic",
+]
+
+[tool.ruff.lint]
+select = ["I", "E", "F", "B"]
+ignore = ["B904"]

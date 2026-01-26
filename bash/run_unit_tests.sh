@@ -1,1 +1,0 @@
-.venv/bin/python -m pytest --cov=app tests/unit

@@ -14,7 +14,7 @@ def add_user_file_provider() -> type[AddUserFile]:
 async def get_add_user_file(
     user_file: UploadFile,
     storage_repository: Annotated[StorageRepository, Depends(get_file_storage)],
-    add_user_file: type[AddUserFile] = Depends(add_user_file_provider),
+    add_user_file: Annotated[type[AddUserFile], Depends(add_user_file_provider)],
 ) -> AddUserFile:
     file_bytes = await user_file.read()
     file_name = user_file.filename

@@ -41,6 +41,3 @@ async def check_relational_db_connection() -> Callable[..., Awaitable[None]]:
 
 class Base(DeclarativeBase):
     pass
-
-
-import time

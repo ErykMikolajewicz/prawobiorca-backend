@@ -19,16 +19,7 @@ mkdocs serve
 
 - Write your code to a feature branch.
 
-- Format code in repo:
-```bash
-isort .
-black .
-```
-
-- run unit tests via:
-```bash
-python -m pytest tests/unit
-```
+- Run script bash/before_commit.sh
 
 - If everything work push your code to repo, remember to do it on a feature branch, and call me (Eryk Mikołajewicz) about code review
 

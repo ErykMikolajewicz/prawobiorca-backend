@@ -37,10 +37,10 @@ def refresh_tokens_provider() -> type[RefreshTokens]:
 def get_refresh_tokens(
     access_tokens_reader: Annotated[AccessTokensReader, Depends(get_access_tokens_reader)],
     key_value_repo: Annotated[Redis, Depends(get_key_value_repository)],
+    refresh_tokens: Annotated[type[RefreshTokens], Depends(refresh_tokens_provider)],
     refresh_token: str = Header(
         alias="X-Refresh-Token", min_length=url_safe_bearer_token_length, max_length=url_safe_bearer_token_length
-    ),
-    refresh_tokens: type[RefreshTokens] = Depends(refresh_tokens_provider),
+    )
 ) -> RefreshTokens:
     return refresh_tokens(key_value_repo, access_tokens_reader, refresh_token)
 
@@ -64,8 +64,8 @@ def get_log_user(
     authentication_data: Annotated[OAuth2PasswordRequestForm, Depends(OAuth2PasswordRequestForm)],
     access_tokens_reader: Annotated[AccessTokensReader, Depends(get_access_tokens_reader)],
     key_value_repo: Annotated[Redis, Depends(get_key_value_repository)],
-    users_unit_of_work: UsersUnitOfWork = Depends(get_users_unit_of_work),
-    log_user: type[LogUser] = Depends(log_user_provider),
+    users_unit_of_work: Annotated[UsersUnitOfWork, Depends(get_users_unit_of_work)],
+    log_user: Annotated[type[LogUser], Depends(log_user_provider)],
 ) -> LogUser:
     email = authentication_data.username
     password = authentication_data.password

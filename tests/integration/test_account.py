@@ -53,7 +53,7 @@ async def test_verify_account_email_success(
 
     user = await user_repository.get_by_email(VALID_EMAIL)
     try:
-        assert user.is_email_verified == True
+        assert user.is_email_verified
     finally:
         await user_repository.delete(user_id)
         await redis_client.delete(email_verification_key)

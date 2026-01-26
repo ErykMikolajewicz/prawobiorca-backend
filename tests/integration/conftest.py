@@ -7,20 +7,20 @@ and dependency overrides for FastAPI, ensuring test isolation.
 # The justification for the applied solutions is in the mkdocs documentation.
 from typing import AsyncGenerator, Generator
 
+import alembic.command
+import alembic.config
 import pytest
 from redis.asyncio import ConnectionPool, Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
 from testcontainers.redis import RedisContainer
 
-import alembic.command
-import alembic.config
 from app.framework.dependencies.key_value_repository import get_key_value_repository
 from app.infrastructure.relational_db.connection import get_relational_session
 from main import app
 
-REDIS_IMAGE_VERSION = "redis:8.0"
-POSTGRES_IMAGE_VERSION = "postgres:17.5"
+REDIS_IMAGE_VERSION = "redis:8"
+POSTGRES_IMAGE_VERSION = "postgres:18"
 
 
 @pytest.fixture(scope="session", autouse=True)

@@ -1,7 +1,5 @@
 from typing import List, Optional, Protocol
 
-from fastapi import UploadFile
-
 
 class StorageRepository(Protocol):
     async def upload_file(self, file_bytes: bytes, file_name: str): ...
