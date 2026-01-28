@@ -8,6 +8,11 @@
 uv sync --all-groups
 ```
 
+- Run script to set commit hook
+```bash
+git config core.hooksPath .githooks
+```
+
 - Open docs via command:
 ```bash
 mkdocs serve
@@ -18,8 +23,6 @@ mkdocs serve
 - Read about project architecture, especially codding rules
 
 - Write your code to a feature branch.
-
-- Run script bash/before_commit.sh
 
 - If everything work push your code to repo, remember to do it on a feature branch, and call me (Eryk Mikołajewicz) about code review
 

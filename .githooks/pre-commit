@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+ruff check .
+ruff format
+
+python -m pytest tests/unit
+
+git add -u
