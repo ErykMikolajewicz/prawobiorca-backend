@@ -2,6 +2,7 @@ from pathlib import Path
 from typing import Optional
 
 import aiofiles
+import aiofiles.os
 
 from app.shared.exceptions import FileNameExist
 
@@ -15,16 +16,32 @@ class LocalFileStorage:
         if file_path.exists():
             raise FileNameExist
         async with aiofiles.open(file_path, "wb") as file:
-            file.write(file_bytes)
+            await file.write(file_bytes)
 
     async def delete_file(self, file_name: str) -> None:
-        raise NotImplementedError
+        file_path = self._files_dir / file_name
+        await aiofiles.os.remove(file_path)
 
     async def get_file(self, file_name: str) -> bytes:
-        raise NotImplementedError
+        file_path = self._files_dir / file_name
+        async with aiofiles.open(file_path, "rb") as file:
+            bytes_read = await file.read()
+            
+        return bytes_read
 
     async def list_files(
         self,
         prefix: Optional[str] = None,
     ) -> list[str]:
-        raise NotImplementedError
+        
+        if prefix:
+            file_path = self._files_dir / prefix
+        
+        else:
+            file_path = self._files_dir
+
+        filenames = []
+        for file in file_path.iterdir():
+            filenames.append(file.name)
+            
+        return filenames

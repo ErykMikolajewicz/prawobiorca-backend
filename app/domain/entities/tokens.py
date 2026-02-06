@@ -3,9 +3,9 @@ from dataclasses import dataclass
 from app.shared.enums import TokenType
 
 
-@dataclass
+@dataclass(frozen=True)
 class RefreshTokenData:
     access_token: str
     refresh_token: str
     expires_in: int
-    token_type: TokenType.BEARER
+    token_type: TokenType
