@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -eu pipefail
 
-ruff check .
+ruff check . --fix
 ruff format
 
 python -m pytest tests/unit
