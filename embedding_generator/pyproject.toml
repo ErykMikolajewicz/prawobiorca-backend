@@ -1,0 +1,12 @@
+[project]
+name = "embedding_generator"
+version = "0.1.0"
+description = "Benchmark for various options of deploying embedding models."
+requires-python = "==3.13.*"
+dependencies = [
+    "fastapi==0.128.*",
+    "pydantic-settings==2.12.*",
+    "uvicorn==0.40.*",
+    "onnxruntime==1.24.*",
+    "transformers==5.1.*"
+]

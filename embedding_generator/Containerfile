@@ -1,0 +1,25 @@
+FROM python:3.13-slim-trixie
+
+WORKDIR /embedding_generator
+
+RUN pip install --no-cache-dir uv
+
+COPY pyproject.toml pyproject.toml
+
+RUN uv sync --no-cache
+
+COPY model_download.py model_download.py
+
+RUN .venv/bin/python model_download.py
+
+RUN useradd -r embedding_generator
+
+USER embedding_generator
+
+COPY src src
+
+EXPOSE 8000
+
+ENV PATH="/embedding_generator/.venv/bin:$PATH"
+
+ENTRYPOINT ["uvicorn", "--port", "8080", "--host", "0.0.0.0", "src.main:app"]
