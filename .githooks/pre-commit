@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -eu pipefail
+
+ruff check . --fix
+ruff format
+
+python -m pytest tests/unit
+
+git add -u

@@ -6,7 +6,7 @@ class TokenType(StrEnum):
 
 
 class KeyPrefix(StrEnum):
-    ACCESS_TOKEN = "access_token"  # nosec
-    USER_REFRESH_TOKEN = "user_refresh_token"  # nosec
-    REFRESH_TOKEN = "refresh_token"  # nosec
-    EMAIL_VERIFICATION_TOKEN = "email_verification_token"  # nosec
+    ACCESS_TOKEN = "access_token"  # noqa: S105
+    USER_REFRESH_TOKEN = "user_refresh_token"  # noqa: S105
+    REFRESH_TOKEN = "refresh_token"  # noqa: S105
+    EMAIL_VERIFICATION_TOKEN = "email_verification_token" # noqa: S105
