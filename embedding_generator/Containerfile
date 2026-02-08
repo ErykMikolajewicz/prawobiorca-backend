@@ -18,7 +18,7 @@ USER embedding_generator
 
 COPY src src
 
-EXPOSE 8000
+EXPOSE 8080
 
 ENV PATH="/embedding_generator/.venv/bin:$PATH"
 
