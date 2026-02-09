@@ -10,6 +10,7 @@ from app.infrastructure.file_storage.connection import check_file_storage_connec
 from app.infrastructure.key_value_db.connection import check_key_value_db_connection
 from app.infrastructure.relational_db.connection import check_relational_db_connection
 from app.infrastructure.vector_db.connection import check_vector_db_connection
+from app.infrastructure.embeddings.initialization import init_http_client
 from app.shared.logging_config import setup_logging
 
 logger = logging.getLogger("app")
@@ -36,6 +37,11 @@ async def lifespan(_: FastAPI):
 
         file_storage_closing_callback = await check_file_storage_connection()
         closing_callbacks.insert(0, file_storage_closing_callback)
+
+        http_client, http_closing_callback = await init_http_client()
+        app.state.embedding_client = http_client
+        closing_callbacks.insert(0, http_closing_callback)
+
     except Exception as e:
         logger.critical(f"Can not connect to external service: {e}")
         raise

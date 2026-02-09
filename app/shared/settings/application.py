@@ -2,7 +2,7 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.infrastructure.enums import FileStorageType
+from app.infrastructure.enums import FileStorageType, HttpClientType
 
 
 class ApplicationSettings(BaseSettings):
@@ -12,6 +12,8 @@ class ApplicationSettings(BaseSettings):
     REFRESH_TOKEN_EXPIRATION_SECONDS: int = ...
 
     FILE_STORAGE: FileStorageType = ...
+
+    HTTP_CLIENT: HttpClientType = ...
 
     model_config = SettingsConfigDict(
         env_file=Path(".env"), extra="ignore", case_sensitive=True, frozen=True, env_prefix="APP_"
