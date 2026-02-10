@@ -3,7 +3,8 @@ class UserExists(Exception):
 
 
 class FileNameExist(Exception):
-    pass
+    def __init__(self, filename: str):
+        self.file_name = filename
 
 
 class InvalidCredentials(Exception):
@@ -15,7 +16,8 @@ class UserNotFound(Exception):
 
 
 class EmptyFileException(Exception):
-    pass
+    def __init__(self, filename: str):
+        self.file_name = filename
 
 
 class RelationalDbIntegrityError(Exception):

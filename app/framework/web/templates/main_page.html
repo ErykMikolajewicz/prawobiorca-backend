@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lista plików</title>
+  </head>
+  <body>
+    {% if error_message %}
+      <p role="alert" style="color: #b00020;">
+        {{ error_message }}
+      </p>
+    {% endif %}
+
+    <h1>Lista plików</h1>
+
+    {% if files %}
+      <ul>
+        {% for name in files %}
+          <li>{{ name }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Brak plików.</p>
+    {% endif %}
+
+  <hr />
+
+  <h2>Dodaj plik</h2>
+  <form method="post" action="/files" enctype="multipart/form-data">
+    <input type="file" name="file" />
+    <button type="submit">Wyślij</button>
+  </form>
+
+  </body>
+</html>

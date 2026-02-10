@@ -3,8 +3,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.application.use_cases.user_files import AddUserFile
-from app.framework.dependencies.user_files import get_add_user_file
+from app.application.use_cases.files import AddFile
+from app.framework.dependencies.files import get_add_file
 from app.shared.exceptions import EmptyFileException, FileNameExist, FileNameNotProvided
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ user_files_router = APIRouter(prefix="/user", tags=["user files"])
         status.HTTP_409_CONFLICT: {"description": "File with that name already exist!"},
     },
 )
-async def add_user_file(add_user_file_: Annotated[AddUserFile, Depends(get_add_user_file)]):
+async def add_user_file(add_user_file_: Annotated[AddFile, Depends(get_add_file)]):
     try:
         await add_user_file_.execute()
     except EmptyFileException:

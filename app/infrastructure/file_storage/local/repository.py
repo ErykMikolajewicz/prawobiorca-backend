@@ -14,7 +14,7 @@ class LocalFileStorage:
     async def upload_file(self, file_bytes: bytes, file_name: str):
         file_path = self._files_dir / file_name
         if file_path.exists():
-            raise FileNameExist
+            raise FileNameExist(file_name)
         async with aiofiles.open(file_path, "wb") as file:
             await file.write(file_bytes)
 

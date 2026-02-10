@@ -4,6 +4,7 @@ import tomllib
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.framework.api.router import include_all_routers
 from app.infrastructure.file_storage.connection import check_file_storage_connection
@@ -12,6 +13,7 @@ from app.infrastructure.relational_db.connection import check_relational_db_conn
 from app.infrastructure.vector_db.connection import check_vector_db_connection
 from app.infrastructure.embeddings.initialization import init_http_client
 from app.shared.logging_config import setup_logging
+from app.shared.settings.application import app_settings
 
 logger = logging.getLogger("app")
 with open("pyproject.toml", "rb") as f:
@@ -62,6 +64,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan, title="PRAWOBIORCA", version=version)
+app.add_middleware(SessionMiddleware, secret_key=app_settings.SESSION_KEY.get_secret_value())
 
 setup_logging()
 include_all_routers(app)
