@@ -17,7 +17,13 @@
     {% if files %}
       <ul>
         {% for name in files %}
-          <li>{{ name }}</li>
+          <li>
+            {{ name }}
+            <form action="/files/search" method="get" style="display: inline;">
+              <input type="hidden" name="filename" value="{{ name }}" />
+              <button type="submit">Szukaj</button>
+            </form>
+          </li>
         {% endfor %}
       </ul>
     {% else %}
