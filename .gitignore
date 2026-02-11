@@ -15,3 +15,5 @@ wheels/
 
 .idea
 /secrets/
+
+tmp
