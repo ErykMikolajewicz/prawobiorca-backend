@@ -13,8 +13,8 @@ from app.application.use_cases.extraction import extract_text
 from dotenv import load_dotenv
 from pathlib import Path
 
-
-def _extract_document()->list:
+def _divide_document()->list:
+    """Returns a list where each element is one chapter of the document"""
     load_dotenv()
     doc_path = Path(os.environ['PWR_REGULAMIN_PDF_URL'])
     doc_str = extract_text(doc_path)
@@ -30,11 +30,11 @@ def _extract_document()->list:
 
 logger = logging.getLogger(__name__)
 
-extract_document_router = APIRouter(
+divide_document_router = APIRouter(
     prefix="/test",
     tags=["test"],
 )
 
-@extract_document_router.get('/extract_document')
-async def extract_document()->list:
-    return _extract_document()
+@divide_document_router.get('/divide_document')
+async def divide_document()->list:
+    return _divide_document()
