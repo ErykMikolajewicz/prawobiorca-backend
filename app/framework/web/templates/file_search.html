@@ -10,6 +10,12 @@
 
     <h1>Przeszukaj plik: {{ filename }}</h1>
 
+    {% if error_message %}
+      <div role="alert" style="padding: 12px; border: 1px solid #c00; background: #fee; color: #900; margin: 12px 0;">
+        <strong>Błąd:</strong> {{ error_message }}
+      </div>
+    {% endif %}
+
     <form method="post">
       <label for="query">Twoje zapytanie:</label>
       <input type="text" id="query" name="query" placeholder="Wpisz treść..." required />
@@ -28,6 +34,5 @@
       <hr />
       <p>Brak wyników dla zapytania: "{{ query }}"</p>
     {% endif %}
-
   </body>
 </html>

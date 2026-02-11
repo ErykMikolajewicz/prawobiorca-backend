@@ -8,3 +8,7 @@ class FileStorageType(StrEnum):
 
 class HttpClientType(StrEnum):
     HTTPX = "HTTPX"
+
+
+class VectorDBType(StrEnum):
+    QDRANT = "QDRANT"

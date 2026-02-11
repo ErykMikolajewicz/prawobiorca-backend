@@ -3,7 +3,7 @@ from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic.types import SecretStr
 
-from app.infrastructure.enums import FileStorageType, HttpClientType
+from app.infrastructure.enums import FileStorageType, HttpClientType, VectorDBType
 
 
 class ApplicationSettings(BaseSettings):
@@ -15,6 +15,8 @@ class ApplicationSettings(BaseSettings):
     REFRESH_TOKEN_EXPIRATION_SECONDS: int = ...
 
     FILE_STORAGE: FileStorageType = ...
+
+    VECTOR_DB: VectorDBType = ...
 
     HTTP_CLIENT: HttpClientType = ...
 
