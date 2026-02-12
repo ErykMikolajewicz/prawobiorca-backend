@@ -1,11 +1,8 @@
-<!doctype html>
-<html lang="pl">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Wyszukiwanie: {{ filename }}</title>
-  </head>
-  <body>
+{% extends "base.html" %}
+
+{% block title %}Przeszukiwanie: {{ filename }}{% endblock %}
+
+{% block content %}
     <p><a href="/">← Powrót do listy plików</a></p>
 
     <h1>Przeszukaj plik: {{ filename }}</h1>
@@ -19,7 +16,7 @@
     <form method="post">
       <label for="query">Twoje zapytanie:</label>
       <input type="text" id="query" name="query" placeholder="Wpisz treść..." required />
-      <button type="submit">Szukaj</button>
+      <button type="submit">Przeszukaj</button>
     </form>
 
     {% if results %}
@@ -34,5 +31,4 @@
       <hr />
       <p>Brak wyników dla zapytania: "{{ query }}"</p>
     {% endif %}
-  </body>
-</html>
+{% endblock %}
