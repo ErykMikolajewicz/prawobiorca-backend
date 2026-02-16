@@ -1,7 +1,6 @@
 from typing import Awaitable, Callable, Any
 
-from app.infrastructure.enums import HttpClientType
-from app.shared.settings.application import app_settings
+from app.shared.settings.application import HttpClientType, app_settings
 
 
 async def init_http_client() -> tuple[Any, Callable[..., Awaitable[None]]]:

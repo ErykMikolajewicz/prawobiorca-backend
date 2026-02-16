@@ -1,9 +1,21 @@
+from enum import StrEnum
 from pathlib import Path
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic.types import SecretStr
 
-from app.infrastructure.enums import FileStorageType, HttpClientType, VectorDBType
+
+class FileStorageType(StrEnum):
+    GOOGLE_CLOUD = "GOOGLE_CLOUD"
+    LOCAL_FILES = "LOCAL_FILES"
+
+
+class HttpClientType(StrEnum):
+    HTTPX = "HTTPX"
+
+
+class VectorDBType(StrEnum):
+    QDRANT = "QDRANT"
 
 
 class ApplicationSettings(BaseSettings):

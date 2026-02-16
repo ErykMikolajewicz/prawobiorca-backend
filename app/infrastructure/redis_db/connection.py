@@ -2,7 +2,7 @@ from typing import Awaitable, Callable
 
 import redis.asyncio as redis
 
-from app.infrastructure.key_value_db.redis_db import redis_pool
+from app.infrastructure.redis_db.redis_db import redis_pool
 
 
 async def check_key_value_db_connection() -> Callable[..., Awaitable[None]]:

@@ -35,7 +35,7 @@ def test_create_account_weak_passwords(client, assure_use_case_not_executed, pas
         "",
         "a",
         "foo@.com",
-        "@no-local-part.com",
+        "@no-local_storage-part.com",
         "user@@domain.com",
     ],
 )

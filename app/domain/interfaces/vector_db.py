@@ -2,7 +2,7 @@ from typing import Protocol
 from uuid import UUID
 
 
-class VectorDBRepository(Protocol):
+class RegulationsRepository(Protocol):
     async def add_point(
         self, 
         point_id: UUID, 

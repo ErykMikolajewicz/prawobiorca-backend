@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 
-from app.domain.interfaces.vector_db import VectorDBRepository
+from app.domain.interfaces.vector_db import RegulationsRepository
 from app.domain.ports.embeddings import EmbeddingPort
 
 
 @dataclass
 class SearchFile:
     embedding_port: EmbeddingPort
-    vector_db_repository: VectorDBRepository
+    vector_db_repository: RegulationsRepository
     query: str
 
     async def execute(self) -> list[dict]:

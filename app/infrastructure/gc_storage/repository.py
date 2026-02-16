@@ -6,7 +6,7 @@ from google.cloud import storage
 from google.cloud.storage import Blob
 
 from app.shared.consts import DEFAULT_URL_EXPIRY
-from app.shared.settings.file_storage import gc_file_storage_settings
+from app.shared.settings.google_cloud_storage import gc_file_storage_settings
 
 credentials_path = gc_file_storage_settings.STORAGE_CREDENTIALS
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(credentials_path.absolute())

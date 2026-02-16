@@ -6,7 +6,7 @@ from fastapi import status
 from app.domain.services.security import Secret, hash_password
 from app.infrastructure.relational_db.repositories.users import UsersRepository
 from app.shared.enums import KeyPrefix, TokenType
-from app.shared.settings.application import app_settings
+from app.framework.dependencies.file_storage import app_settings
 from tests.consts import STRONG_PASSWORD, VALID_EMAIL
 
 ACCESS_TOKEN_EXPIRATION_SECONDS = app_settings.ACCESS_TOKEN_EXPIRATION_SECONDS

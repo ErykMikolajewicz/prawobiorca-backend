@@ -4,11 +4,10 @@ from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import PointStruct
 from grpc.aio import AioRpcError
 
-from app.domain.interfaces.vector_db import VectorDBRepository
 from app.domain.exceptions import VectorCollectionNotFound
 
 
-class QdrantRepository(VectorDBRepository):
+class QdrantRegulationsRepository:
     def __init__(self, client: AsyncQdrantClient, collection_name: str):
         self._client = client
         self._collection_name = collection_name
@@ -46,7 +45,6 @@ class QdrantRepository(VectorDBRepository):
         results = []
         for point in search_result:
             point = point[1]
-            print(point)
             if point:
                 results.append(point.payload)
         
