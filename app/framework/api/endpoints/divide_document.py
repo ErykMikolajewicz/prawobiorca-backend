@@ -51,12 +51,21 @@ def _divide_document()->list:
     regex_remove_chapter_name = r'(?s)^.*?\n\s*§\s*'
     
     paragraph_regex = r"(?:§\s+\d+\.).+?(?=§\s+\d+\.)"
+    paragraph_groups_regex = r"(?s)(?P<title>§\s+\d+\.\s+.*?\n)(?P<contents>.*?)(?=§\s+\d+\.|\Z)"
+
     
     for i, (nr, title, content) in enumerate(structured_chapters):
-        new_content = re.sub(regex_remove_chapter_name, '§ ', content)
+        new_content = re.sub(regex_remove_chapter_name, '§', content)
   
         # divide chapter into paragraphs
-        paragraphs = re.findall(paragraph_regex, new_content, flags=re.DOTALL | re.MULTILINE)
+        #paragraphs = re.findall(paragraph_regex, new_content, re.DOTALL | re.MULTILINE)
+        paragraphs = []
+        
+        
+        for match in list(re.finditer(paragraph_groups_regex, new_content, re.DOTALL | re.MULTILINE)):
+            paragraph = (match.group('title').replace('\n','').strip(), match.group('contents'))
+            #print(paragraph)
+            paragraphs.append(paragraph)
 
 
         structured_chapters[i] = (nr, title, paragraphs)
