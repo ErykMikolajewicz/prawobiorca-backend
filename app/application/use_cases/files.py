@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass
 
-from app.domain.interfaces.file_storage import StorageRepository
+from app.application.interfaces.file_storage import StorageRepository
 from app.shared.exceptions import EmptyFileException, FileNameExist, FileNameNotProvided
 
 logger = logging.getLogger(__name__)

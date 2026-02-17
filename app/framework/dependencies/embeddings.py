@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends, Request
 from httpx import AsyncClient
 
-from app.domain.ports.embeddings import EmbeddingPort
+from app.application.ports.embeddings import EmbeddingPort
 from app.infrastructure.embeddings.httpx_client.port import HttpxEmbeddingsPort
 from app.shared.settings.embeddings import embeddings_settings
 

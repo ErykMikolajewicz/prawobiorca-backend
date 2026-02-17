@@ -5,8 +5,8 @@ from fastapi import Depends, Form
 from app.application.use_cases.search import SearchFile
 from app.framework.dependencies.embeddings import get_embeddings_port
 from app.framework.dependencies.regulations import get_regulations_repository
-from app.domain.ports.embeddings import EmbeddingPort
-from app.domain.interfaces.vector_db import RegulationsRepository
+from app.application.ports.embeddings import EmbeddingPort
+from app.application.interfaces.vector_db import RegulationsRepository
 
 
 def get_search_file(query: Annotated[str, Form()],

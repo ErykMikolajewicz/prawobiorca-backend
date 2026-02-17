@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from app.domain.interfaces.vector_db import RegulationsRepository
-from app.domain.ports.embeddings import EmbeddingPort
+from app.application.interfaces.vector_db import RegulationsRepository
+from app.application.ports.embeddings import EmbeddingPort
 
 
 @dataclass

@@ -3,10 +3,11 @@ from typing import Annotated
 from fastapi import Depends, Header, HTTPException, Path, Request, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from redis.asyncio.client import Redis
+from pydantic import SecretStr
 
 from app.application.dtos.account import LoginData
 from app.application.use_cases.auth import LogoutUser, LogUser, RefreshTokens
-from app.domain.services.security import Secret, url_safe_bearer_token_length, url_safe_email_verification_token_length
+from app.domain.services.security import url_safe_bearer_token_length, url_safe_email_verification_token_length
 from app.domain.services.tokens import AccessTokensReader, EmailTokenVerifier
 from app.framework.dependencies.key_value_db import get_key_value_repository
 from app.framework.dependencies.units_of_work import get_users_unit_of_work
@@ -69,9 +70,8 @@ def get_log_user(
 ) -> LogUser:
     email = authentication_data.username
     password = authentication_data.password
-    password = Secret(password)
 
-    login_data = LoginData(email, password)
+    login_data = LoginData(email=email, password=SecretStr(password))
     return log_user(key_value_repo, access_tokens_reader, users_unit_of_work, login_data)
 
 

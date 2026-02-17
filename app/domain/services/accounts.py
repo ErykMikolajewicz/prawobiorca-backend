@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 from app.application.dtos.account import LoginData
 from app.domain.services.security import verify_password
@@ -12,7 +11,7 @@ refresh_token_expiration_seconds = app_settings.REFRESH_TOKEN_EXPIRATION_SECONDS
 logger = logging.getLogger(__name__)
 
 
-async def check_user_can_log(users_unit_of_work: UsersUnitOfWork, login_data: LoginData) -> Optional[str]:
+async def check_user_can_log(users_unit_of_work: UsersUnitOfWork, login_data: LoginData) -> str | None:
     email = login_data.email
     async with users_unit_of_work as uof:
         user = await uof.users.get_by_email(email)

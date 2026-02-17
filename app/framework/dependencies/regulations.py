@@ -1,6 +1,6 @@
 from fastapi import Query
 
-from app.domain.interfaces.vector_db import RegulationsRepository
+from app.application.interfaces.vector_db import RegulationsRepository
 from app.shared.settings.application import VectorDBType, app_settings
 
 

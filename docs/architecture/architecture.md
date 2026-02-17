@@ -19,19 +19,20 @@ The following sections of this document contain information about:
 ## Project Structure
 
 The application follows the **Clean Architecture** principles, enforcing separation of concerns and dependency rules. The code is organized into concentric layers, where inner layers contain business logic and are independent of outer layers (infrastructure, frameworks).
+As an intentional architectural decision, an exception has been made for Pydantic. Instead of relying on standard dataclasses across the entire codebase. 
 
 ### `app/domain`
 This folder represents the core of the application and contains the **Enterprise Business Rules**. It is the innermost layer and has no dependencies on other layers.
 - **Entities**: Domain objects with state and behavior.
 - **Value Objects**: Immutable objects defined by their attributes.
 - **Services**: Logic that doesn't naturally fit within a single entity.
-- **Ports & Interfaces**: Abstract definitions for repositories and external services (found in `ports/` and `interfaces/`), implemented by the Infrastructure layer.
 - **Exceptions**: Domain-specific exceptions.
 
 ### `app/application`
 This layer contains the **Application Business Rules**. It orchestrates the flow of data to and from the domain entities and directs those entities to use their Critical Business Rules to achieve the goals of the use case.
 - **Use Cases**: Specific application actions.
-- **DTOs (Data Transfer Objects)**: Data structures used to pass data between the application layer and framework. Use to do not contain business logic part, by framework, like pydantic.
+- **DTOs (Data Transfer Objects)**: Data structures used both in framework fastapi, and as entry input/output structure for use cases.
+- **Ports & Interfaces**: Abstract definitions for repositories and external services (found in `ports/` and `interfaces/`), implemented by the Infrastructure layer.
 
 ### `app/infrastructure`
 This layer acts as an adapter, implementing the interfaces (Ports) defined in the Domain and Application layers. It handles technical details and communication with external systems.

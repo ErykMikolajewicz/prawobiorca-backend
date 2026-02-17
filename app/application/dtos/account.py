@@ -1,9 +1,23 @@
-from dataclasses import dataclass
+import re
+from string import punctuation
 
-from app.domain.services.security import Secret
+from pydantic import BaseModel, EmailStr, Field, SecretStr, field_validator
 
 
-@dataclass
-class LoginData:
-    email: str
-    password: Secret
+class LoginData(BaseModel):
+    email: EmailStr = ...
+    password: SecretStr = Field(min_length=8, max_length=32)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, value: SecretStr):
+        password_str = value.get_secret_value()
+        if not re.search(r"[A-Z]", password_str):
+            raise ValueError("Password must contain at least one uppercase letter.")
+        if not re.search(r"[a-z]", password_str):
+            raise ValueError("Password must contain at least one lowercase letter.")
+        if not re.search(r"[0-9]", password_str):
+            raise ValueError("Password must contain at least one digit.")
+        if not re.search(f"[{re.escape(punctuation)}]", password_str):
+            raise ValueError("Password must contain at least one special character.")
+        return value

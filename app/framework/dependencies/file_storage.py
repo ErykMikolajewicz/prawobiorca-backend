@@ -2,7 +2,7 @@ from typing import Awaitable, Callable
 
 from fastapi.concurrency import run_in_threadpool
 
-from app.domain.interfaces.file_storage import StorageRepository
+from app.application.interfaces.file_storage import StorageRepository
 from app.shared.settings.application import app_settings, FileStorageType
 
 
