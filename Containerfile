@@ -1,6 +1,6 @@
-FROM python:3.13-slim-bookworm AS builder
+FROM python:3.13-trixie
 
-RUN pip install --no-cache uv==0.9.*
+RUN pip install --no-cache uv==0.10.*
 
 RUN useradd -r prawobiorca_app
 
@@ -15,8 +15,6 @@ USER prawobiorca_app
 COPY --chown=prawobiorca_app:prawobiorca_app private.key certificate.crt /prawobiorca/
 
 ENV PATH="/prawobiorca/.venv/bin:$PATH"
-
-COPY --chown=prawobiorca_app:prawobiorca_app .env .env
 
 COPY --chown=prawobiorca_app:prawobiorca_app app app
 COPY --chown=prawobiorca_app:prawobiorca_app main.py main.py

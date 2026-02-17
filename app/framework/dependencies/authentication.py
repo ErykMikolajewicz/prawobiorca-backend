@@ -8,7 +8,7 @@ from app.application.dtos.account import LoginData
 from app.application.use_cases.auth import LogoutUser, LogUser, RefreshTokens
 from app.domain.services.security import Secret, url_safe_bearer_token_length, url_safe_email_verification_token_length
 from app.domain.services.tokens import AccessTokensReader, EmailTokenVerifier
-from app.framework.dependencies.key_value_repository import get_key_value_repository
+from app.framework.dependencies.key_value_db import get_key_value_repository
 from app.framework.dependencies.units_of_work import get_users_unit_of_work
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 

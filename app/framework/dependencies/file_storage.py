@@ -1,17 +1,41 @@
+from typing import Awaitable, Callable
+
+from fastapi.concurrency import run_in_threadpool
+
 from app.domain.interfaces.file_storage import StorageRepository
-from app.infrastructure.enums import FileStorageType
-from app.shared.settings.application import app_settings
+from app.shared.settings.application import app_settings, FileStorageType
 
 
 def get_file_storage() -> StorageRepository:
     match app_settings.FILE_STORAGE:
         case FileStorageType.LOCAL_FILES:
-            from app.infrastructure.file_storage.local.repository import LocalFileStorage
+            from app.infrastructure.local_storage.repository import LocalFileStorage
 
             return LocalFileStorage()
         case FileStorageType.GOOGLE_CLOUD:
-            from app.infrastructure.file_storage.gc.repository import GCSStorageRepository
+            from app.infrastructure.gc_storage.repository import GCSStorageRepository
 
             return GCSStorageRepository()
+        case _:
+            raise Exception(f"Invalid storage configuration {app_settings.FILE_STORAGE} !")
+
+
+async def check_file_storage_connection() -> Callable[..., Awaitable[None]]:
+    match app_settings.FILE_STORAGE:
+        case FileStorageType.LOCAL_FILES:
+
+            async def closing_callback():
+                pass
+
+            return closing_callback
+        case FileStorageType.GOOGLE_CLOUD:
+            from app.infrastructure.gc_storage.repository import storage_client
+
+            await run_in_threadpool(storage_client.list_buckets())
+
+            async def closing_callback():
+                await run_in_threadpool(storage_client.close)
+
+            return closing_callback
         case _:
             raise Exception(f"Invalid storage configuration {app_settings.FILE_STORAGE} !")

@@ -1,6 +1,6 @@
 from httpx import AsyncClient, Limits, Timeout
 
-from app.shared.settings.http_client import httpx_client_settings
+from app.shared.settings.httpx_client import httpx_client_settings
 
 
 client = AsyncClient(

@@ -1,7 +1,7 @@
 import logging
 import logging.config
 
-from app.shared.settings.application import app_settings
+from app.framework.dependencies.file_storage import app_settings
 
 global_logging_level = app_settings.LOGGING_LEVEL
 
