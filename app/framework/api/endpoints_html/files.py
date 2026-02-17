@@ -8,10 +8,10 @@ from app.framework.dependencies.files import get_add_file
 from app.shared.consts import FLASH_KEY
 from app.shared.exceptions import EmptyFileException, FileNameExist, FileNameNotProvided
 
-files_router = APIRouter(tags=["files"])
+html_files_router = APIRouter(tags=["files"])
 
 
-@files_router.post(
+@html_files_router.post(
     "/files"
 )
 async def add_file(add_file_: Annotated[AddFile, Depends(get_add_file)], request: Request):

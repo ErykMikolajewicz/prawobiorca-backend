@@ -9,10 +9,10 @@ from app.shared.exceptions import EmptyFileException, FileNameExist, FileNameNot
 
 logger = logging.getLogger(__name__)
 
-user_files_router = APIRouter(prefix="/user", tags=["user files"])
+files_router = APIRouter(prefix="/user", tags=["user files"])
 
 
-@user_files_router.post(
+@files_router.post(
     "/files",
     status_code=status.HTTP_201_CREATED,
     responses={
@@ -20,9 +20,9 @@ user_files_router = APIRouter(prefix="/user", tags=["user files"])
         status.HTTP_409_CONFLICT: {"description": "File with that name already exist!"},
     },
 )
-async def add_user_file(add_user_file_: Annotated[AddFile, Depends(get_add_file)]):
+async def add_file(add_file_: Annotated[AddFile, Depends(get_add_file)]):
     try:
-        await add_user_file_.execute()
+        await add_file_.execute()
     except EmptyFileException:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="File can not be empty!")
     except FileNameNotProvided:
