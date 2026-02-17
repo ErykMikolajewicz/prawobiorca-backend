@@ -50,13 +50,21 @@ def _divide_document()->list:
     
     regex_remove_chapter_name = r'(?s)^.*?\n\s*§\s*'
     
+    paragraph_regex = r"(?:§\s+\d+\.).+?(?=§\s+\d+\.)"
+    
     for i, (nr, title, content) in enumerate(structured_chapters):
-        new_content = re.sub(regex_remove_chapter_name, '§ ', content, count=1)
-        structured_chapters[i] = (nr, title, new_content)
+        new_content = re.sub(regex_remove_chapter_name, '§ ', content)
+  
+        # divide chapter into paragraphs
+        paragraphs = re.findall(paragraph_regex, new_content, flags=re.DOTALL | re.MULTILINE)
+
+
+        structured_chapters[i] = (nr, title, paragraphs)
 
     return structured_chapters
     
-        
+
+
 logger = logging.getLogger(__name__)
 
 divide_document_router = APIRouter(
