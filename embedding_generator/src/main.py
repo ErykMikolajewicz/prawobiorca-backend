@@ -1,8 +1,6 @@
 from contextlib import asynccontextmanager
 
-import uvicorn
 from fastapi import FastAPI, Request
-
 from src.models import Embeddings, Texts
 from src.onnx_encoding import OnnxEncoder
 

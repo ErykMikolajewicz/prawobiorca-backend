@@ -4,9 +4,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
+from app.application.dtos.auth import LoginOutput
 from app.application.use_cases.auth import LogoutUser, LogUser, RefreshTokens
 from app.framework.dependencies.authentication import get_log_user, get_logout_user, get_refresh_tokens, validate_token
-from app.application.dtos.auth import LoginOutput
 from app.shared.exceptions import InvalidCredentials, UserCantLog
 
 auth_router = APIRouter(tags=["account"])

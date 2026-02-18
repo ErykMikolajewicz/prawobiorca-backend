@@ -2,8 +2,8 @@ from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException, Path, Request, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from redis.asyncio.client import Redis
 from pydantic import SecretStr
+from redis.asyncio.client import Redis
 
 from app.application.dtos.account import LoginData
 from app.application.use_cases.auth import LogoutUser, LogUser, RefreshTokens
@@ -41,7 +41,7 @@ def get_refresh_tokens(
     refresh_tokens: Annotated[type[RefreshTokens], Depends(refresh_tokens_provider)],
     refresh_token: str = Header(
         alias="X-Refresh-Token", min_length=url_safe_bearer_token_length, max_length=url_safe_bearer_token_length
-    )
+    ),
 ) -> RefreshTokens:
     return refresh_tokens(key_value_repo, access_tokens_reader, refresh_token)
 

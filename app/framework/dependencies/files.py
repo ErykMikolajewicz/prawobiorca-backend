@@ -2,8 +2,8 @@ from typing import Annotated
 
 from fastapi import Depends, UploadFile
 
-from app.application.use_cases.files import AddFile, ListFiles
 from app.application.interfaces.file_storage import StorageRepository
+from app.application.use_cases.files import AddFile, ListFiles
 from app.framework.dependencies.file_storage import get_file_storage
 
 

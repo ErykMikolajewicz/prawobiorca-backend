@@ -1,8 +1,8 @@
 from uuid import UUID
 
+from grpc.aio import AioRpcError
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import PointStruct
-from grpc.aio import AioRpcError
 
 from app.domain.exceptions import VectorCollectionNotFound
 
@@ -12,9 +12,7 @@ class QdrantRegulationsRepository:
         self._client = client
         self._collection_name = collection_name
 
-    async def add_point(
-        self, point_id: UUID, vector: list[float], payload: dict
-    ) -> None:
+    async def add_point(self, point_id: UUID, vector: list[float], payload: dict) -> None:
         await self._client.upsert(
             collection_name=self._collection_name,
             points=[
@@ -47,5 +45,5 @@ class QdrantRegulationsRepository:
             point = point[1]
             if point:
                 results.append(point.payload)
-        
+
         return results

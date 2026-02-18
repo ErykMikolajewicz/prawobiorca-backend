@@ -7,8 +7,9 @@ from app.shared.settings.application import VectorDBType, app_settings
 def get_regulations_repository(filename: str = Query()) -> RegulationsRepository:
     match app_settings.VECTOR_DB:
         case VectorDBType.QDRANT:
-            from app.infrastructure.qdrant_db.repository import QdrantRegulationsRepository
             from app.infrastructure.qdrant_db.connection import qdrant_client
+            from app.infrastructure.qdrant_db.repository import QdrantRegulationsRepository
+
             return QdrantRegulationsRepository(
                 client=qdrant_client,
                 collection_name=filename,

@@ -2,11 +2,11 @@ from typing import Annotated
 
 from fastapi import Depends
 
+from app.application.dtos.account import LoginData
 from app.application.use_cases.account import CreateAccount, VerifyAccount
 from app.domain.services.tokens import EmailTokenVerifier
 from app.framework.dependencies.authentication import get_email_token_verifier
 from app.framework.dependencies.units_of_work import get_users_unit_of_work
-from app.application.dtos.account import LoginData
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 
 

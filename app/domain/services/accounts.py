@@ -2,8 +2,8 @@ import logging
 
 from app.application.dtos.account import LoginData
 from app.domain.services.security import verify_password
-from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 from app.framework.dependencies.file_storage import app_settings
+from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 
 access_token_expiration_seconds = app_settings.ACCESS_TOKEN_EXPIRATION_SECONDS
 refresh_token_expiration_seconds = app_settings.REFRESH_TOKEN_EXPIRATION_SECONDS

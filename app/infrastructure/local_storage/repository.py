@@ -26,22 +26,22 @@ class LocalFileStorage:
         file_path = self._files_dir / file_name
         async with aiofiles.open(file_path, "rb") as file:
             bytes_read = await file.read()
-            
+
         return bytes_read
 
     async def list_files(
         self,
         prefix: Optional[str] = None,
     ) -> list[str]:
-        
+
         if prefix:
             file_path = self._files_dir / prefix
-        
+
         else:
             file_path = self._files_dir
 
         filenames = []
         for file in file_path.iterdir():
             filenames.append(file.name)
-            
+
         return filenames

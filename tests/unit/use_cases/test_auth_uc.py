@@ -4,7 +4,6 @@ import pytest
 
 from app.application.dtos.account import LoginData
 from app.application.use_cases.auth import LogoutUser, LogUser, RefreshTokens
-from app.domain.services.security import Secret
 from app.shared.enums import TokenType
 from app.shared.exceptions import InvalidCredentials, UserCantLog
 
@@ -48,7 +47,7 @@ def users_uow():
 
 @pytest.fixture
 def login_data():
-    return LoginData(email="example@example", password=Secret("StrongPassword!"))
+    return LoginData(email="example@example.com", password="StrongPassword3!")
 
 
 @pytest.fixture
@@ -124,7 +123,6 @@ async def test_log_user_success_no_previous_refresh(
         patch("app.application.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as check_can_log,
         patch("app.application.use_cases.auth.AccessTokensManager") as Manager,
     ):
-
         check_can_log.return_value = user_id
 
         manager = AsyncMock()
@@ -163,7 +161,6 @@ async def test_log_user_success_with_previous_refresh_invalidates_old_one(
         patch("app.application.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as check_can_log,
         patch("app.application.use_cases.auth.AccessTokensManager") as Manager,
     ):
-
         check_can_log.return_value = user_id
 
         manager = AsyncMock()
@@ -193,7 +190,6 @@ async def test_log_user_user_cant_log_calls_prevent_timing_attack_and_raises(
         patch("app.application.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as check_can_log,
         patch("app.application.use_cases.auth.prevent_timing_attack", new_callable=AsyncMock) as prevent,
     ):
-
         check_can_log.return_value = None
 
         uc = LogUser(

@@ -17,12 +17,12 @@ def divide_document(document: bytes) -> list:
     matches = re.finditer(regex_chapter, doc_str, re.MULTILINE)
     chapters = [match.group() for match in matches]
 
-    chapter_titles = [str(re.findall(regex_chapter_title, chapter)[0]).strip() or '' for chapter in chapters]
+    chapter_titles = [str(re.findall(regex_chapter_title, chapter)[0]).strip() or "" for chapter in chapters]
     pure_chapter_titles = []
 
     # formatting list elements to tuple (chapter num, chapter title, contents)
     for i, chapter_title in enumerate(chapter_titles, start=1):
-        pure_title_regex = r'[-–]\s*(.+)'
+        pure_title_regex = r"[-–]\s*(.+)"
         match = re.search(pure_title_regex, chapter_title)
 
         if not match:
@@ -32,20 +32,18 @@ def divide_document(document: bytes) -> list:
 
         pure_chapter_titles.append([i, pure_title])
 
-    structured_chapters = [pure_chapter_titles[i]+[chapters[i]] for i in range(len(chapters))]
+    structured_chapters = [pure_chapter_titles[i] + [chapters[i]] for i in range(len(chapters))]
 
-    regex_remove_chapter_name = r'(?s)^.*?\n\s*§\s*'
+    regex_remove_chapter_name = r"(?s)^.*?\n\s*§\s*"
 
     paragraph_groups_regex = r"(?s)(?P<title>§\s+\d+\.\s+.*?\n)(?P<contents>.*?)(?=§\s+\d+\.|\Z)"
 
-
     for i, (nr, title, content) in enumerate(structured_chapters):
-        new_content = re.sub(regex_remove_chapter_name, '§', content)
-
+        new_content = re.sub(regex_remove_chapter_name, "§", content)
 
         paragraphs = []
         for match in list(re.finditer(paragraph_groups_regex, new_content, re.DOTALL | re.MULTILINE)):
-            paragraph = (match.group('title').replace('\n','').strip(), match.group('contents'))
+            paragraph = (match.group("title").replace("\n", "").strip(), match.group("contents"))
             paragraphs.append(paragraph)
 
         structured_chapters[i] = (nr, title, paragraphs)

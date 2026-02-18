@@ -1,4 +1,4 @@
-from typing import Awaitable, Callable, Any
+from typing import Any, Awaitable, Callable
 
 from app.shared.settings.application import HttpClientType, app_settings
 

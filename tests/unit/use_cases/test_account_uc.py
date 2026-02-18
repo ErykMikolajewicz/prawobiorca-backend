@@ -4,7 +4,6 @@ import pytest
 
 from app.application.dtos.account import LoginData
 from app.application.use_cases.account import CreateAccount, VerifyAccount
-from app.domain.services.security import Secret
 from app.shared.exceptions import InvalidCredentials, RelationalDbIntegrityError, UserExists
 
 
@@ -29,7 +28,7 @@ def token_verifier_mock():
 
 
 async def test_create_account_success(uow_mock):
-    password = Secret("StrongPass123!")
+    password = "StrongPass123!"
     data = LoginData(email="test@example.com", password=password)
 
     with patch("app.application.use_cases.account.hash_password", return_value="hashed") as hp:
@@ -41,7 +40,7 @@ async def test_create_account_success(uow_mock):
 
 
 async def test_create_account_conflict_raises_user_exists(uow_mock):
-    password = Secret("StrongPass123!")
+    password = "StrongPass123!"
     data = LoginData(email="test@example.com", password=password)
     uow_mock.users.add.side_effect = RelationalDbIntegrityError()
 
