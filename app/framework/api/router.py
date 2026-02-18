@@ -7,6 +7,7 @@ from app.framework.api.endpoints.files import files_router
 from app.framework.api.endpoints_html.main_page import main_page_router
 from app.framework.api.endpoints_html.files import html_files_router
 from app.framework.api.endpoints_html.search import search_router
+from app.framework.api.endpoints_html.login import login_router
 
 
 def include_all_routers(app: FastAPI):
@@ -17,3 +18,4 @@ def include_all_routers(app: FastAPI):
     app.include_router(main_page_router)
     app.include_router(html_files_router)
     app.include_router(search_router)
+    app.include_router(login_router)
