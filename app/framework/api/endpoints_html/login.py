@@ -7,3 +7,8 @@ login_router = APIRouter(tags=["login_html"])
 @login_router.get("/login", status_code=status.HTTP_200_OK)
 async def get_login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
+
+
+@login_router.get("/register", status_code=status.HTTP_200_OK)
+async def get_register_page(request: Request):
+    return templates.TemplateResponse("register.html", {"request": request})
