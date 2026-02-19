@@ -12,6 +12,3 @@ class LoginOutput(BaseModel):
     ]
     expires_in: int
     token_type: TokenType
-    refresh_token: Annotated[
-        str, StringConstraints(min_length=url_safe_bearer_token_length, max_length=url_safe_bearer_token_length)
-    ]

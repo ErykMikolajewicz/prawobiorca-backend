@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from app.application.interfaces.users import UsersRepository
+from app.application.interfaces.users import UsersRepository, UsersTokensRepository
 
 
 class AsyncUnitOfWork(Protocol):
@@ -15,3 +15,4 @@ class AsyncUnitOfWork(Protocol):
 
 class UsersUnitOfWork(AsyncUnitOfWork):
     users: UsersRepository
+    users_tokens: UsersTokensRepository

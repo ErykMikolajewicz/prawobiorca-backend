@@ -1,23 +1,25 @@
 import asyncio
 import logging
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 
 from redis.asyncio import Redis
 
 from app.application.dtos.account import LoginData
 from app.application.interfaces.unit_of_work import UsersUnitOfWork
+from app.domain.entities.tokens import AccessTokenData
 from app.domain.exceptions import UserCantLog
 from app.domain.services.accounts import check_user_can_log
-from app.domain.services.security import prevent_timing_attack
+from app.domain.services.security import generate_token, prevent_timing_attack
 from app.domain.services.tokens import AccessTokensManager, AccessTokensReader
+from app.shared.enums import TokenType
 
 logger = logging.getLogger(__name__)
+SESSION_DURATION_SECONDS = 30 * 60
 
 
 @dataclass
 class LogUser:
-    key_value_repo: Redis
-    access_tokens_reader: AccessTokensReader
     users_unit_of_work: UsersUnitOfWork
     login_data: LoginData
 
@@ -29,19 +31,17 @@ class LogUser:
             await prevent_timing_attack(execution_start_time)
             raise UserCantLog
 
-        previous_refresh_token = await self.access_tokens_reader.get_refresh_token_by_user(user_id)
-        if previous_refresh_token is not None:
-            logger.warning("User with existing refresh token logging.")
+        access_token = generate_token()
+        valid_until = datetime.now(timezone.utc) + timedelta(seconds=SESSION_DURATION_SECONDS)
 
-        async with self.key_value_repo.pipeline() as pipeline:
-            access_token_manager = AccessTokensManager(pipeline)
+        async with self.users_unit_of_work as uow:
+            await uow.users_tokens.add_token(user_id, access_token, valid_until)
 
-            if previous_refresh_token is not None:
-                await access_token_manager.invalidate_refresh_token(previous_refresh_token)
-
-            tokens = await access_token_manager.refresh_tokens(user_id)
-            await pipeline.execute()
-        return tokens
+        return AccessTokenData(
+            access_token=access_token,
+            expires_in=SESSION_DURATION_SECONDS,
+            token_type=TokenType.BEARER,
+        )
 
 
 @dataclass

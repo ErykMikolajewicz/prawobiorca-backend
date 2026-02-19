@@ -12,21 +12,18 @@ logger = logging.getLogger(__name__)
 
 
 async def check_user_can_log(users_unit_of_work: UsersUnitOfWork, login_data: LoginData) -> str | None:
-    email = login_data.email
+    username = login_data.username
     async with users_unit_of_work as uof:
-        user = await uof.users.get_by_email(email)
+        user = await uof.users.get_by_username(username)
     if user is None:
         logger.warning("Failed login attempt. User not found!")
-        return None
-
-    if not user.is_email_verified:
-        logger.warning("Failed login attempt. Invalid password!")
         return None
 
     password = login_data.password
     hashed_password = user.hashed_password
     if not verify_password(password, hashed_password):
-        logger.warning("User with not verified email attempt to log!")
+        logger.warning("Failed login attempt. Invalid password!")
+        return None
 
     user_id = user.id
     user_id = str(user_id)

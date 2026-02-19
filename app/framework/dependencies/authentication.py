@@ -13,7 +13,9 @@ from app.framework.dependencies.units_of_work import get_users_unit_of_work
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 
 
-def get_access_tokens_reader(key_value_repo: Annotated[Redis, Depends(get_key_value_repository)]) -> AccessTokensReader:
+def get_access_tokens_reader(
+    key_value_repo: Annotated[Redis, Depends(get_key_value_repository)],
+) -> AccessTokensReader:
     return AccessTokensReader(key_value_repo)
 
 
@@ -36,8 +38,6 @@ def log_user_provider() -> type[LogUser]:
 
 def get_log_user(
     authentication_data: Annotated[OAuth2PasswordRequestForm, Depends(OAuth2PasswordRequestForm)],
-    access_tokens_reader: Annotated[AccessTokensReader, Depends(get_access_tokens_reader)],
-    key_value_repo: Annotated[Redis, Depends(get_key_value_repository)],
     users_unit_of_work: Annotated[UsersUnitOfWork, Depends(get_users_unit_of_work)],
     log_user: Annotated[type[LogUser], Depends(log_user_provider)],
 ) -> LogUser:
@@ -45,7 +45,7 @@ def get_log_user(
     password = authentication_data.password
 
     login_data = LoginData(username=email, password=SecretStr(password))
-    return log_user(key_value_repo, access_tokens_reader, users_unit_of_work, login_data)
+    return log_user(users_unit_of_work, login_data)
 
 
 def get_logout_user(

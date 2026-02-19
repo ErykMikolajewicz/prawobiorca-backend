@@ -1,9 +1,10 @@
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from app.application.dtos.account import LoginData
-from app.application.use_cases.auth import LogoutUser, LogUser
+from app.application.use_cases.auth import SESSION_DURATION_SECONDS, LogoutUser, LogUser
 from app.domain.exceptions import UserCantLog
 from app.shared.enums import TokenType
 
@@ -42,7 +43,11 @@ def access_tokens_reader():
 
 @pytest.fixture
 def users_uow():
-    return AsyncMock()
+    uow = AsyncMock()
+    uow.__aenter__.return_value = uow
+    uow.__aexit__.return_value = False
+    uow.users_tokens = AsyncMock()
+    return uow
 
 
 @pytest.fixture
@@ -54,105 +59,61 @@ def login_data():
 def tokens_payload():
     return {
         "access_token": "access_token_value",
-        "expires_in": 123,
+        "expires_in": SESSION_DURATION_SECONDS,
         "token_type": TokenType.BEARER,
-        "refresh_token": "refresh_token_value",
     }
 
 
-async def test_log_user_success_no_previous_refresh(
-    key_value_repo_with_pipeline, pipeline, access_tokens_reader, users_uow, login_data, tokens_payload, uuid_generator
-):
+async def test_log_user_success(users_uow, login_data, tokens_payload, uuid_generator):
     user_id = next(uuid_generator)
-
-    access_tokens_reader.get_refresh_token_by_user.return_value = None
+    fixed_token = tokens_payload["access_token"]
 
     with (
         patch("app.application.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as check_can_log,
-        patch("app.application.use_cases.auth.AccessTokensManager") as Manager,
+        patch("app.application.use_cases.auth.generate_token", return_value=fixed_token) as generate,
     ):
-        check_can_log.return_value = user_id
+        check_can_log.return_value = str(user_id)
+        before = datetime.now(timezone.utc)
 
-        manager = AsyncMock()
-        Manager.return_value = manager
-        manager.refresh_tokens = AsyncMock(return_value=tokens_payload)
-        manager.invalidate_refresh_token = AsyncMock()
-
-        uc = LogUser(
-            key_value_repo=key_value_repo_with_pipeline,
-            access_tokens_reader=access_tokens_reader,
-            users_unit_of_work=users_uow,
-            login_data=login_data,
-        )
-
+        uc = LogUser(users_unit_of_work=users_uow, login_data=login_data)
         result = await uc.execute()
 
-    assert result == tokens_payload
+        after = datetime.now(timezone.utc)
+
+    assert result.access_token == tokens_payload["access_token"]
+    assert result.expires_in == tokens_payload["expires_in"]
+    assert result.token_type == tokens_payload["token_type"]
+
     check_can_log.assert_awaited_once_with(users_uow, login_data)
-    access_tokens_reader.get_refresh_token_by_user.assert_awaited_once_with(user_id)
+    generate.assert_called_once_with()
+    users_uow.users_tokens.add_token.assert_awaited_once()
 
-    Manager.assert_called_once_with(pipeline)
-    manager.invalidate_refresh_token.assert_not_called()
-    manager.refresh_tokens.assert_awaited_once_with(user_id)
-    pipeline.execute.assert_awaited_once()
-
-
-async def test_log_user_success_with_previous_refresh_invalidates_old_one(
-    key_value_repo_with_pipeline, pipeline, access_tokens_reader, users_uow, login_data, tokens_payload, uuid_generator
-):
-    user_id = next(uuid_generator)
-    previous_refresh = "old_refresh"
-
-    access_tokens_reader.get_refresh_token_by_user.return_value = previous_refresh
-
-    with (
-        patch("app.application.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as check_can_log,
-        patch("app.application.use_cases.auth.AccessTokensManager") as Manager,
-    ):
-        check_can_log.return_value = user_id
-
-        manager = AsyncMock()
-        Manager.return_value = manager
-        manager.invalidate_refresh_token = AsyncMock()
-        manager.refresh_tokens = AsyncMock(return_value=tokens_payload)
-
-        uc = LogUser(
-            key_value_repo=key_value_repo_with_pipeline,
-            access_tokens_reader=access_tokens_reader,
-            users_unit_of_work=users_uow,
-            login_data=login_data,
-        )
-
-        result = await uc.execute()
-
-    assert result == tokens_payload
-    manager.invalidate_refresh_token.assert_awaited_once_with(previous_refresh)
-    manager.refresh_tokens.assert_awaited_once_with(user_id)
-    pipeline.execute.assert_awaited_once()
+    add_args = users_uow.users_tokens.add_token.call_args.args
+    assert add_args[0] == user_id
+    assert add_args[1] == fixed_token
+    valid_until = add_args[2]
+    assert isinstance(valid_until, datetime)
+    assert (
+        before + timedelta(seconds=SESSION_DURATION_SECONDS)
+        <= valid_until
+        <= after + timedelta(seconds=SESSION_DURATION_SECONDS)
+    )
 
 
-async def test_log_user_user_cant_log_calls_prevent_timing_attack_and_raises(
-    key_value_repo, access_tokens_reader, users_uow, login_data
-):
+async def test_log_user_user_cant_log_calls_prevent_timing_attack_and_raises(users_uow, login_data):
     with (
         patch("app.application.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as check_can_log,
         patch("app.application.use_cases.auth.prevent_timing_attack", new_callable=AsyncMock) as prevent,
     ):
         check_can_log.return_value = None
 
-        uc = LogUser(
-            key_value_repo=key_value_repo,
-            access_tokens_reader=access_tokens_reader,
-            users_unit_of_work=users_uow,
-            login_data=login_data,
-        )
+        uc = LogUser(users_unit_of_work=users_uow, login_data=login_data)
 
         with pytest.raises(UserCantLog):
             await uc.execute()
 
     check_can_log.assert_awaited_once_with(users_uow, login_data)
     prevent.assert_awaited_once()
-    key_value_repo.pipeline.assert_not_called()
 
 
 async def test_logout_user_success_with_refresh_token(

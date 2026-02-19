@@ -9,3 +9,10 @@ class RefreshTokenData:
     refresh_token: str
     expires_in: int
     token_type: TokenType
+
+
+@dataclass(frozen=True)
+class AccessTokenData:
+    access_token: str
+    expires_in: int
+    token_type: TokenType
