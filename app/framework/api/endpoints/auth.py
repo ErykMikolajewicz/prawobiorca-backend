@@ -1,13 +1,12 @@
-from dataclasses import asdict
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from starlette import status
 
 from app.application.dtos.auth import LoginOutput
-from app.application.use_cases.auth import LogoutUser, LogUser, RefreshTokens
-from app.domain.exceptions import InvalidCredentials, UserCantLog
-from app.framework.dependencies.authentication import get_log_user, get_logout_user, get_refresh_tokens, validate_token
+from app.application.use_cases.auth import LogoutUser, LogUser
+from app.domain.exceptions import UserCantLog
+from app.framework.dependencies.authentication import get_log_user, get_logout_user, validate_token
 
 auth_router = APIRouter(tags=["account"])
 
@@ -33,13 +32,3 @@ async def log_user(log_user_: Annotated[LogUser, Depends(get_log_user)]) -> Logi
 )
 async def logout_user(logout_user_: Annotated[LogoutUser, Depends(get_logout_user)]):
     await logout_user_.execute()
-
-
-@auth_router.post("/auth/refresh", responses={status.HTTP_401_UNAUTHORIZED: {"description": "Invalid refresh token!"}})
-async def refresh(refresh_tokens: Annotated[RefreshTokens, Depends(get_refresh_tokens)]) -> LoginOutput:
-    try:
-        tokens = await refresh_tokens.execute()
-    except InvalidCredentials:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token!")
-    tokens = LoginOutput.model_validate(asdict(tokens))
-    return tokens

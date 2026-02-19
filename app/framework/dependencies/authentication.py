@@ -1,14 +1,13 @@
 from typing import Annotated
 
-from fastapi import Depends, Header, HTTPException, Path, Request, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import SecretStr
 from redis.asyncio.client import Redis
 
 from app.application.dtos.account import LoginData
-from app.application.use_cases.auth import LogoutUser, LogUser, RefreshTokens
-from app.domain.services.security import url_safe_bearer_token_length, url_safe_email_verification_token_length
-from app.domain.services.tokens import AccessTokensReader, EmailTokenVerifier
+from app.application.use_cases.auth import LogoutUser, LogUser
+from app.domain.services.tokens import AccessTokensReader
 from app.framework.dependencies.key_value_db import get_key_value_repository
 from app.framework.dependencies.units_of_work import get_users_unit_of_work
 from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
@@ -31,32 +30,6 @@ async def validate_token(
     request.state.access_token = token
 
 
-def refresh_tokens_provider() -> type[RefreshTokens]:
-    return RefreshTokens
-
-
-def get_refresh_tokens(
-    access_tokens_reader: Annotated[AccessTokensReader, Depends(get_access_tokens_reader)],
-    key_value_repo: Annotated[Redis, Depends(get_key_value_repository)],
-    refresh_tokens: Annotated[type[RefreshTokens], Depends(refresh_tokens_provider)],
-    refresh_token: str = Header(
-        alias="X-Refresh-Token", min_length=url_safe_bearer_token_length, max_length=url_safe_bearer_token_length
-    ),
-) -> RefreshTokens:
-    return refresh_tokens(key_value_repo, access_tokens_reader, refresh_token)
-
-
-def get_email_token_verifier(
-    key_value_repo: Annotated[Redis, Depends(get_key_value_repository)],
-    verification_token: str = Path(
-        min_length=url_safe_email_verification_token_length,
-        max_length=url_safe_email_verification_token_length,
-        alias="verificationToken",
-    ),
-):
-    return EmailTokenVerifier(key_value_repo, verification_token)
-
-
 def log_user_provider() -> type[LogUser]:
     return LogUser
 
@@ -71,7 +44,7 @@ def get_log_user(
     email = authentication_data.username
     password = authentication_data.password
 
-    login_data = LoginData(email=email, password=SecretStr(password))
+    login_data = LoginData(username=email, password=SecretStr(password))
     return log_user(key_value_repo, access_tokens_reader, users_unit_of_work, login_data)
 
 

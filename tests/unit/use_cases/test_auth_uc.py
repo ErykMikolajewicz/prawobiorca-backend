@@ -3,8 +3,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from app.application.dtos.account import LoginData
-from app.application.use_cases.auth import LogoutUser, LogUser, RefreshTokens
-from app.domain.exceptions import InvalidCredentials, UserCantLog
+from app.application.use_cases.auth import LogoutUser, LogUser
+from app.domain.exceptions import UserCantLog
 from app.shared.enums import TokenType
 
 
@@ -58,58 +58,6 @@ def tokens_payload():
         "token_type": TokenType.BEARER,
         "refresh_token": "refresh_token_value",
     }
-
-
-async def test_refresh_tokens_success(
-    key_value_repo_with_pipeline, pipeline, access_tokens_reader, tokens_payload, uuid_generator
-):
-    refresh_token = "refresh_token_value"
-    user_id = next(uuid_generator)
-
-    access_tokens_reader.get_user_by_refresh_token.return_value = user_id
-
-    with patch("app.application.use_cases.auth.AccessTokensManager") as Manager:
-        manager = AsyncMock()
-        Manager.return_value = manager
-
-        manager.invalidate_refresh_token = AsyncMock()
-        manager.refresh_tokens = AsyncMock(return_value=tokens_payload)
-
-        uc = RefreshTokens(
-            key_value_repo=key_value_repo_with_pipeline,
-            access_tokens_reader=access_tokens_reader,
-            refresh_token=refresh_token,
-        )
-
-        result = await uc.execute()
-
-    assert result == tokens_payload
-    access_tokens_reader.get_user_by_refresh_token.assert_awaited_once_with(refresh_token)
-
-    Manager.assert_called_once_with(pipeline)
-    manager.invalidate_refresh_token.assert_awaited_once_with(refresh_token)
-    manager.refresh_tokens.assert_awaited_once_with(user_id)
-    pipeline.execute.assert_awaited_once()
-
-
-async def test_refresh_tokens_invalid_token_raises(key_value_repo, access_tokens_reader):
-    refresh_token = "bad_refresh"
-    key_value_repo.pipeline.assert_not_called()
-
-    access_tokens_reader.get_user_by_refresh_token.return_value = None
-
-    uc = RefreshTokens(
-        key_value_repo=key_value_repo,
-        access_tokens_reader=access_tokens_reader,
-        refresh_token=refresh_token,
-    )
-
-    with pytest.raises(InvalidCredentials) as exc:
-        await uc.execute()
-
-    assert "Invalid refresh token" in str(exc.value)
-    access_tokens_reader.get_user_by_refresh_token.assert_awaited_once_with(refresh_token)
-    key_value_repo.pipeline.assert_not_called()
 
 
 async def test_log_user_success_no_previous_refresh(

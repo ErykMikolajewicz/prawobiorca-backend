@@ -5,35 +5,13 @@ from dataclasses import dataclass
 from redis.asyncio import Redis
 
 from app.application.dtos.account import LoginData
-from app.domain.entities.tokens import RefreshTokenData
-from app.domain.exceptions import InvalidCredentials, UserCantLog
+from app.application.interfaces.unit_of_work import UsersUnitOfWork
+from app.domain.exceptions import UserCantLog
 from app.domain.services.accounts import check_user_can_log
 from app.domain.services.security import prevent_timing_attack
 from app.domain.services.tokens import AccessTokensManager, AccessTokensReader
-from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 
 logger = logging.getLogger(__name__)
-
-
-@dataclass
-class RefreshTokens:
-    key_value_repo: Redis
-    access_tokens_reader: AccessTokensReader
-    refresh_token: str
-
-    async def execute(self) -> RefreshTokenData:
-        user_id = await self.access_tokens_reader.get_user_by_refresh_token(self.refresh_token)
-        if user_id is None:
-            logger.warning("Invalid refresh token!")
-            raise InvalidCredentials("Invalid refresh token!")
-
-        async with self.key_value_repo.pipeline() as pipeline:
-            access_token_manager = AccessTokensManager(pipeline)
-
-            await access_token_manager.invalidate_refresh_token(self.refresh_token)
-            tokens = await access_token_manager.refresh_tokens(user_id)
-            await pipeline.execute()
-        return tokens
 
 
 @dataclass
