@@ -1,11 +1,11 @@
 import re
 from string import punctuation
 
-from pydantic import BaseModel, EmailStr, Field, SecretStr, field_validator
+from pydantic import BaseModel, Field, SecretStr, field_validator
 
 
 class LoginData(BaseModel):
-    email: EmailStr = ...
+    username: str
     password: SecretStr = Field(min_length=8, max_length=32)
 
     @field_validator("password")

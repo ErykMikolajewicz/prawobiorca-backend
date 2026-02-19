@@ -1,6 +1,7 @@
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, Form
+from pydantic import SecretStr
 
 from app.application.dtos.account import LoginData
 from app.application.use_cases.account import CreateAccount, VerifyAccount
@@ -15,11 +16,13 @@ def create_account_provider() -> type[CreateAccount]:
 
 
 def get_create_account(
-    account_data: LoginData,
+    username: Annotated[str, Form(...)],
+    password: Annotated[str, Form(...)],
     users_unit_of_work: Annotated[UsersUnitOfWork, Depends(get_users_unit_of_work)],
     create_account: Annotated[type[CreateAccount], Depends(create_account_provider)],
 ) -> CreateAccount:
-    return create_account(users_unit_of_work, account_data)
+    login_data = LoginData(username=username, password=SecretStr(password))
+    return create_account(users_unit_of_work, login_data)
 
 
 def verify_account_provider() -> type[VerifyAccount]:

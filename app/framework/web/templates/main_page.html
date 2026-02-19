@@ -1,8 +1,11 @@
 {% extends "base.html" %}
+{% from "macros.html" import auth_button %}
 
 {% block title %}Lista plików - PRAWOBIORCA{% endblock %}
 
 {% block content %}
+    {{ auth_button(is_user_logged) }}
+
     {% if error_message %}
       <p role="alert" style="color: #b00020;">
         {{ error_message }}

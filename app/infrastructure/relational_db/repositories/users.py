@@ -1,26 +1,32 @@
-from typing import Optional
-
-from sqlalchemy import select, update
+from sqlalchemy import insert, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-import app.infrastructure.relational_db.schemas.users as user_schema
-from app.infrastructure.relational_db.bases import CrudRepository
+from app.domain.entities.user import User
+from app.domain.value_objects.user import CreateUserData
+from app.infrastructure.relational_db.schemas.users import Users
+from app.shared.exceptions import ObjectExists
 
 
-class UsersRepository(CrudRepository[user_schema.Users]):
+class UsersRepository:
     def __init__(self, session: AsyncSession):
-        super().__init__(session, user_schema.Users)
+        self._session = session
+        self._model = Users
 
-    async def get_by_email(self, email: str) -> Optional[user_schema.Users]:
-        select_statement = select(self.model).where(self.model.email == email)
-        result = await self.session.scalar(select_statement)
-        return result
+    async def add(self, create_data: CreateUserData):
+        insert_statement = insert(self._model).values(
+            username=create_data.username, hashed_password=create_data.hashed_password
+        )
+        try:
+            await self._session.execute(insert_statement)
+        except IntegrityError:
+            raise ObjectExists
 
-    async def verify_email(self, user_id: str):
-        update_statement = update(self.model).where(self.model.id == user_id).values(is_email_verified=True)
-        await self.session.execute(update_statement)
+    async def get_by_username(self, username: str) -> User | None:
+        select_statement = select(self._model).where(self._model.username == username)
+        result: Users = await self._session.scalar(select_statement)
+        if result is None:
+            return result
 
-
-class UsersFilesRepository(CrudRepository[user_schema.UsersFiles]):
-    def __init__(self, session: AsyncSession):
-        super().__init__(session, user_schema.UsersFiles)
+        user = User(result.id, result.username, result.hashed_password)
+        return user

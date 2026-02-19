@@ -4,8 +4,8 @@ import pytest
 
 from app.application.dtos.account import LoginData
 from app.application.use_cases.auth import LogoutUser, LogUser, RefreshTokens
+from app.domain.exceptions import InvalidCredentials, UserCantLog
 from app.shared.enums import TokenType
-from app.shared.exceptions import InvalidCredentials, UserCantLog
 
 
 @pytest.fixture
@@ -47,7 +47,7 @@ def users_uow():
 
 @pytest.fixture
 def login_data():
-    return LoginData(email="example@example.com", password="StrongPassword3!")
+    return LoginData(username="example@example.com", password="StrongPassword3!")
 
 
 @pytest.fixture

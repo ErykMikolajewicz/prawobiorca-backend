@@ -11,7 +11,7 @@ from app.framework.dependencies.file_storage import app_settings, check_file_sto
 from app.infrastructure.embeddings.initialization import init_http_client
 from app.infrastructure.qdrant_db.connection import check_vector_db_connection
 from app.infrastructure.redis_db.connection import check_key_value_db_connection
-from app.infrastructure.relational_db.connection import check_relational_db_connection
+from app.infrastructure.relational_db.connection import check_relational_db_connection, init_db
 from app.shared.logging_config import setup_logging
 
 setup_logging()
@@ -79,4 +79,5 @@ if __name__ == "__main__":
         server = Server(app, interface=Interfaces.ASGI)
         await server.serve()
 
+    asyncio.run(init_db())
     asyncio.run(launch_granian())

@@ -1,5 +1,7 @@
 from typing import Protocol
 
+from app.application.interfaces.users import UsersRepository
+
 
 class AsyncUnitOfWork(Protocol):
     async def __aenter__(self): ...
@@ -9,3 +11,7 @@ class AsyncUnitOfWork(Protocol):
     async def commit(self): ...
 
     async def rollback(self): ...
+
+
+class UsersUnitOfWork(AsyncUnitOfWork):
+    users: UsersRepository

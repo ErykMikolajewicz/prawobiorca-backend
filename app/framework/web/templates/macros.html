@@ -1,0 +1,13 @@
+{% macro auth_button(is_user_logged) %}
+  <div class="auth-controls">
+    {% if is_user_logged %}
+      <form action="/logout" method="post" style="display: inline;">
+        <button type="submit">Wyloguj się</button>
+      </form>
+    {% else %}
+      <a href="/login" style="text-decoration: none;">
+        <button type="button">Zaloguj się</button>
+      </a>
+    {% endif %}
+  </div>
+{% endmacro %}

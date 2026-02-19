@@ -4,7 +4,9 @@ import pytest
 
 from app.application.dtos.account import LoginData
 from app.application.use_cases.account import CreateAccount, VerifyAccount
-from app.shared.exceptions import InvalidCredentials, RelationalDbIntegrityError, UserExists
+from app.domain.exceptions import InvalidCredentials, UserExists
+from app.domain.value_objects.user import CreateUserData
+from app.shared.exceptions import ObjectExists
 
 
 @pytest.fixture
@@ -29,23 +31,24 @@ def token_verifier_mock():
 
 async def test_create_account_success(uow_mock):
     password = "StrongPass123!"
-    data = LoginData(email="test@example.com", password=password)
+    data = LoginData(username="test@example.com", password=password)
 
-    with patch("app.application.use_cases.account.hash_password", return_value="hashed") as hp:
-        use_case = CreateAccount(users_unit_of_work=uow_mock, account_data=data)
+    with patch("app.application.use_cases.account.hash_password", return_value=b"hashed") as hp:
+        use_case = CreateAccount(users_unit_of_work=uow_mock, login_data=data)
         await use_case.execute()
 
     hp.assert_called_once_with(data.password)
-    uow_mock.users.add.assert_awaited_once_with({"email": data.email, "hashed_password": "hashed"})
+    create_user_data = CreateUserData(data.username, b"hashed")
+    uow_mock.users.add.assert_awaited_once_with(create_user_data)
 
 
 async def test_create_account_conflict_raises_user_exists(uow_mock):
     password = "StrongPass123!"
-    data = LoginData(email="test@example.com", password=password)
-    uow_mock.users.add.side_effect = RelationalDbIntegrityError()
+    data = LoginData(username="test@example.com", password=password)
+    uow_mock.users.add.side_effect = ObjectExists()
 
     with patch("app.application.use_cases.account.hash_password", return_value="hashed"):
-        use_case = CreateAccount(users_unit_of_work=uow_mock, account_data=data)
+        use_case = CreateAccount(users_unit_of_work=uow_mock, login_data=data)
 
         with pytest.raises(UserExists):
             await use_case.execute()

@@ -1,6 +1,6 @@
 from typing import Awaitable, Callable
 
-from sqlalchemy import text
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
@@ -14,6 +14,15 @@ DATABASE_URL = (
 
 engine = create_async_engine(
     DATABASE_URL,
+    echo=False,
+    pool_size=db_settings.POOL_SIZE,
+    max_overflow=db_settings.MAX_OVERFLOW,
+    pool_timeout=db_settings.POOL_TIMEOUT,
+    pool_recycle=db_settings.POOL_RECYCLE,
+)
+
+sync_engine = create_engine(
+    DATABASE_URL.replace("asyncpg", "psycopg"),
     echo=False,
     pool_size=db_settings.POOL_SIZE,
     max_overflow=db_settings.MAX_OVERFLOW,
@@ -41,3 +50,8 @@ async def check_relational_db_connection() -> Callable[..., Awaitable[None]]:
 
 class Base(DeclarativeBase):
     pass
+
+
+async def init_db() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
