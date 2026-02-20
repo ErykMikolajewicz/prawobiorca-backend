@@ -20,7 +20,7 @@ class UsersTokens(Base, CreateDateMixin):
     __tablename__ = "users_tokens"
 
     user_id: Mapped[UUID] = mapped_column(sqla.ForeignKey("users.id"), nullable=False)
-    token: Mapped[str] = mapped_column(
+    session_id: Mapped[str] = mapped_column(
         sqla.String(64),
         primary_key=True,
     )

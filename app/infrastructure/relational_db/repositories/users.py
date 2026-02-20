@@ -40,8 +40,8 @@ class UsersTokensRepository:
         self._session = session
         self._model = UsersTokens
 
-    async def check_token_is_valid(self, token: str) -> bool:
-        statement = select(self._model.valid_until).where(self._model.token == token).limit(1)
+    async def get_user_id_by_session_id(self, session_id: str) -> bool:
+        statement = select(self._model.valid_until).where(self._model.session_id == session_id).limit(1)
 
         result = await self._session.execute(statement)
         row = result.first()
@@ -58,10 +58,14 @@ class UsersTokensRepository:
 
         return valid_until >= now_utc
 
-    async def add_token(self, user_id: UUID, token: str, valid_until: datetime) -> None:
+    async def add_session(self, user_id: UUID, session_id: str, valid_until: datetime) -> None:
         statement = insert(self._model).values(
             user_id=user_id,
-            token=token,
+            session_id=session_id,
             valid_until=valid_until,
         )
+        await self._session.execute(statement)
+
+    async def invalidate_session(self, session_id: str):
+        statement = select(self._model).where(self._model.session_id == session_id)
         await self._session.execute(statement)

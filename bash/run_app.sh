@@ -11,10 +11,6 @@ podman run -d \
   qdrant/qdrant:latest
 
 podman run -d \
-  -p 127.0.0.1:6379:6379 \
-  redis:8 redis-server
-
-podman run -d \
   -p 127.0.0.1:8080:8080 \
   embedding_generator
 

@@ -1,9 +1,10 @@
 import logging
+from uuid import UUID
 
 from app.application.dtos.account import LoginData
+from app.application.interfaces.users import UsersRepository
 from app.domain.services.security import verify_password
 from app.framework.dependencies.file_storage import app_settings
-from app.infrastructure.relational_db.units_of_work.users import UsersUnitOfWork
 
 access_token_expiration_seconds = app_settings.ACCESS_TOKEN_EXPIRATION_SECONDS
 refresh_token_expiration_seconds = app_settings.REFRESH_TOKEN_EXPIRATION_SECONDS
@@ -11,10 +12,9 @@ refresh_token_expiration_seconds = app_settings.REFRESH_TOKEN_EXPIRATION_SECONDS
 logger = logging.getLogger(__name__)
 
 
-async def check_user_can_log(users_unit_of_work: UsersUnitOfWork, login_data: LoginData) -> str | None:
+async def check_user_can_log(users_repo: UsersRepository, login_data: LoginData) -> UUID | None:
     username = login_data.username
-    async with users_unit_of_work as uof:
-        user = await uof.users.get_by_username(username)
+    user = await users_repo.get_by_username(username)
     if user is None:
         logger.warning("Failed login attempt. User not found!")
         return None
@@ -26,5 +26,4 @@ async def check_user_can_log(users_unit_of_work: UsersUnitOfWork, login_data: Lo
         return None
 
     user_id = user.id
-    user_id = str(user_id)
     return user_id

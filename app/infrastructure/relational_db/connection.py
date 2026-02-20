@@ -1,6 +1,6 @@
 from typing import Awaitable, Callable
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
@@ -21,25 +21,12 @@ engine = create_async_engine(
     pool_recycle=db_settings.POOL_RECYCLE,
 )
 
-sync_engine = create_engine(
-    DATABASE_URL.replace("asyncpg", "psycopg"),
-    echo=False,
-    pool_size=db_settings.POOL_SIZE,
-    max_overflow=db_settings.MAX_OVERFLOW,
-    pool_timeout=db_settings.POOL_TIMEOUT,
-    pool_recycle=db_settings.POOL_RECYCLE,
-)
 
 async_session_maker = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,
     expire_on_commit=False,
 )
-
-
-async def get_relational_session() -> AsyncSession:
-    async with async_session_maker() as session:
-        yield session  # bad type hint from PyCharm
 
 
 async def check_relational_db_connection() -> Callable[..., Awaitable[None]]:

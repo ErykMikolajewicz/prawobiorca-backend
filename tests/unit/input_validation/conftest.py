@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 import pytest
 from fastapi import Request
 
-from app.framework.dependencies.authentication import validate_token
+from app.framework.dependencies.authentication import set_user_by_session_id
 from main import app
 
 
@@ -30,6 +30,6 @@ def override_validate_token(bearer_token_generator, uuid_generator):
         request.state.user_id = user_id
         return access_token, user_id
 
-    app.dependency_overrides[validate_token] = _override
+    app.dependency_overrides[set_user_by_session_id] = _override
     yield access_token, user_id
     app.dependency_overrides = {}

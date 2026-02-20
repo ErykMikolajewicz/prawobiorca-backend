@@ -12,7 +12,7 @@ class RefreshTokenData:
 
 
 @dataclass(frozen=True)
-class AccessTokenData:
-    access_token: str
+class SessionData:
+    session_id: str
     expires_in: int
     token_type: TokenType

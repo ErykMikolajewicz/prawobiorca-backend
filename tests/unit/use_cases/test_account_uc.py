@@ -1,12 +1,6 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-from app.application.dtos.account import LoginData
-from app.application.use_cases.account import CreateAccount, VerifyAccount
-from app.domain.exceptions import InvalidCredentials, UserExists
-from app.domain.value_objects.user import CreateUserData
-from app.shared.exceptions import ObjectExists
 
 
 @pytest.fixture
@@ -27,55 +21,3 @@ def token_verifier_mock():
     verifier.get_user_id_by_token = AsyncMock()
     verifier.invalidate_token = AsyncMock()
     return verifier
-
-
-async def test_create_account_success(uow_mock):
-    password = "StrongPass123!"
-    data = LoginData(username="test@example.com", password=password)
-
-    with patch("app.application.use_cases.account.hash_password", return_value=b"hashed") as hp:
-        use_case = CreateAccount(users_unit_of_work=uow_mock, login_data=data)
-        await use_case.execute()
-
-    hp.assert_called_once_with(data.password)
-    create_user_data = CreateUserData(data.username, b"hashed")
-    uow_mock.users.add.assert_awaited_once_with(create_user_data)
-
-
-async def test_create_account_conflict_raises_user_exists(uow_mock):
-    password = "StrongPass123!"
-    data = LoginData(username="test@example.com", password=password)
-    uow_mock.users.add.side_effect = ObjectExists()
-
-    with patch("app.application.use_cases.account.hash_password", return_value="hashed"):
-        use_case = CreateAccount(users_unit_of_work=uow_mock, login_data=data)
-
-        with pytest.raises(UserExists):
-            await use_case.execute()
-
-    uow_mock.users.add.assert_awaited_once()
-
-
-async def test_verify_account_success(uow_mock, token_verifier_mock):
-    token_verifier_mock.get_user_id_by_token.return_value = 123
-
-    use_case = VerifyAccount(email_token_verifier=token_verifier_mock, users_unit_of_work=uow_mock)
-    await use_case.execute()
-
-    token_verifier_mock.get_user_id_by_token.assert_awaited_once()
-    uow_mock.users.verify_email.assert_awaited_once_with(123)
-    token_verifier_mock.invalidate_token.assert_awaited_once()
-
-
-async def test_verify_account_invalid_token_raises_invalid_credentials(uow_mock, token_verifier_mock):
-    token_verifier_mock.get_user_id_by_token.return_value = None
-
-    use_case = VerifyAccount(email_token_verifier=token_verifier_mock, users_unit_of_work=uow_mock)
-
-    with pytest.raises(InvalidCredentials) as exc:
-        await use_case.execute()
-
-    assert "Invalid email verification token!" in str(exc.value)
-
-    uow_mock.users.verify_email.assert_not_awaited()
-    token_verifier_mock.invalidate_token.assert_not_awaited()

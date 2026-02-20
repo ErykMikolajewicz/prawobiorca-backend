@@ -6,7 +6,8 @@ from redis.asyncio.client import Pipeline
 from app.domain.entities.tokens import RefreshTokenData
 from app.domain.services.security import generate_token
 from app.framework.dependencies.file_storage import app_settings
-from app.shared.enums import KeyPrefix, TokenType
+from app.infrastructure.redis_db.enums import KeyPrefix
+from app.shared.enums import TokenType
 
 access_token_expiration_seconds = app_settings.ACCESS_TOKEN_EXPIRATION_SECONDS
 refresh_token_expiration_seconds = app_settings.REFRESH_TOKEN_EXPIRATION_SECONDS
