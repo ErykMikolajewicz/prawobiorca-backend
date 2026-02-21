@@ -5,10 +5,9 @@ from math import ceil
 import bcrypt
 from pydantic import SecretStr
 
-from app.shared.consts import BEARER_TOKEN_LENGTH, EMAIL_VERIFICATION_TOKEN_LENGTH, SECURITY_MIN_RESPONSE_TIME
+from app.shared.consts import SECURITY_MIN_RESPONSE_TIME, SESSION_ID_LENGTH
 
-url_safe_bearer_token_length = ceil(BEARER_TOKEN_LENGTH * 4 / 3)
-url_safe_email_verification_token_length = ceil(EMAIL_VERIFICATION_TOKEN_LENGTH * 4 / 3)
+url_safe_session_id_length = ceil(SESSION_ID_LENGTH * 4 / 3)
 
 
 def hash_password(password: SecretStr) -> bytes:
@@ -18,9 +17,9 @@ def hash_password(password: SecretStr) -> bytes:
     return hashed_password
 
 
-def generate_token(token_length: int = BEARER_TOKEN_LENGTH) -> str:
-    token = secrets.token_urlsafe(token_length)
-    return token
+def generate_session_id(session_id_length: int = SESSION_ID_LENGTH) -> str:
+    session_id = secrets.token_urlsafe(session_id_length)
+    return session_id
 
 
 def verify_password(password: SecretStr, hashed_password: bytes) -> bool:

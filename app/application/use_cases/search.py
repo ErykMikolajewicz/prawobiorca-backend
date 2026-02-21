@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from app.application.interfaces.vector_db import RegulationsRepository
+from app.application.interfaces.regulations import RegulationsRepository
 from app.application.ports.embeddings import EmbeddingPort
 
 

@@ -4,7 +4,7 @@ from grpc.aio import AioRpcError
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import PointStruct
 
-from app.domain.exceptions import VectorCollectionNotFound
+from app.domain.exceptions import RegulationsNotPreparedToSearch
 
 
 class QdrantRegulationsRepository:
@@ -38,7 +38,7 @@ class QdrantRegulationsRepository:
                 score_threshold=threshold,
             )
         except AioRpcError:
-            raise VectorCollectionNotFound(self._collection_name)
+            raise RegulationsNotPreparedToSearch(self._collection_name)
 
         results = []
         for point in search_result:

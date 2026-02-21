@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 
 from app.application.dtos.account import LoginData
-from app.application.interfaces.session import AsyncSession
+from app.application.interfaces.relational import AsyncSession
 from app.application.interfaces.users import UsersRepository
 from app.domain.exceptions import UserExists
 from app.domain.services.security import hash_password

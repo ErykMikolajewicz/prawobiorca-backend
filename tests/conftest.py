@@ -10,17 +10,17 @@ from collections.abc import Iterator
 import pytest
 from fastapi.testclient import TestClient
 
-from app.domain.services.security import url_safe_bearer_token_length, url_safe_email_verification_token_length
+from app.domain.services.security import url_safe_session_id_length
 from main import app
 
 
 @pytest.fixture(scope="function")
 def bearer_token_generator() -> Iterator[str]:
     """
-    Pytest fixture that generates a sequence of url-safe bearer tokens.
+    Generates a sequence of url-safe session id.
 
-    The tokens are pre-defined and asserted to match the
-    `url_safe_bearer_token_length`.
+    The session id is pre-defined and asserted to match the
+    `url_safe_session_id_length`.
 
     Can be used max 3 times, currently sufficient for all tests scenarios.
 
@@ -34,7 +34,7 @@ def bearer_token_generator() -> Iterator[str]:
         "CKIr3mwWTEXoMNaHl7Q4-jjz8oowSPBIayMSTe2UXxg",
     )
     for token in tokens:
-        assert len(token) == url_safe_bearer_token_length
+        assert len(token) == url_safe_session_id_length
 
     return iter(tokens)
 
@@ -42,9 +42,7 @@ def bearer_token_generator() -> Iterator[str]:
 @pytest.fixture(scope="function")
 def uuid_generator() -> Iterator[str]:
     """
-    Pytest fixture that generates a sequence of predefined UUIDs.
-
-    Used to provide consistent UUID values in tests.
+    Generates a sequence of predefined UUIDs.
 
     Can be used max 3 times, currently sufficient for all tests scenarios.
 
@@ -60,29 +58,10 @@ def uuid_generator() -> Iterator[str]:
     return iter(uuids)
 
 
-@pytest.fixture(scope="function")
-def email_token_generator() -> Iterator[str]:
-    """
-    Pytest fixture that generates a sequence of URL-safe email verification tokens.
-
-    The tokens are pre-defined and asserted to match the
-    `url_safe_email_verification_token_length`.
-
-    Can be used max 1 times, currently sufficient for all tests scenarios.
-
-    Yields:
-        str: The next email verification token from the predefined list.
-    """
-    tokens = ("csca-AVXPdclA0dJlSLhgGc1sWpaPOxVTiHjVfTLyog",)
-    assert len(tokens[0]) == url_safe_email_verification_token_length
-
-    return iter(tokens)
-
-
 @pytest.fixture(scope="session")
 def client() -> TestClient:
     """
-    Pytest fixture that provides a FastAPI test client.
+    Provides a FastAPI test client.
 
     The test client is initialized once per test session (`scope="session"`)
     and allows making HTTP requests to the FastAPI application instance

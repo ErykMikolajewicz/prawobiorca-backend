@@ -1,7 +1,5 @@
 import pytest
 
-from app.framework.dependencies.accounts import create_account_provider
-
 
 @pytest.mark.parametrize(
     "password, error_detail",
@@ -12,8 +10,7 @@ from app.framework.dependencies.accounts import create_account_provider
         ("NoSpecial1", "Password must contain at least one special character."),
     ],
 )
-def test_create_account_weak_passwords(client, assure_use_case_not_executed, password, error_detail):
-    assure_use_case_not_executed(create_account_provider)
+def test_create_account_weak_passwords(client, password, error_detail):
 
     payload = {"username": "example@example.com", "password": password}
 

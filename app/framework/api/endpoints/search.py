@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Form, Query, Request, status
 from fastapi.responses import RedirectResponse
 
 from app.application.use_cases.search import SearchFile
-from app.domain.exceptions import VectorCollectionNotFound
+from app.domain.exceptions import RegulationsNotPreparedToSearch
 from app.framework.dependencies.authentication import set_user_by_session_id
 from app.framework.dependencies.search import get_search_file
 from app.framework.web.templating import templates
@@ -47,8 +47,8 @@ async def post_search_file(
 ):
     try:
         results = await search_file.execute()
-    except VectorCollectionNotFound as e:
-        error_message = f"Nie przygotowano do wyszukiwania pliku {e.collection_name}, zrób to na liście plików!"
+    except RegulationsNotPreparedToSearch as e:
+        error_message = f"Nie przygotowano do wyszukiwania pliku {e.regulations_name}, zrób to na liście plików!"
         request.session[FLASH_KEY] = {"error_message": error_message}
         return RedirectResponse(url="/files/search", status_code=status.HTTP_303_SEE_OTHER)
 

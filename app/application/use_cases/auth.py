@@ -4,15 +4,17 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
 from app.application.dtos.account import LoginData
-from app.application.interfaces.session import AsyncSession
+from app.application.dtos.auth import LoginOutput
+from app.application.interfaces.relational import AsyncSession
 from app.application.interfaces.users import UsersRepository, UsersTokensRepository
-from app.domain.entities.tokens import SessionData
 from app.domain.exceptions import UserCantLog
 from app.domain.services.accounts import check_user_can_log
-from app.domain.services.security import generate_token, prevent_timing_attack
+from app.domain.services.security import generate_session_id, prevent_timing_attack
+from app.framework.dependencies.file_storage import app_settings
 
 logger = logging.getLogger(__name__)
-SESSION_DURATION_SECONDS = 30 * 60
+
+session_id_expiration_seconds = app_settings.SESSION_ID_EXPIRATION_SECONDS
 
 
 @dataclass
@@ -31,14 +33,14 @@ class LogUser:
             await prevent_timing_attack(execution_start_time)
             raise UserCantLog
 
-        session_id = generate_token()
-        valid_until = datetime.now(timezone.utc) + timedelta(seconds=SESSION_DURATION_SECONDS)
+        session_id = generate_session_id()
+        valid_until = datetime.now(timezone.utc) + timedelta(seconds=session_id_expiration_seconds)
 
         async with self.session as session:
             await self.tokens_repo.add_session(user_id, session_id, valid_until)
             await session.commit()
 
-        return SessionData(session_id=session_id, expires_in=SESSION_DURATION_SECONDS)
+        return LoginOutput(session_id=session_id, expires_in=session_id_expiration_seconds)
 
 
 @dataclass

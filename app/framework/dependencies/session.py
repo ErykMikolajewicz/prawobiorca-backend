@@ -1,4 +1,4 @@
-from app.application.interfaces.session import AsyncSession
+from app.application.interfaces.relational import AsyncSession
 from app.infrastructure.relational_db.connection import async_session_maker
 
 

@@ -2,9 +2,9 @@ from typing import Annotated
 
 from fastapi import Depends, Request
 
-from app.application.interfaces.session import AsyncSession
+from app.application.interfaces.relational import AsyncSession
 from app.application.interfaces.users import UsersTokensRepository
-from app.application.use_cases.auth import LogoutUser, LogUser
+from app.application.use_cases.auth import LogoutUser
 from app.framework.dependencies.session import get_relational_session
 from app.framework.dependencies.users import get_users_tokens_repository
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME
@@ -19,10 +19,6 @@ async def set_user_by_session_id(
 
     request.state.user_id = user_id
     request.state.session_id = session_id
-
-
-def log_user_provider() -> type[LogUser]:
-    return LogUser
 
 
 def get_logout_user(

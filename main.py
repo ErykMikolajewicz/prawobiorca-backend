@@ -8,8 +8,8 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.framework.api.router import include_all_routers
 from app.framework.dependencies.file_storage import app_settings, check_file_storage_connection
+from app.framework.dependencies.vector_db import check_vector_db_connection
 from app.infrastructure.embeddings.initialization import init_http_client
-from app.infrastructure.qdrant_db.connection import check_vector_db_connection
 from app.infrastructure.relational_db.connection import check_relational_db_connection, init_db
 from app.shared.logging_config import setup_logging
 

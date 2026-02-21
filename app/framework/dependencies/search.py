@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import Depends, Form
 
-from app.application.interfaces.vector_db import RegulationsRepository
+from app.application.interfaces.regulations import RegulationsRepository
 from app.application.ports.embeddings import EmbeddingPort
 from app.application.use_cases.search import SearchFile
 from app.framework.dependencies.embeddings import get_embeddings_port

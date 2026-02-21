@@ -5,7 +5,7 @@ from fastapi.responses import RedirectResponse
 from pydantic import SecretStr
 
 from app.application.dtos.account import LoginData
-from app.application.interfaces.session import AsyncSession
+from app.application.interfaces.relational import AsyncSession
 from app.application.interfaces.users import UsersRepository, UsersTokensRepository
 from app.application.use_cases.auth import LogoutUser, LogUser
 from app.domain.exceptions import UserCantLog
