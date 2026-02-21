@@ -24,4 +24,4 @@ class UsersTokens(Base, CreateDateMixin):
         sqla.String(64),
         primary_key=True,
     )
-    valid_until: Mapped[datetime]
+    valid_until: Mapped[datetime] = mapped_column(sqla.DateTime(timezone=True), nullable=False)

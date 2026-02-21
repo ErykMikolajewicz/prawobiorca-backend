@@ -10,12 +10,12 @@ from typing import AsyncGenerator, Generator
 import alembic.command
 import alembic.config
 import pytest
+from app.framework.dependencies.key_value_db import get_key_value_repository
 from redis.asyncio import ConnectionPool, Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
 from testcontainers.redis import RedisContainer
 
-from app.framework.dependencies.key_value_db import get_key_value_repository
 from app.infrastructure.relational_db.connection import get_relational_session
 from main import app
 

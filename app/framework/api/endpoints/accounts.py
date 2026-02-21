@@ -13,6 +13,7 @@ from app.framework.dependencies.accounts import create_account_provider
 from app.framework.dependencies.session import get_relational_session
 from app.framework.dependencies.users import get_users_repository
 from app.framework.web.templating import templates
+from app.shared.consts import FLASH_KEY
 
 account_router = APIRouter(tags=["account"])
 
@@ -26,30 +27,36 @@ async def create_account(
     users_repo: Annotated[UsersRepository, Depends(get_users_repository)],
     create_account_class: Annotated[type[CreateAccount], Depends(create_account_provider)],
 ):
-
     try:
         login_data = LoginData(username=username, password=SecretStr(password))
     except ValueError as e:
         password_verification_error = str(e)
-        return templates.TemplateResponse(
-            "register.html", {"request": request, "error_message": password_verification_error}
-        )
+        request.session[FLASH_KEY] = {"error_message": password_verification_error}
+        return RedirectResponse(url="/accounts/register", status_code=status.HTTP_303_SEE_OTHER)
 
     create_account_ = create_account_class(session, users_repo, login_data)
 
     try:
         await create_account_.execute()
     except UserExists:
-        return templates.TemplateResponse(
-            "register.html", {"request": request, "error_message": "Użytkownik z tą nazwą już istnieje!"}
-        )
+        request.session[FLASH_KEY] = {"error_message": f"Użytkownik o nazwie {username} już istnieje!"}
+        return RedirectResponse(url="/accounts/register", status_code=status.HTTP_303_SEE_OTHER)
 
     return RedirectResponse(url="/auth/login", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @account_router.get("/accounts/register", status_code=status.HTTP_200_OK)
 async def get_register_page(request: Request):
+    flash_data = request.session.pop(FLASH_KEY, None)
+    if flash_data:
+        try:
+            error_message = flash_data["error_message"]
+        except KeyError:
+            error_message = ""
+    else:
+        error_message = ""
+
     return templates.TemplateResponse(
         "register.html",
-        {"request": request, "error_message": "", "username": ""},
+        {"request": request, "error_message": error_message},
     )

@@ -10,7 +10,6 @@ from app.domain.entities.tokens import SessionData
 from app.domain.exceptions import UserCantLog
 from app.domain.services.accounts import check_user_can_log
 from app.domain.services.security import generate_token, prevent_timing_attack
-from app.shared.enums import TokenType
 
 logger = logging.getLogger(__name__)
 SESSION_DURATION_SECONDS = 30 * 60
@@ -39,11 +38,7 @@ class LogUser:
             await self.tokens_repo.add_session(user_id, session_id, valid_until)
             await session.commit()
 
-        return SessionData(
-            session_id=session_id,
-            expires_in=SESSION_DURATION_SECONDS,
-            token_type=TokenType.BEARER,
-        )
+        return SessionData(session_id=session_id, expires_in=SESSION_DURATION_SECONDS)
 
 
 @dataclass

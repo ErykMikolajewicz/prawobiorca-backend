@@ -15,4 +15,3 @@ class RefreshTokenData:
 class SessionData:
     session_id: str
     expires_in: int
-    token_type: TokenType

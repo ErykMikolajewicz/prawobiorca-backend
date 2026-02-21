@@ -10,7 +10,6 @@ from app.framework.api.router import include_all_routers
 from app.framework.dependencies.file_storage import app_settings, check_file_storage_connection
 from app.infrastructure.embeddings.initialization import init_http_client
 from app.infrastructure.qdrant_db.connection import check_vector_db_connection
-from app.infrastructure.redis_db.connection import check_key_value_db_connection
 from app.infrastructure.relational_db.connection import check_relational_db_connection, init_db
 from app.shared.logging_config import setup_logging
 
@@ -32,9 +31,6 @@ async def lifespan(_: FastAPI):
         relational_closing_callback = await check_relational_db_connection()
         closing_callbacks.insert(0, relational_closing_callback)
 
-        key_value_closing_callback = await check_key_value_db_connection()
-        closing_callbacks.insert(0, key_value_closing_callback)
-
         vector_db_closing_callback = await check_vector_db_connection()
         closing_callbacks.insert(0, vector_db_closing_callback)
 
@@ -49,6 +45,7 @@ async def lifespan(_: FastAPI):
         logger.critical(f"Can not connect to external service: {e}")
         raise
     else:
+        await init_db()
         app.state.ready = True
         logger.info("Application is ready to serve.")
         yield
@@ -79,5 +76,4 @@ if __name__ == "__main__":
         server = Server(app, interface=Interfaces.ASGI)
         await server.serve()
 
-    asyncio.run(init_db())
     asyncio.run(launch_granian())
