@@ -30,8 +30,9 @@ async def get_search_file_view(request: Request, filename: str = Query()):
     is_user_logged = request.state.user_id is not None
 
     return templates.TemplateResponse(
+        request,
         "file_search.html",
-        {"request": request, "filename": filename, "error_message": error_message, "is_user_logged": is_user_logged},
+        {"filename": filename, "error_message": error_message, "is_user_logged": is_user_logged},
     )
 
 
@@ -55,9 +56,9 @@ async def post_search_file(
     is_user_logged = request.state.user_id is not None
 
     return templates.TemplateResponse(
+        request,
         "file_search.html",
         {
-            "request": request,
             "filename": filename,
             "query": query,
             "results": results,

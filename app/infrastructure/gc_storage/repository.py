@@ -5,7 +5,7 @@ from fastapi.concurrency import run_in_threadpool
 from google.cloud import storage
 from google.cloud.storage import Blob
 
-from app.shared.consts import DEFAULT_URL_EXPIRY
+from app.application.dtos.files import FileData
 from app.shared.settings.google_cloud_storage import gc_file_storage_settings
 
 credentials_path = gc_file_storage_settings.STORAGE_CREDENTIALS
@@ -19,11 +19,10 @@ class GCSStorageRepository:
     def __init__(self):
         self.client = storage_client
         self.bucket = self.client.bucket("user_files")
-        self.default_url_expiry = DEFAULT_URL_EXPIRY
 
-    async def upload_file(self, file_bytes: bytes, file_name: str):
-        blob: Blob = self.bucket.blob(file_name)
-        await run_in_threadpool(blob.upload_from_string, file_bytes)
+    async def upload_file(self, file_data: FileData):
+        blob: Blob = self.bucket.blob(file_data.file_name)
+        await run_in_threadpool(blob.upload_from_string, file_data.file)
 
     async def delete_file(self, file_name: str) -> None:
         blob: Blob = self.bucket.blob(file_name)

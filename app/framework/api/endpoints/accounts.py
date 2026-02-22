@@ -55,6 +55,7 @@ async def get_register_page(request: Request):
         error_message = ""
 
     return templates.TemplateResponse(
+        request,
         "register.html",
-        {"request": request, "error_message": error_message},
+        {"error_message": error_message},
     )

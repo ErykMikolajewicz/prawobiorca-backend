@@ -29,7 +29,7 @@ async def get_login_page(request: Request):
     else:
         error_message = ""
 
-    return templates.TemplateResponse("login.html", {"request": request, "error_message": error_message})
+    return templates.TemplateResponse(request, "login.html", {"error_message": error_message})
 
 
 @auth_router.post("/auth/login")

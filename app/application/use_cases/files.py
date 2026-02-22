@@ -1,29 +1,21 @@
 import logging
 from dataclasses import dataclass
 
+from app.application.dtos.files import FileData
 from app.application.interfaces.file_storage import StorageRepository
-from app.shared.exceptions import EmptyFileException, FileNameExist, FileNameNotProvided
+from app.domain.exceptions import FileNameExist
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class AddFile:
-    file: bytes
-    file_name: str
+    file_data: FileData
     storage_repository: StorageRepository
 
     async def execute(self):
-        if self.file_name == "":
-            logger.warning("Tried to add file without name!")
-            raise FileNameNotProvided
-
-        if self.file == b"":
-            logger.warning("Tried to add empty file!")
-            raise EmptyFileException(self.file_name)
-
         try:
-            await self.storage_repository.upload_file(self.file, self.file_name)
+            await self.storage_repository.upload_file(self.file_data)
         except FileNameExist:
             logger.warning("File, with that name already exists!")
             raise

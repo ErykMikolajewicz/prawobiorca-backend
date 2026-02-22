@@ -2,6 +2,7 @@ import pytest
 from fastapi import Request
 
 from app.framework.dependencies.authentication import set_user_by_session_id
+from app.framework.dependencies.file_storage import get_file_storage
 from main import app
 
 
@@ -12,5 +13,17 @@ def override_set_user_by_session_id(session_id_generator, uuid_generator):
         request.state.session_id = next(session_id_generator)
 
     app.dependency_overrides[set_user_by_session_id] = _override
+    yield
+    app.dependency_overrides = {}
+
+
+class MockStorageRepository:
+    async def upload_file(self, file_data):
+        pass
+
+
+@pytest.fixture
+def override_get_file_storage():
+    app.dependency_overrides[get_file_storage] = lambda: MockStorageRepository()
     yield
     app.dependency_overrides = {}

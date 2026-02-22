@@ -6,6 +6,7 @@ and generators for tokens and UUIDs.
 """
 
 from collections.abc import Iterator
+from uuid import UUID
 
 import pytest
 from fastapi.testclient import TestClient
@@ -36,7 +37,7 @@ def session_id_generator() -> Iterator[str]:
 
 
 @pytest.fixture(scope="function")
-def uuid_generator() -> Iterator[str]:
+def uuid_generator() -> Iterator[UUID]:
     """
     Generates a sequence of predefined UUIDs.
 
@@ -45,7 +46,7 @@ def uuid_generator() -> Iterator[str]:
     Yields:
         str: The next UUID from the predefined list.
     """
-    uuids = "1b4a1b7a-dbd6-4be4-a52e-80fdd9ddbfb0"
+    uuids = (UUID("1b4a1b7a-dbd6-4be4-a52e-80fdd9ddbfb0"),)
 
     return iter(uuids)
 

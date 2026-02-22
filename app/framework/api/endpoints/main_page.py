@@ -30,6 +30,7 @@ async def get_main_page(list_files: Annotated[ListFiles, Depends(get_list_files)
     is_user_logged = request.state.user_id is not None
 
     return templates.TemplateResponse(
+        request,
         "main_page.html",
-        {"request": request, "files": files_list, "error_message": error_message, "is_user_logged": is_user_logged},
+        {"files": files_list, "error_message": error_message, "is_user_logged": is_user_logged},
     )
