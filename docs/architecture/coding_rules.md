@@ -137,15 +137,15 @@ else:
 ---
 
 ## Formatting Tools
-Before every commit, first run script before_mmit.sh
+Before every commit, first run a script before_mmit.sh
 It will:
 - Check for security vulnerability with bandit;
-- Use ruff, to format your code, and check some writing rules;
+- Use ruff to format your code and check some writing rules;
 - Run unit tests.
 
 ---
 
 ## Summary
-Follow PEP 8, and use PyCharm to help with that. Prefer descriptive and readable code over brevity.
+Follow PEP 8 and use PyCharm to help with that. Prefer descriptive and readable code over brevity.
 Code should be as self-explanatory as possible, but use comments when necessary and add type hints.
 Use advanced Python features like list comprehensions with care.

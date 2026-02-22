@@ -2,7 +2,6 @@
 
 ## 1. Introduction
 **Prawobiorca** is an application designed for intelligent searching of legal acts. The system uses Vector Search to enable users to find relevant regulations using natural language queries.
-
 For logged-in users, the application offers a "Cases" management function, which allows aggregating regulations from various sources and generating ready-made legal applications in PDF format.
 ---
 

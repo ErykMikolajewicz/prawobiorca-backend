@@ -11,30 +11,15 @@ PostgreSQL was chosen as the relational database. The decision was driven by the
 Postgres serves as the default data storage location in the application. Other forms of storage are used only when required for performance reasons or due to the absence of certain functionality in the relational database.
 
 ### Abstraction Layer and Integration
-The application uses the SQLAlchemy ORM for database communication, which provides a sufficient abstraction layer. There are no additional layers on top of SQLAlchemy, as replacing this tool is considered unlikely. Additionally, the Unit of Work pattern is used for transaction management.
+The application uses the SQLAlchemy ORM for database communication. There is a repository pattern used to gather all data access code in one place and decouple app layer for orm related concerns.
 
-### Capabilities and Future Plans
-Replacing Postgres is considered unlikely but possible. The potentially biggest challenge is the high cost of database maintenance and management. Scalability issues may also arise. In such cases, migration to a commercially supported database (e.g., EnterpriseDB) or the use of managed solutions offered by cloud providers is possible.
-
----
-
-## Key–Value Database
-
-### Technology Choice and Justification
-Redis was chosen as the key–value database. This type of database is necessary due to the need to share data (e.g., access tokens) between instances of the web application, and storing them in a relational database would be too slow.
-
-### Scope of Use
-Redis is primarily used to store tokens and other small, frequently used data, where reading from the relational database would be unnecessarily slow. It also simplifies managing data with a limited lifespan.
-
-### Abstraction Layer and Integration
-The project uses an abstraction layer referred to as the “key–value database.” However, in type hints, the Redis client is used directly. Replacing Redis with another technology is considered unlikely, so the lack of a full additional abstraction layer is a deliberate choice. Adding such a layer would increase complexity without providing benefits in terms of easier maintenance or future flexibility.
-
-### Capabilities and Future Plans
-Due to the lack of technologies offering functionality comparable to Redis, there are no plans to replace it. The solution is close to being open source — although there are some licensing controversies — it is not simply MIT or Apache. The benefits of being independent of the chosen technology were assessed as low.
+### Capabilities and Plans
+Replacing Postgres is considered unlikely but possible.
 
 ---
 
 ## Cloud Storage
+Currently not used, replaced by just local file hierarchy.
 
 ### Technology Choice and Justification
 Google Cloud Storage was chosen as the file storage solution. This decision was made for performance reasons — storing files in the relational database would likely negatively impact the overall database performance, and serving them via the web application would be a heavy load on the network. To maintain consistency in the technology stack, Google Cloud Storage was selected because the Google Cloud platform is also used in other areas of the project.

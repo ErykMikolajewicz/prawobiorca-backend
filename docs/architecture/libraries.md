@@ -38,7 +38,7 @@ Alternatives:
 
 ### email-validator
 
-An optional Pydantic dependency used to validate email addresses in the application.
+An optional Pydantic dependency is used to validate email addresses in the application.
 
 ---
 
@@ -51,7 +51,7 @@ The main framework used in the project. Selected for:
 - easier testing through dependency injection.
 
 Alternatives:  
-- **Flask** — weaker asynchronous support and requires installing numerous plugins for basic functionality.  
+- **Flask** — weaker asynchronous support and requires installing many plugins for basic functionality.  
 - **Django** — overly complex for the project’s needs (e.g., HTML file hosting, rigid ORM structure). The application is intended to operate as a set of SOA services communicating via REST API, where FastAPI is a lighter, more flexible option.
 
 ---
@@ -68,6 +68,13 @@ The downside is that it is synchronous — currently, asynchronous wrappers must
 An HTTP server written in Rust, supporting HTTP/2.  
 Pros: high performance.  
 Cons: harder debugging compared to Python-based servers (e.g., Hypercorn).
+
+---
+
+### httpx
+
+New popular http Python client. Used for its async support.
+Used to communicate with embedding service.
 
 ---
 
@@ -95,13 +102,7 @@ The official client for the Qdrant database — essentially the only option.
 
 ---
 
-### redis
-
-The official client for Redis — standard solution.
-
----
-
-### sqlalchemy[asyncio]
+### sqlalchemy\[asyncio\]
 
 The most popular ORM in Python.  
 Pros:  
@@ -118,7 +119,7 @@ Alternative: **[Tortoise ORM](https://tortoise.github.io/){target=_blank}** — 
 
 ## Dev/Test Dependencies
 
-Dependencies required during the development process, writing tests, or debugging. Unlike the main dependencies section, they are not required to run the application in a production environment.
+Dependencies are required during the development process, writing tests, or debugging. Unlike the main dependencies section, they are not required to run the application in a production environment.
 
 ---
 
@@ -127,23 +128,8 @@ A tool for performing database migrations. Especially useful in tests, as it all
 
 ---
 
-### Bandit
-A security scanner for detecting basic vulnerabilities. It has to be run before committing. Alternatively, one could consider [SonarQube](https://www.sonarsource.com/knowledge/languages/python/){target=_blank}, although it hasn’t been thoroughly evaluated.
-
----
-
-### Black
-An automatic code formatter. Helps maintain a consistent coding style across the team. It has to be run before every commit.
-
----
-
-### granian[reload]
+### granian\[reload\]
 An extension of [Granian](#granian) that enables automatic reload when code changes. Used during debugging when running the application via a bash script.
-
----
-
-### isort
-A tool for organizing imports. Groups them by source, improving readability and consistency of the code. It has to be run before committing.
 
 ---
 
@@ -157,7 +143,7 @@ A visual theme for documentation generated with [MkDocs](#mkdocs).
 
 ---
 
-### mkdocstrings[python]
+### mkdocstrings\[python\]
 A plugin that integrates Python docstrings into documentation generated with [MkDocs](#mkdocs).
 
 ---
@@ -167,7 +153,7 @@ PostgreSQL driver (version 3, despite the name not indicating it). Supports both
 
 ---
 
-### Pytest
+### pytest
 The most popular testing framework in Python. Significantly extends the capabilities of the built-in `unittest` module. Alternative testing frameworks were not considered.
 
 ---
@@ -177,10 +163,10 @@ A [Pytest](#pytest) plugin that enables testing asynchronous code. It has some l
 
 ---
 
-### testcontainers[postgres,redis]
-A library for easily creating containers during integration tests. Officially works only with Docker, but Podman can be configured to cooperate with it by emulating Docker.
+### ruff
+Popular python linter. Used to ensure similar formatting across various devs. Also, can catch some bad smelling code, like unused imports
 
 ---
 
-### Uvicorn
-A lightweight HTTP server, often used during development for debugging due to its ease of execution from a Python script. Likely to be removed eventually, once running the [Granian](#granianreload) server directly from Python (instead of as a separate console application) is fully refined.
+### testcontainers\[postgres\]
+A library for easily creating containers during integration tests. Officially works only with Docker, but Podman can be configured to cooperate with it by emulating Docker.
