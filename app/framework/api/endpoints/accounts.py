@@ -9,7 +9,7 @@ from app.application.interfaces.relational import AsyncSession
 from app.application.interfaces.users import UsersRepository
 from app.application.use_cases.account import CreateAccount
 from app.domain.exceptions import UserExists
-from app.framework.dependencies.session import get_relational_session
+from app.framework.dependencies.relational import get_relational_session
 from app.framework.dependencies.users import get_users_repository
 from app.framework.web.templating import templates
 from app.shared.consts import FLASH_KEY

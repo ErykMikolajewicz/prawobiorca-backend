@@ -40,23 +40,20 @@ class UsersTokensRepository:
         self._session = session
         self._model = UsersTokens
 
-    async def get_user_id_by_session_id(self, session_id: str) -> bool:
-        statement = select(self._model.valid_until).where(self._model.session_id == session_id).limit(1)
+    async def get_user_id_by_session_id(self, session_id: str) -> UUID | None:
+        statement = (
+            select(self._model.user_id)
+            .where(self._model.session_id == session_id and self._model.valid_until > datetime.now(timezone.utc))
+            .limit(1)
+        )
 
         result = await self._session.execute(statement)
-        row = result.first()
+        user = result.first()
 
-        if row is None:
-            return False
+        if user is None:
+            return None
 
-        valid_until: datetime = row[0]
-
-        now_utc = datetime.now(timezone.utc)
-
-        if valid_until.tzinfo is None:
-            return valid_until >= now_utc.replace(tzinfo=None)
-
-        return valid_until >= now_utc
+        return user[0]
 
     async def add_session(self, user_id: UUID, session_id: str, valid_until: datetime) -> None:
         statement = insert(self._model).values(

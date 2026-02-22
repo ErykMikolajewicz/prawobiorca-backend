@@ -10,7 +10,7 @@ from app.application.interfaces.users import UsersRepository, UsersTokensReposit
 from app.application.use_cases.auth import LogoutUser, LogUser
 from app.domain.exceptions import UserCantLog
 from app.framework.dependencies.authentication import get_logout_user, set_user_by_session_id
-from app.framework.dependencies.session import get_relational_session
+from app.framework.dependencies.relational import get_relational_session
 from app.framework.dependencies.users import get_users_repository, get_users_tokens_repository
 from app.framework.web.templating import templates
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME, FLASH_KEY

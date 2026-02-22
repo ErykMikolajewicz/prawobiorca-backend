@@ -5,7 +5,7 @@ from fastapi import Depends, Request
 from app.application.interfaces.relational import AsyncSession
 from app.application.interfaces.users import UsersTokensRepository
 from app.application.use_cases.auth import LogoutUser
-from app.framework.dependencies.session import get_relational_session
+from app.framework.dependencies.relational import get_relational_session
 from app.framework.dependencies.users import get_users_tokens_repository
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME
 

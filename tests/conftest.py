@@ -15,28 +15,24 @@ from main import app
 
 
 @pytest.fixture(scope="function")
-def bearer_token_generator() -> Iterator[str]:
+def session_id_generator() -> Iterator[str]:
     """
     Generates a sequence of url-safe session id.
 
     The session id is pre-defined and asserted to match the
     `url_safe_session_id_length`.
 
-    Can be used max 3 times, currently sufficient for all tests scenarios.
+    Can be used max 1 time p test, currently sufficient for all test scenarios.
 
     Yields:
-        str: The next bearer token from the predefined list.
+        str: The next session id from the predefined sequence.
     """
 
-    tokens = (
-        "O8KwTwMvXTSn3VdWl6iZlNqmw39UvFRvIbeHfo-mykY",
-        "XzkNQQKM3CYn3ncRcs-c2txIxihTk_Mi126sebi06VA",
-        "CKIr3mwWTEXoMNaHl7Q4-jjz8oowSPBIayMSTe2UXxg",
-    )
-    for token in tokens:
-        assert len(token) == url_safe_session_id_length
+    session_ids = ("O8KwTwMvXTSn3VdWl6iZlNqmw39UvFRvIbeHfo-mykY",)
+    for session_id in session_ids:
+        assert len(session_id) == url_safe_session_id_length
 
-    return iter(tokens)
+    return iter(session_ids)
 
 
 @pytest.fixture(scope="function")
@@ -44,16 +40,12 @@ def uuid_generator() -> Iterator[str]:
     """
     Generates a sequence of predefined UUIDs.
 
-    Can be used max 3 times, currently sufficient for all tests scenarios.
+    Can be used max 1 time per test, currently sufficient for all test scenarios.
 
     Yields:
         str: The next UUID from the predefined list.
     """
-    uuids = (
-        "1b4a1b7a-dbd6-4be4-a52e-80fdd9ddbfb0",
-        "ad987bb3-cf5b-4d07-a23c-2e5f1221171a",
-        "4596f6de-d067-4e36-ad9f-a3b3959eee6b",
-    )
+    uuids = "1b4a1b7a-dbd6-4be4-a52e-80fdd9ddbfb0"
 
     return iter(uuids)
 

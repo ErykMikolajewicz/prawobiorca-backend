@@ -1,6 +1,6 @@
 """Common pytest fixtures for integration tests.
 
-These fixtures handle container initialization (PostgreSQL, Redis)
+These fixtures handle container initialization (PostgresSQL, Redis)
 and dependency overrides for FastAPI, ensuring test isolation.
 """
 
@@ -13,7 +13,7 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
-from app.framework.dependencies.session import get_relational_session
+from app.framework.dependencies.relational import get_relational_session
 from main import app
 
 POSTGRES_IMAGE_VERSION = "postgres:18"
@@ -21,13 +21,13 @@ POSTGRES_IMAGE_VERSION = "postgres:18"
 
 @pytest.fixture(scope="session", autouse=True)
 def run_migrations(postgres_container: PostgresContainer) -> None:
-    """Run Alembic migrations on the test PostgreSQL database.
+    """Run Alembic migrations on the test PostgresSQL database.
 
     This fixture automatically runs before tests to ensure
     the schema is up to date.
 
     Args:
-        postgres_container (PostgresContainer): Running PostgreSQL test container.
+        postgres_container (PostgresContainer): Running PostgresSQL test container.
     """
     alembic_cfg = alembic.config.Config("alembic.ini")
     db_url = postgres_container.get_connection_url()
@@ -37,12 +37,12 @@ def run_migrations(postgres_container: PostgresContainer) -> None:
 
 @pytest.fixture(scope="session")
 def postgres_container() -> Generator[PostgresContainer, None]:
-    """Create and manage a PostgreSQL test container.
+    """Create and manage a PostgresSQL test container.
 
     Scope is set to `session` to avoid repeated startup overhead.
 
     Yields:
-        PostgresContainer: Running PostgreSQL container.
+        PostgresContainer: Running PostgresSQL container.
     """
     with PostgresContainer(POSTGRES_IMAGE_VERSION, driver="psycopg") as postgres:
         yield postgres
@@ -53,10 +53,10 @@ async def override_get_relational_session(postgres_container: PostgresContainer)
     """Override the FastAPI relational DB dependency with a test session.
 
     Replaces the default `get_relational_session` dependency with a session
-    connected to the PostgreSQL test container.
+    connected to the PostgresSQL test container.
 
     Args:
-        postgres_container (PostgresContainer): Running PostgreSQL test container.
+        postgres_container (PostgresContainer): Running PostgresSQL test container.
 
     Yields:
         None: This is a pytest fixture that sets the override in FastAPI.
@@ -80,12 +80,12 @@ async def override_get_relational_session(postgres_container: PostgresContainer)
 
 @pytest.fixture
 async def relational_session(postgres_container: PostgresContainer) -> AsyncGenerator[AsyncSession, None]:
-    """Provide a direct session to the test PostgreSQL database.
+    """Provide a direct session to the test PostgresSQL database.
 
     Useful for inserting or cleaning up data before/after tests.
 
     Args:
-        postgres_container (PostgresContainer): Running PostgreSQL test container.
+        postgres_container (PostgresContainer): Running PostgresSQL test container.
 
     Yields:
         AsyncSession: SQLAlchemy async session with AUTOCOMMIT isolation.
