@@ -3,9 +3,9 @@
 Prawobiorca is an application developed within the WMS_DEV science club at the Wrocław University of Science and Technology.
 Its goal is to help students defend and assert their rights.
 
-The core part of the application is a regulations search engine. It allows obtaining information in a simple and accessible way by entering queries, which are then processed based on their meaning rather than exact text matching.
+The core part of the application is a regulations search engine. It allows collecting information in a simple and accessible way by entering queries, which are then processed based on their meaning rather than exact text matching.
 
-Future plans include:
+Plans include:
 - **Application Generator** - create elegant PDF documents by simply describing what you want to achieve.
 - **Court Judgments Search Engine** - check if other students have defended their cases in court and what the outcomes were.
 - **Court Judgments Summarizer** - easily extract important facts from a sea of legal jargon!
@@ -25,7 +25,7 @@ Future plans include:
 
 3. **Open the documentation**:
     ```bash
-    mkdocs serve
+    zensical serve
     ```
     - Read the section about **Workflow**, especially regarding the commit format.
     - Read about **Project Architecture**, especially the coding rules.
