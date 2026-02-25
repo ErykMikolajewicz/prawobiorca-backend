@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "macros.html" import auth_button %}
+
+{% block title %}Moje sprawy - PRAWOBIORCA{% endblock %}
+
+{% block content %}
+  {{ auth_button(is_user_logged) }}
+
+  <p><a href="/">Powrot do strony glownej</a></p>
+
+  <h2>Moje sprawy</h2>
+
+  {% if error_message %}
+    <p role="alert">{{ error_message }}</p>
+  {% endif %}
+
+  {% if cases %}
+    <ul>
+      {% for case in cases %}
+        <li>
+          <strong>{{ case.name }}</strong>
+          {% if case.context %}
+            <p>{{ case.context }}</p>
+          {% endif %}
+          <form method="post" action="/cases/{{ case.id }}/delete">
+            <button type="submit">Usun sprawe</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>Nie masz jeszcze zadnych spraw.</p>
+  {% endif %}
+{% endblock %}
