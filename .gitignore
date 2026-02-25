@@ -16,4 +16,6 @@ wheels/
 .idea
 /secrets/
 
+/site/
+
 tmp

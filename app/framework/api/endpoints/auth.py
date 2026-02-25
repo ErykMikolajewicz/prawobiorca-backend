@@ -1,3 +1,4 @@
+import json
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, Request, status
@@ -51,7 +52,7 @@ async def log_user(
 
     log_user_ = LogUser(session, users_repo, tokens_repo, login_data)
     try:
-        session_id = await log_user_.execute()
+        login_output = await log_user_.execute()
     except UserCantLog:
         error_message = "Nieprawidłowe dane logowania!"
         request.session[FLASH_KEY] = {"error_message": error_message}
@@ -59,14 +60,16 @@ async def log_user(
 
     response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
 
+    login_output = login_output.model_dump()
+    session_data = json.dumps(login_output)
     response.set_cookie(
         key=AUTHORIZATION_COOKIE_NAME,
-        value=session_id,
+        value=session_data,
         httponly=True,
         secure=True,
         samesite="strict",
         max_age=60 * 60 * 24 * 7,
-        path="/auth/login",
+        path="/",
     )
 
     return response
@@ -83,7 +86,7 @@ async def logout_user(logout_user_: Annotated[LogoutUser, Depends(get_logout_use
 
     response.delete_cookie(
         key=AUTHORIZATION_COOKIE_NAME,
-        path="/auth/login",
+        path="/",
     )
 
     return response

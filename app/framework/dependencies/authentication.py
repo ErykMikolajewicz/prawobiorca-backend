@@ -1,3 +1,4 @@
+import json
 from typing import Annotated
 
 from fastapi import Depends, Request
@@ -14,8 +15,14 @@ async def set_user_by_session_id(
     users_tokens_repo: Annotated[UsersTokensRepository, Depends(get_users_tokens_repository)],
     request: Request,
 ):
-    session_id = request.cookies.get(AUTHORIZATION_COOKIE_NAME)
-    user_id = await users_tokens_repo.get_user_id_by_session_id(session_id)
+    session_data = request.cookies.get(AUTHORIZATION_COOKIE_NAME)
+    if session_data:
+        session_data = json.loads(session_data)
+        session_id = session_data["session_id"]
+        user_id = await users_tokens_repo.get_user_id_by_session_id(session_id)
+    else:
+        user_id = None
+        session_id = None
 
     request.state.user_id = user_id
     request.state.session_id = session_id

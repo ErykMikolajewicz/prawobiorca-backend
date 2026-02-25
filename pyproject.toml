@@ -1,6 +1,6 @@
 [project]
 name = "prawobiorca-backend"
-version = "0.15.0"
+version = "0.16.0"
 description = "Law acts search engine with AI features."
 readme = "README.md"
 requires-python = ">=3.13"
@@ -50,24 +50,6 @@ filterwarnings = [
 ]
 asyncio_default_fixture_loop_scope = "function"
 asyncio_mode = "auto"
-
-[tool.black]
-line-length = 120
-target-version = ["py313"]
-exclude = '''
-/(
-    \.git
-  | \.venv
-  | config
-  | secrets
-  | bash
-  | alembic
-)/
-'''
-
-[tool.isort]
-skip = ["alembic", ".venv"]
-
 
 [tool.ruff]
 line-length = 120

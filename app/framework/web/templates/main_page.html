@@ -37,4 +37,19 @@
     <input type="file" name="file" />
     <button type="submit">Wyślij</button>
   </form>
+
+  {% if is_user_logged %}
+    <hr />
+
+    <h2>Moje sprawy</h2>
+    {% if cases %}
+      <ul>
+        {% for case in cases %}
+          <li>{{ case.name }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Brak spraw.</p>
+    {% endif %}
+  {% endif %}
 {% endblock %}
