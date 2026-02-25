@@ -23,10 +23,9 @@ class CasesRepository:
             cases.append(case_data)
         return cases
 
-    async def add(self, new_case: NewCase) -> UUID:
+    async def add(self, new_case: NewCase) -> None:
         statement = insert(self._model).values(user_id=new_case.user_id, name=new_case.name).returning(self._model.id)
-        case_id = await self._session.scalar(statement)
-        return case_id
+        await self._session.scalar(statement)
 
     async def delete(self, case_id: UUID) -> None:
         statement = delete(self._model).where(self._model.id == case_id)

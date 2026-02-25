@@ -51,5 +51,15 @@
     {% else %}
       <p>Brak spraw.</p>
     {% endif %}
+
+  <form action="/user/cases" method="post">
+    <div>
+        <label for="case_name">Nazwa sprawy:</label>
+        <input type="text" id="case_name" name="case_name" required>
+    </div>
+
+    <button type="submit">Utwórz sprawę</button>
+  </form>
+
   {% endif %}
 {% endblock %}

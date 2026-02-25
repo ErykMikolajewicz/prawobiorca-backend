@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.framework.api.endpoints.accounts import account_router
 from app.framework.api.endpoints.auth import auth_router
+from app.framework.api.endpoints.cases import cases_router
 from app.framework.api.endpoints.files import html_files_router
 from app.framework.api.endpoints.health import health_router
 from app.framework.api.endpoints.main_page import main_page_router
@@ -15,3 +16,4 @@ def include_all_routers(app: FastAPI):
     app.include_router(main_page_router)
     app.include_router(html_files_router)
     app.include_router(search_router)
+    app.include_router(cases_router)
