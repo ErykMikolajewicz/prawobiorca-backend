@@ -10,10 +10,10 @@ from app.domain.exceptions import FileNameExist, FileNameTooLong, InvalidCharact
 from app.framework.dependencies.file_storage import get_file_storage
 from app.shared.consts import FLASH_KEY
 
-html_files_router = APIRouter(tags=["files"])
+files_router = APIRouter(tags=["files"])
 
 
-@html_files_router.post("/files")
+@files_router.post("/files")
 async def add_file(
     request: Request, file: UploadFile, storage_repository: Annotated[StorageRepository, Depends(get_file_storage)]
 ):

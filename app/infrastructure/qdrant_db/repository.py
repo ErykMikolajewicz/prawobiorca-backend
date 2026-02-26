@@ -2,7 +2,7 @@ from uuid import UUID
 
 from grpc.aio import AioRpcError
 from qdrant_client import AsyncQdrantClient
-from qdrant_client.models import PointStruct
+from qdrant_client.models import Distance, PointStruct, VectorParams
 
 from app.domain.exceptions import RegulationsNotPreparedToSearch
 
@@ -41,9 +41,11 @@ class QdrantRegulationsRepository:
             raise RegulationsNotPreparedToSearch(self._collection_name)
 
         results = []
-        for point in search_result:
-            point = point[1]
-            if point:
-                results.append(point.payload)
+        for point in search_result.points:
+            results.append(point.payload)
 
         return results
+
+    async def initialize_law_act(self, act_name: str):
+        vectors_config = VectorParams(size=768, distance=Distance.COSINE)
+        await self._client.create_collection(act_name, vectors_config)

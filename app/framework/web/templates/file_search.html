@@ -9,15 +9,25 @@
 
     <h1>Przeszukaj plik: {{ filename }}</h1>
 
+    <form action="/user/files/{{ filename }}/preparation" method="post">
+      <button type="submit">Przygotuj plik</button>
+    </form>
+
     {% if error_message %}
       <div role="alert" style="padding: 12px; border: 1px solid #c00; background: #fee; color: #900; margin: 12px 0;">
         <strong>Błąd:</strong> {{ error_message }}
       </div>
     {% endif %}
 
+    {% if info_message %}
+      <div role="status">
+        <strong>Info:</strong> {{ info_message }}
+      </div>
+    {% endif %}
+
     <form method="post">
       <label for="query">Twoje zapytanie:</label>
-      <input type="text" id="query" name="query" placeholder="Wpisz treść..." required />
+      <input type="text" id="query" name="query" placeholder="Wpisz treść..." value="{{ query }}" required />
       <button type="submit">Przeszukaj</button>
     </form>
 

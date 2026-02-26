@@ -19,20 +19,23 @@ search_router = APIRouter(tags=["search"], dependencies=(Depends(set_user_by_ses
 )
 async def get_search_file_view(request: Request, filename: str = Query()):
     flash_data = request.session.pop(FLASH_KEY, None)
+    error_message = ""
+    info_message = ""
     if flash_data:
-        try:
-            error_message = flash_data["error_message"]
-        except KeyError:
-            error_message = ""
-    else:
-        error_message = ""
+        error_message = flash_data.get("error_message", "")
+        info_message = flash_data.get("info_message", "")
 
     is_user_logged = request.state.user_id is not None
 
     return templates.TemplateResponse(
         request,
         "file_search.html",
-        {"filename": filename, "error_message": error_message, "is_user_logged": is_user_logged},
+        {
+            "filename": filename,
+            "error_message": error_message,
+            "info_message": info_message,
+            "is_user_logged": is_user_logged,
+        },
     )
 
 

@@ -4,51 +4,74 @@ from io import BytesIO
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTPage, LTTextContainer
 
+from app.domain.value_objects.document import Chapter, Document, Paragraph, Point
 
-def divide_document(document: bytes) -> list:
-    doc_str = extract_text(document)
+CHAPTER_CORE = r"^Rozdział\s+(?P<ch_num>[IVX]+)\s+[–-]\s+(?P<ch_title>[^\n]+)"
+CHAPTER_PLAIN = r"^Rozdział\s+[IVX]+\s+[–-]\s+.+$"
+CHAPTER_BLOCK = rf"{CHAPTER_CORE}\n(?P<ch_body>.*?)(?={CHAPTER_PLAIN}|\Z)"
 
-    # pattern for selecting the whole chapter (Rozdział) - header & content
-    regex_chapter = r"^(?:Rozdział\s)?[IVX]+[^\.\n]*\n[\s\S]*?(?=^(?:Rozdział\s)?[IVX]+[^\.\n]*|\Z)"
+PARAGRAPH_CORE = r"^§\s+(?P<p_num>\d+)\.\s+(?P<p_title>[^\n]+)"
+PARAGRAPH_PLAIN = r"§\s+\d+\.\s+[^\n]+$"
+PARAGRAPH_BLOCK = rf"{PARAGRAPH_CORE}\n(?P<p_body>.*?)(?={PARAGRAPH_PLAIN}|\Z)"
 
-    # pattern for selecting only the title of the chapter - e.g. "Rozdział I – Postanowienia ogólne"
-    regex_chapter_title = r"^Rozdział\s[IVX]+[^\.\n§]* "
+POINT_CORE = r"^(?P<pt_num>\d+)[\.|\)].*?"
+POINT_PLAIN = r"\d+[\.|\)]\s+.*?"
+POINT_BLOCK = rf"{POINT_CORE}\s+(?P<pt_body>.*?)(?={POINT_PLAIN}|\Z)"
 
-    matches = re.finditer(regex_chapter, doc_str, re.MULTILINE)
-    chapters = [match.group() for match in matches]
+FLAGS = re.MULTILINE | re.DOTALL
 
-    chapter_titles = [str(re.findall(regex_chapter_title, chapter)[0]).strip() or "" for chapter in chapters]
-    pure_chapter_titles = []
 
-    # formatting list elements to tuple (chapter num, chapter title, contents)
-    for i, chapter_title in enumerate(chapter_titles, start=1):
-        pure_title_regex = r"[-–]\s*(.+)"
-        match = re.search(pure_title_regex, chapter_title)
+def extract_document(document_content: bytes, document_title: str) -> Document:
+    def _roman_to_int(roman: str) -> int:
+        vals = {"I": 1, "V": 5, "X": 10}
+        roman.replace("IV", "IIII")
+        roman.replace("IX", "XVIIII")
 
-        if not match:
-            raise Exception("Rozdział XXX regex error")
+        return sum([vals[num] for num in roman])
 
-        pure_title = match.group(1).strip()
+    text = extract_text(document_content)
 
-        pure_chapter_titles.append([i, pure_title])
+    chapters = re.finditer(CHAPTER_BLOCK, text, FLAGS)
 
-    structured_chapters = [pure_chapter_titles[i] + [chapters[i]] for i in range(len(chapters))]
+    chapter_items: list[Chapter] = []
 
-    regex_remove_chapter_name = r"(?s)^.*?\n\s*§\s*"
+    for chapter in chapters:
+        ch_body = chapter.group("ch_body")
 
-    paragraph_groups_regex = r"(?s)(?P<title>§\s+\d+\.\s+.*?\n)(?P<contents>.*?)(?=§\s+\d+\.|\Z)"
+        paragraphs = re.finditer(PARAGRAPH_BLOCK, ch_body, FLAGS)
 
-    for i, (nr, title, content) in enumerate(structured_chapters):
-        new_content = re.sub(regex_remove_chapter_name, "§", content)
+        paragraph_items: list[Paragraph] = []
 
-        paragraphs = []
-        for match in list(re.finditer(paragraph_groups_regex, new_content, re.DOTALL | re.MULTILINE)):
-            paragraph = (match.group("title").replace("\n", "").strip(), match.group("contents"))
-            paragraphs.append(paragraph)
+        for paragraph in paragraphs:
+            p_body = paragraph.group("p_body")
+            p_num = paragraph.group("p_num")
+            p_title = paragraph.group("p_title")
 
-        structured_chapters[i] = (nr, title, paragraphs)
+            paragraph = Paragraph(title=p_title, number=int(p_num), points=[])
 
-    return structured_chapters
+            paragraph_items.append(paragraph)
+
+            points = re.finditer(POINT_BLOCK, p_body, FLAGS)
+
+            point_items: list[Point] = []
+
+            for point in points:
+                pt_number = point.group("pt_num")
+                pt_body = point.group("pt_body").replace("\n", "").rstrip()
+
+                point = Point(number=int(pt_number), body=pt_body)
+
+                point_items.append(point)
+
+            paragraph.points = point_items
+
+        if paragraph_items:
+            ch_num = chapter.group("ch_num")
+            ch_title = chapter.group("ch_title").rstrip()
+            chapter = Chapter(title=ch_title, number=_roman_to_int(ch_num), paragraphs=paragraph_items)
+            chapter_items.append(chapter)
+
+    return Document(title=document_title, chapters=chapter_items)
 
 
 def extract_text(pdf_bytes: bytes, top_margin: float = 50, bottom_margin: float = 60) -> str:
