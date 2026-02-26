@@ -7,8 +7,7 @@ from app.application.use_cases.files import ListFiles
 from app.framework.dependencies.authentication import set_user_by_session_id
 from app.framework.dependencies.cases import get_list_user_cases
 from app.framework.dependencies.files import get_list_files
-from app.framework.web.templating import templates
-from app.shared.consts import FLASH_KEY
+from app.framework.web.helpers import render_page_template
 
 main_page_router = APIRouter(tags=["main_page"], dependencies=(Depends(set_user_by_session_id),))
 
@@ -30,17 +29,4 @@ async def get_main_page(
     if is_user_logged:
         cases = await list_cases.execute()
 
-    flash_data = request.session.pop(FLASH_KEY, None)
-    if flash_data:
-        try:
-            error_message = flash_data["error_message"]
-        except KeyError:
-            error_message = ""
-    else:
-        error_message = ""
-
-    return templates.TemplateResponse(
-        request,
-        "main_page.html",
-        {"files": files_list, "error_message": error_message, "is_user_logged": is_user_logged, "cases": cases},
-    )
+    return render_page_template(request, "main_page.html", cases=cases, files=files_list)

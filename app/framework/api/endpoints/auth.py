@@ -13,7 +13,7 @@ from app.domain.exceptions import UserCantLog
 from app.framework.dependencies.authentication import get_logout_user, set_user_by_session_id
 from app.framework.dependencies.relational import get_relational_session
 from app.framework.dependencies.users import get_users_repository, get_users_tokens_repository
-from app.framework.web.templating import templates
+from app.framework.web.helpers import render_page_template
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME, FLASH_KEY
 
 auth_router = APIRouter(tags=["auth"])
@@ -21,16 +21,7 @@ auth_router = APIRouter(tags=["auth"])
 
 @auth_router.get("/auth/login")
 async def get_login_page(request: Request):
-    flash_data = request.session.pop(FLASH_KEY, None)
-    if flash_data:
-        try:
-            error_message = flash_data["error_message"]
-        except KeyError:
-            error_message = ""
-    else:
-        error_message = ""
-
-    return templates.TemplateResponse(request, "login.html", {"error_message": error_message})
+    return render_page_template(request, "login.html")
 
 
 @auth_router.post("/auth/login")

@@ -11,7 +11,7 @@ from app.application.use_cases.account import CreateAccount
 from app.domain.exceptions import UserExists
 from app.framework.dependencies.relational import get_relational_session
 from app.framework.dependencies.users import get_users_repository
-from app.framework.web.templating import templates
+from app.framework.web.helpers import render_page_template
 from app.shared.consts import FLASH_KEY
 
 account_router = APIRouter(tags=["account"])
@@ -45,17 +45,4 @@ async def create_account(
 
 @account_router.get("/accounts/register", status_code=status.HTTP_200_OK)
 async def get_register_page(request: Request):
-    flash_data = request.session.pop(FLASH_KEY, None)
-    if flash_data:
-        try:
-            error_message = flash_data["error_message"]
-        except KeyError:
-            error_message = ""
-    else:
-        error_message = ""
-
-    return templates.TemplateResponse(
-        request,
-        "register.html",
-        {"error_message": error_message},
-    )
+    return render_page_template(request, "register.html")

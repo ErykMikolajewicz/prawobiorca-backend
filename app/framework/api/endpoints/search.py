@@ -7,7 +7,7 @@ from app.application.use_cases.search import SearchFile
 from app.domain.exceptions import RegulationsNotPreparedToSearch
 from app.framework.dependencies.authentication import set_user_by_session_id
 from app.framework.dependencies.search import get_search_file
-from app.framework.web.templating import templates
+from app.framework.web.helpers import render_page_template
 from app.shared.consts import FLASH_KEY
 
 search_router = APIRouter(tags=["search"], dependencies=(Depends(set_user_by_session_id),))
@@ -18,25 +18,7 @@ search_router = APIRouter(tags=["search"], dependencies=(Depends(set_user_by_ses
     status_code=status.HTTP_200_OK,
 )
 async def get_search_file_view(request: Request, filename: str = Query()):
-    flash_data = request.session.pop(FLASH_KEY, None)
-    error_message = ""
-    info_message = ""
-    if flash_data:
-        error_message = flash_data.get("error_message", "")
-        info_message = flash_data.get("info_message", "")
-
-    is_user_logged = request.state.user_id is not None
-
-    return templates.TemplateResponse(
-        request,
-        "file_search.html",
-        {
-            "filename": filename,
-            "error_message": error_message,
-            "info_message": info_message,
-            "is_user_logged": is_user_logged,
-        },
-    )
+    return render_page_template(request, "file_search.html", filename=filename)
 
 
 @search_router.post(
@@ -56,15 +38,4 @@ async def post_search_file(
         request.session[FLASH_KEY] = {"error_message": error_message}
         return RedirectResponse(url="/files/search", status_code=status.HTTP_303_SEE_OTHER)
 
-    is_user_logged = request.state.user_id is not None
-
-    return templates.TemplateResponse(
-        request,
-        "file_search.html",
-        {
-            "filename": filename,
-            "query": query,
-            "results": results,
-            "is_user_logged": is_user_logged,
-        },
-    )
+    return render_page_template(request, "file_search.html", filename=filename, query=query, results=results)
