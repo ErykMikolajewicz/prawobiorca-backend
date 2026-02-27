@@ -1,9 +1,10 @@
 from typing import Protocol
-from uuid import UUID
+
+from app.domain.value_objects.documents import EmbeddedDocument
 
 
 class RegulationsRepository(Protocol):
-    async def add_point(self, point_id: UUID, vector: list[float], payload: dict) -> None: ...
+    async def add_documents(self, documents: list[EmbeddedDocument]) -> None: ...
 
     async def search(
         self,
