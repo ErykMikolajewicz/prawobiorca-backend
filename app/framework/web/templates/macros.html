@@ -2,11 +2,11 @@
   <div class="auth-controls">
     {% if is_user_logged %}
       <form action="/auth/logout" method="post" style="display: inline;">
-        <button type="submit">Wyloguj się</button>
+        <button type="submit" class="btn btn-primary">Wyloguj się</button>
       </form>
     {% else %}
       <a href="/auth/login" style="text-decoration: none;">
-        <button type="button">Zaloguj się</button>
+        <button type="button" class="btn btn-primary">Zaloguj się</button>
       </a>
     {% endif %}
   </div>

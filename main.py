@@ -4,6 +4,8 @@ import tomllib
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.framework.api.router import include_all_routers
@@ -63,7 +65,9 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(lifespan=lifespan, title="PRAWOBIORCA", version=version)
 app.add_middleware(SessionMiddleware, secret_key=app_settings.SESSION_KEY.get_secret_value())
+app.mount("/static", StaticFiles(directory="app/framework/web/static"), name="static")
 
+templates = Jinja2Templates(directory="app/framework/web/templates")
 
 include_all_routers(app)
 

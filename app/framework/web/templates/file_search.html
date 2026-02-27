@@ -10,7 +10,7 @@
     <h1>Przeszukaj plik: {{ filename }}</h1>
 
     <form action="/user/files/{{ filename }}/preparation" method="post">
-      <button type="submit">Przygotuj plik</button>
+      <button type="submit" class="btn btn-primary">Przygotuj plik</button>
     </form>
 
     {% if error_message %}
@@ -28,7 +28,7 @@
     <form method="post">
       <label for="query">Twoje zapytanie:</label>
       <input type="text" id="query" name="query" placeholder="Wpisz treść..." value="{{ query }}" required />
-      <button type="submit">Przeszukaj</button>
+      <button type="submit" class="btn btn-primary">Przeszukaj</button>
     </form>
 
     {% if results %}
