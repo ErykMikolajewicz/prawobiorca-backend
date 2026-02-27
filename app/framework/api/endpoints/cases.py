@@ -3,9 +3,9 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, status
 from fastapi.responses import RedirectResponse
 
-from app.application.use_cases.cases import AddCase
+from app.application.use_cases.cases import AddCase, DeleteCase
 from app.framework.dependencies.authentication import set_user_by_session_id
-from app.framework.dependencies.cases import get_add_user_case
+from app.framework.dependencies.cases import delete_user_case, get_add_user_case
 
 cases_router = APIRouter(tags=["cases"], dependencies=(Depends(set_user_by_session_id),))
 
@@ -13,5 +13,12 @@ cases_router = APIRouter(tags=["cases"], dependencies=(Depends(set_user_by_sessi
 @cases_router.post("/user/cases")
 async def add_user_case(add_user_case_: Annotated[AddCase, Depends(get_add_user_case)]):
     await add_user_case_.execute()
+
+    return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@cases_router.post("/user/cases/delete")
+async def delete_user_case(delete_user_case_: Annotated[DeleteCase, Depends(delete_user_case)]):
+    await delete_user_case_.execute()
 
     return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
