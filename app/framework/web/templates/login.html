@@ -12,14 +12,14 @@
 {% endif %}
 
 <form action="/auth/login" method="post">
-    <div>
-        <label for="username">Nazwa użytkownika:</label>
-        <input type="text" id="username" name="username" required>
+    <div class="mb-3">
+        <label for="username" class="form-label">Nazwa użytkownika:</label>
+        <input type="text" id="username" class="form-control w-25" name="username" required>
     </div>
     
-    <div>
-        <label for="password">Hasło:</label>
-        <input type="password" id="password" name="password" required>
+    <div class="mb-3">
+        <label for="password" class="form-label">Hasło:</label>
+        <input type="password" class="form-control w-25" id="password" name="password" required>
     </div>
 
     <button type="submit" class="btn btn-primary">Zaloguj</button>
