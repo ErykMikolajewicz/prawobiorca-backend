@@ -23,6 +23,10 @@ def get_public_file_repository() -> PublicFilesRepository:
 
 def get_users_file_repository(request: Request) -> UsersFilesRepository:
     user_id = request.state.user_id
+    # That dependency normally can be created only for logged users.
+    # On the main page need to be created (and not used) with not logged users.
+    if user_id is None:
+        return None
 
     match app_settings.FILE_STORAGE:
         case FileStorageType.LOCAL_FILES:
