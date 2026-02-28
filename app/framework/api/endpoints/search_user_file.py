@@ -10,22 +10,22 @@ from app.framework.dependencies.search import get_search_file
 from app.framework.web.helpers import render_page_template
 from app.shared.consts import FLASH_KEY
 
-search_router = APIRouter(tags=["search"], dependencies=(Depends(set_user_by_session_id),))
+user_file_search_router = APIRouter(tags=["search_user_file"], dependencies=(Depends(set_user_by_session_id),))
 
 
-@search_router.get(
-    "/files/search",
+@user_file_search_router.get(
+    "/search/user/file",
     status_code=status.HTTP_200_OK,
 )
-async def get_search_file_view(request: Request, filename: str = Query()):
-    return render_page_template(request, "file_search.html", filename=filename)
+async def get_search_public_file_view(request: Request, filename: str = Query()):
+    return render_page_template(request, "search_user_file.html", filename=filename)
 
 
-@search_router.post(
-    "/files/search",
+@user_file_search_router.post(
+    "/search/user/file",
     status_code=status.HTTP_200_OK,
 )
-async def post_search_file(
+async def post_search_public_file(
     request: Request,
     search_file: Annotated[SearchFile, Depends(get_search_file)],
     query: str = Form(),
@@ -34,8 +34,8 @@ async def post_search_file(
     try:
         results = await search_file.execute()
     except RegulationsNotPreparedToSearch as e:
-        error_message = f"Nie przygotowano do wyszukiwania pliku {e.regulations_name}, zrób to na liście plików!"
+        error_message = f"Plik {e.regulations_name}, nie został przygotowany do przeszukiwania!"
         request.session[FLASH_KEY] = {"error_message": error_message}
-        return RedirectResponse(url="/files/search", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url="/search/user/file", status_code=status.HTTP_303_SEE_OTHER)
 
-    return render_page_template(request, "file_search.html", filename=filename, query=query, results=results)
+    return render_page_template(request, "search_user_file.html", filename=filename, query=query, results=results)

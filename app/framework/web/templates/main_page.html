@@ -15,7 +15,7 @@
         {% for name in public_files %}
           <li>
             {{ name }}
-            <form action="/files/search" method="get" style="display: inline;">
+            <form action="/search/public-file" method="get" style="display: inline;">
               <input type="hidden" name="filename" value="{{ name }}" />
               <button type="submit">Przeszukaj</button>
             </form>
@@ -37,7 +37,7 @@
         {% for name in user_files %}
           <li>
             {{ name }}
-            <form action="/files/search" method="get" style="display: inline;">
+            <form action="/search/user/file" method="get" style="display: inline;">
               <input type="hidden" name="filename" value="{{ name }}" />
               <button type="submit">Przeszukaj</button>
             </form>

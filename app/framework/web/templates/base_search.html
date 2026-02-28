@@ -5,16 +5,15 @@
 
 {% block content %}
     {{ auth_button(is_user_logged) }}
-    <p><a href="/">← Powrót do listy plików</a></p>
-
-    <h1>Przeszukaj plik: {{ filename }}</h1>
-
-    <form action="/user/files/{{ filename }}/preparation" method="post">
-      <button type="submit">Przygotuj plik</button>
-    </form>
 
     {{ show_error(error_message) }}
     {{ show_info(info_message) }}
+
+    <p><a href="/">← Powrót do listy plików</a></p>
+
+    {% block search_extras %}{% endblock %}
+
+    <h1>Przeszukaj plik: {{ filename }}</h1>
 
     <form method="post">
       <label for="query">Twoje zapytanie:</label>

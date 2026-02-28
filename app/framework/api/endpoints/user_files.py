@@ -33,7 +33,7 @@ async def prepare_user_file(
     else:
         request.session[FLASH_KEY] = {"info_message": f"Przygotowano plik {file_name}!"}
 
-    return RedirectResponse(url=f"/files/search?filename={file_name}", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url=f"/search/user/file?filename={file_name}", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @user_files_router.post("/user/files")
