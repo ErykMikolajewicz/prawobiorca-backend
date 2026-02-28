@@ -2,4 +2,14 @@ README.md
 .gitignore
 .idea
 .venv
-bash
+.cache
+.githooks
+alembic.ini
+alembic
+zensical.toml
+.env.example
+tests
+files
+embedding_generator
+docs
+scripts

@@ -41,15 +41,19 @@ Plans include:
 To check how the application works, launch it using the script below. Note that you must have **Podman** installed for it to work!
 
 ```bash
-bash/run_app.sh
+scripts/run_app.sh
 ```
 
-Then use command:
+## Initialize relational database
+To initialize tables in a database, use command:
 ```bash
 alembic upgrade head
 ```
 
-To initialize tables in database.
+Then, seed the database with data:
+```bash
+python scripts/seed_db.py
+```
 
 
 Then visit the main application page:

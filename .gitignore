@@ -1,21 +1,17 @@
 # Python-generated files
 __pycache__/
-*.py[oc]
-build/
-dist/
-wheels/
-*.egg-info
+*.pyc
 
 # Virtual environments
 .venv
 
 .env
-/certificate.crt
-/private.key
+certificate.crt
+private.key
 
 .idea
 /secrets/
 
 /site/
 
-tmp
+.cache
