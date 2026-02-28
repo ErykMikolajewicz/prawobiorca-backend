@@ -10,7 +10,7 @@ from app.framework.api.router import include_all_routers
 from app.framework.dependencies.file_storage import app_settings, check_file_storage_connection
 from app.framework.dependencies.vector_db import check_vector_db_connection
 from app.infrastructure.embeddings.initialization import init_http_client
-from app.infrastructure.relational_db.connection import check_relational_db_connection, init_db
+from app.infrastructure.relational_db.connection import check_relational_db_connection
 from app.shared.logging_config import setup_logging
 
 setup_logging()
@@ -45,7 +45,6 @@ async def lifespan(_: FastAPI):
         logger.critical(f"Can not connect to external service: {e}")
         raise
     else:
-        await init_db()
         app.state.ready = True
         logger.info("Application is ready to serve.")
         yield

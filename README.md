@@ -44,6 +44,14 @@ To check how the application works, launch it using the script below. Note that 
 bash/run_app.sh
 ```
 
+Then use command:
+```bash
+alembic upgrade head
+```
+
+To initialize tables in database.
+
+
 Then visit the main application page:
 [https://127.0.0.1:8000/](https://127.0.0.1:8000/)
 
