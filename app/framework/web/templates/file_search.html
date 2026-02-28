@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros.html" import auth_button %}
+{% from "macros.html" import auth_button, show_error, show_info %}
 
 {% block title %}Przeszukiwanie: {{ filename }}{% endblock %}
 
@@ -13,17 +13,8 @@
       <button type="submit">Przygotuj plik</button>
     </form>
 
-    {% if error_message %}
-      <div role="alert" style="padding: 12px; border: 1px solid #c00; background: #fee; color: #900; margin: 12px 0;">
-        <strong>Błąd:</strong> {{ error_message }}
-      </div>
-    {% endif %}
-
-    {% if info_message %}
-      <div role="status">
-        <strong>Info:</strong> {{ info_message }}
-      </div>
-    {% endif %}
+    {{ show_error(error_message) }}
+    {{ show_info(info_message) }}
 
     <form method="post">
       <label for="query">Twoje zapytanie:</label>

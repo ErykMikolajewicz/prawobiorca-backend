@@ -1,16 +1,12 @@
 {% extends "base.html" %}
-{% from "macros.html" import auth_button %}
+{% from "macros.html" import auth_button, show_error %}
 
 {% block title %}Strona startowa - PRAWOBIORCA{% endblock %}
 
 {% block content %}
     {{ auth_button(is_user_logged) }}
 
-    {% if error_message %}
-      <p role="alert" style="color: #b00020;">
-        {{ error_message }}
-      </p>
-    {% endif %}
+    {{ show_error(error_message) }}
 
     <h2>Pliki publiczne</h2>
 

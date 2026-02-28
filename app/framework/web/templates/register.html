@@ -1,31 +1,28 @@
 {% extends "base.html" %}
+{% from "macros.html" import show_error %}
 
 {% block title %}Rejestracja - PRAWOBIORCA{% endblock %}
 
 {% block content %}
-<h2>Rejestracja</h2>
+    <h2>Rejestracja</h2>
 
-{% if error_message %}
-  <div role="alert" style="padding: 12px; border: 1px solid #c00; background: #fee; color: #900; margin: 12px 0;">
-    <strong>Błąd:</strong> {{ error_message }}
-  </div>
-{% endif %}
+    {{ show_error(error_message) }}
 
-<form action="/accounts/register" method="post">
-    <div>
-        <label for="username">Nazwa użytkownika:</label>
-        <input type="text" id="username" name="username" value="{{ username }}" required>
-    </div>
-    
-    <div>
-        <label for="password">Hasło:</label>
-        <input type="password" id="password" name="password" required>
-    </div>
+    <form action="/accounts/register" method="post">
+        <div>
+            <label for="username">Nazwa użytkownika:</label>
+            <input type="text" id="username" name="username" value="{{ username }}" required>
+        </div>
 
-    <button type="submit">Zarejestruj</button>
-</form>
+        <div>
+            <label for="password">Hasło:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
 
-<p>
-    <a href="/auth/login">Masz już konto? Zaloguj się</a>
-</p>
+        <button type="submit">Zarejestruj</button>
+    </form>
+
+    <p>
+        <a href="/auth/login">Masz już konto? Zaloguj się</a>
+    </p>
 {% endblock %}
