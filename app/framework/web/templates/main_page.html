@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "macros.html" import auth_button %}
 
-{% block title %}Lista plików - PRAWOBIORCA{% endblock %}
+{% block title %}Strona startowa - PRAWOBIORCA{% endblock %}
 
 {% block content %}
     {{ auth_button(is_user_logged) }}
@@ -12,16 +12,16 @@
       </p>
     {% endif %}
 
-    <h2>Lista plików</h2>
+    <h2>Pliki publiczne</h2>
 
-    {% if files %}
+    {% if public_files %}
       <ul>
-        {% for name in files %}
+        {% for name in public_files %}
           <li>
             {{ name }}
             <form action="/files/search" method="get" style="display: inline;">
               <input type="hidden" name="filename" value="{{ name }}" />
-              <button type="submit">Szukaj</button>
+              <button type="submit">Przeszukaj</button>
             </form>
           </li>
         {% endfor %}
@@ -32,13 +32,32 @@
 
   <hr />
 
-  <h2>Dodaj plik</h2>
-  <form method="post" action="/files" enctype="multipart/form-data">
-    <input type="file" name="file" />
-    <button type="submit">Wyślij</button>
-  </form>
-
   {% if is_user_logged %}
+
+    <h2>Pliki użytkownika</h2>
+
+    {% if user_files %}
+      <ul>
+        {% for name in user_files %}
+          <li>
+            {{ name }}
+            <form action="/files/search" method="get" style="display: inline;">
+              <input type="hidden" name="filename" value="{{ name }}" />
+              <button type="submit">Przeszukaj</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Brak plików.</p>
+    {% endif %}
+
+    <h2>Dodaj plik</h2>
+    <form method="post" action="/user/files" enctype="multipart/form-data">
+      <input type="file" name="file" />
+      <button type="submit">Wyślij</button>
+    </form>
+
     <hr />
 
     <h2>Moje sprawy</h2>
@@ -52,14 +71,14 @@
       <p>Brak spraw.</p>
     {% endif %}
 
-  <form action="/user/cases" method="post">
-    <div>
-        <label for="case_name">Nazwa sprawy:</label>
-        <input type="text" id="case_name" name="case_name" required>
-    </div>
+    <form action="/user/cases" method="post">
+      <div>
+          <label for="case_name">Nazwa sprawy:</label>
+          <input type="text" id="case_name" name="case_name" required>
+      </div>
 
-    <button type="submit">Utwórz sprawę</button>
-  </form>
+      <button type="submit">Utwórz sprawę</button>
+    </form>
 
   {% endif %}
 {% endblock %}

@@ -22,19 +22,19 @@ def mock_regulations_repo_extended(mock_regulations_repo):
 
 
 @pytest.fixture
-def mock_storage_repo_extended(mock_storage_repo):
-    mock_storage_repo.get_file = AsyncMock()
-    return mock_storage_repo
+def mock_user_files_repo_extended(mock_files_repo):
+    mock_files_repo.get_file = AsyncMock()
+    return mock_files_repo
 
 
 @pytest.mark.asyncio
 async def test_prepare_user_file_execute(
-    mock_document_embedder, mock_storage_repo_extended, mock_regulations_repo_extended
+    mock_document_embedder, mock_user_files_repo_extended, mock_regulations_repo_extended
 ):
     file_name = "test_regulation.pdf"
     file_content = b"fake pdf content"
 
-    mock_storage_repo_extended.get_file.return_value = file_content
+    mock_user_files_repo_extended.get_file.return_value = file_content
 
     mock_regulation_act = MagicMock()
     mock_doc_to_embed_1 = DocumentToEmbed(title="Ch1", text="Short text")
@@ -51,14 +51,14 @@ async def test_prepare_user_file_execute(
 
         use_case = PrepareUserFile(
             document_embedder=mock_document_embedder,
-            storage_repository=mock_storage_repo_extended,
+            files_repository=mock_user_files_repo_extended,
             regulations_repository=mock_regulations_repo_extended,
             file_name=file_name,
         )
 
         await use_case.execute()
 
-    mock_storage_repo_extended.get_file.assert_awaited_once_with(file_name)
+    mock_user_files_repo_extended.get_file.assert_awaited_once_with(file_name)
 
     mock_regulations_repo_extended.initialize_law_act.assert_awaited_once_with(file_name)
 
