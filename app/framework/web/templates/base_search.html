@@ -13,6 +13,20 @@
 
     {% block search_extras %}{% endblock %}
 
+    {% if is_user_logged %}
+        <form method="post">
+          <label for="case_select">Wybierz sprawę:</label>
+          <select id="case_select" name="case_id" autocomplete="off">
+            <option value="" {% if not selected_case %}selected{% endif %}>-- Wybierz z listy --</option>
+            {% for case in cases %}
+              <option value="{{ case.id }}" {% if selected_case == case.id %}selected{% endif %}>
+                {{ case.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </form>
+    {% endif %}
+
     <h1>Przeszukaj plik: {{ filename }}</h1>
 
     <form method="post">

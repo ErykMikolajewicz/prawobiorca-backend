@@ -10,7 +10,7 @@ class SearchFile:
     regulations_repository: RegulationsRepository
     query: str
 
-    async def execute(self) -> list[dict]:
+    async def execute(self) -> list[str]:
         embeddings = await self.embedding_port.embed_queries([self.query])
         query_vector = embeddings[0]
         results = await self.regulations_repository.search(query_vector, limit=5, threshold=0.0)

@@ -19,7 +19,7 @@ class CasesRepository:
 
         cases = []
         for case in result.all():
-            case_data = CaseData(case_id=case.id, name=case.name)
+            case_data = CaseData(case_id=str(case.id), name=case.name)
             cases.append(case_data)
         return cases
 
