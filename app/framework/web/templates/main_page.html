@@ -46,7 +46,7 @@
         {% for case in cases %}
           <li class="list-group-item">
             {{ case.name }}
-             <input type="hidden" name="case_id" value="{{ case.case_id }}">
+            <input type="hidden" name="case_id" value="{{ case.case_id }}" />
             <button type="button" class="btn btn-danger" data-bs-toggle="popover">Usuń</button>
           </li>
         {% endfor %}
@@ -64,12 +64,9 @@
       </form>
     </div>
 
-    <form action="/user/cases/delete" method="post">
-      <div>
-        <label for="case_id">Id sprawy do usunięcia:</label>
-        <input type="text" id="case_id" name="case_id" required /><br />
-      </div>
-      <button type="submit" class="btn btn-danger">Usuń sprawę</button>
-    </form>
   {% endif %}
+{% endblock %}
+
+{% block javascript %}
+  <script src="{{ url_for('static', path='js/delete_case.js') }}"></script>
 {% endblock %}
