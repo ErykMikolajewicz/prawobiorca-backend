@@ -1,23 +1,22 @@
 {% extends "base.html" %}
-{% from "macros.html" import auth_button, show_error %}
+{% from "macros.html" import show_error %}
 
 {% block title %}Strona startowa - PRAWOBIORCA{% endblock %}
 
 {% block content %}
-    {{ auth_button(is_user_logged) }}
 
-    {{ show_error(error_message) }}
+  {{ show_error(error_message) }}
 
-    <h2>Pliki publiczne</h2>
+  <h2>Pliki publiczne</h2>
 
-  {% if files %}
+  {% if public_files %}
     <ul class="list-group list-group-flush">
-      {% for name in files %}
+      {% for name in public_files %}
         <li class="list-group-item">
           {{ name }}
-          <form action="/files/search" method="get" style="display: inline;">
+          <form action="/search/public-file" method="get" style="display: inline;">
             <input type="hidden" name="filename" value="{{ name }}" />
-            <button type="submit" class="btn btn-primary">Szukaj</button>
+            <button type="submit" class="btn btn-primary">Przeszukaj</button>
           </form>
         </li>
       {% endfor %}
@@ -28,15 +27,37 @@
 
   <hr />
 
-  <form method="post" action="/files" enctype="multipart/form-data">
-    <div class="mb-3">
-      <label for="addFile" class="form-label">Dodaj plik</label>
-      <input id="addFile" class="form-control" type="file" name="file" /><br />
-      <button type="submit" class="btn btn-primary">dodaj plik</button>
-    </div>
-  </form>
-
   {% if is_user_logged %}
+
+    <h2>Pliki użytkownika</h2>
+
+    {% if user_files %}
+      <ul>
+        {% for name in user_files %}
+          <li>
+            {{ name }}
+            <form action="/search/user/file" method="get" style="display: inline;">
+              <input type="hidden" name="filename" value="{{ name }}" />
+              <button type="submit">Przeszukaj</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>Brak plików.</p>
+    {% endif %}
+
+    <hr />
+
+    <h2>Dodaj plik</h2>
+    <form method="post" action="/user/files" enctype="multipart/form-data">
+      <div class="mb-3">
+        <label for="addFile" class="form-label">Dodaj plik</label>
+        <input id="addFile" class="form-control" type="file" name="file" /><br />
+        <button type="submit" class="btn btn-primary">dodaj plik</button>
+    </div>
+    </form>
+
     <hr />
 
     <h2>Moje sprawy</h2>
@@ -45,7 +66,7 @@
         {% for case in cases %}
           <li class="list-group-item">
             {{ case.name }}
-            <input type="hidden" name="case_id" value="{{ case.case_id }}" />
+            <input type="hidden" name="case_id" value="{{ case.id }}" />
             <button type="button" class="btn btn-danger" data-bs-toggle="popover">Usuń</button>
           </li>
         {% endfor %}

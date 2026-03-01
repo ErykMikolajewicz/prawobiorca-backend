@@ -1,11 +1,9 @@
 {% extends "base.html" %}
-{% from "macros.html" import auth_button, show_error, show_info %}
+{% from "macros.html" import show_error, show_info %}
 
 {% block title %}Przeszukiwanie: {{ filename }}{% endblock %}
 
 {% block content %}
-    {{ auth_button(is_user_logged) }}
-
     {{ show_error(error_message) }}
     {{ show_info(info_message) }}
 
