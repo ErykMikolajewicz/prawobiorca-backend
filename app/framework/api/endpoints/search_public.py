@@ -24,7 +24,7 @@ async def get_search_public_file_view(
     request: Request,
     list_cases: Annotated[ListCases, Depends(get_list_user_cases)],
     filename: Annotated[str, Query()],
-    selected_case: Annotated[str | None, Form()] = None,
+    current_case_id: Annotated[str | None, Form()] = None,
 ):
     is_user_logged = request.state.user_id is not None
 
@@ -35,7 +35,7 @@ async def get_search_public_file_view(
         cases = []
 
     return render_page_template(
-        request, "search_public.html", filename=filename, cases=cases, selected_case=selected_case
+        request, "search_public.html", filename=filename, cases=cases, current_case_id=current_case_id
     )
 
 
@@ -49,7 +49,7 @@ async def post_search_public_file(
     search_file: Annotated[SearchFile, Depends(get_search_file)],
     query: Annotated[str, Form()],
     filename: Annotated[str, Query()],
-    selected_case: Annotated[str | None, Form()] = None,
+    current_case_id: Annotated[str | None, Form()] = None,
 ):
     try:
         results = await search_file.execute()
@@ -75,5 +75,5 @@ async def post_search_public_file(
         query=query,
         results=results,
         cases=cases,
-        selected_case=selected_case,
+        current_case_id=current_case_id,
     )
