@@ -2,21 +2,25 @@ from typing import Iterable
 
 from httpx import AsyncClient
 
+from app.domain.value_objects.preparation import DocumentToEmbed
+
 
 class HttpxEmbeddingsPort:
     def __init__(self, client: AsyncClient, embedding_url: str):
         self._client = client
         self._embedding_url = embedding_url
 
-    async def embed_documents(self, documents: Iterable[str], title: str | None = None) -> list[list[float]]:
-        if title:
-            prefix = f"title: {title} | text: "
-        else:
-            prefix = "text: "
+    async def embed_documents(self, documents: Iterable[DocumentToEmbed]) -> list[list[float]]:
+        prefixed_docs = []
+        for document in documents:
+            title = document.title
+            if title:
+                prefix = f"title: {title} | text: "
+            else:
+                prefix = "text: "
+            prefixed_docs.append(prefix + document.text)
 
-        documents_with_prefix = [prefix + document for document in documents]
-
-        response = await self._client.post(self._embedding_url, json=documents_with_prefix)
+        response = await self._client.post(self._embedding_url, json=prefixed_docs)
         embeddings = response.json()
 
         return embeddings

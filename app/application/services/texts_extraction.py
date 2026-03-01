@@ -4,7 +4,7 @@ from io import BytesIO
 from pdfminer.high_level import extract_pages
 from pdfminer.layout import LTPage, LTTextContainer
 
-from app.domain.value_objects.document import Chapter, Document, Paragraph, Point
+from app.domain.value_objects.regulations import Chapter, Paragraph, Point, RegulationAct
 
 CHAPTER_CORE = r"^Rozdział\s+(?P<ch_num>[IVX]+)\s+[–-]\s+(?P<ch_title>[^\n]+)"
 CHAPTER_PLAIN = r"^Rozdział\s+[IVX]+\s+[–-]\s+.+$"
@@ -21,7 +21,7 @@ POINT_BLOCK = rf"{POINT_CORE}\s+(?P<pt_body>.*?)(?={POINT_PLAIN}|\Z)"
 FLAGS = re.MULTILINE | re.DOTALL
 
 
-def extract_document(document_content: bytes, document_title: str) -> Document:
+def extract_document(document_content: bytes, document_title: str) -> RegulationAct:
     def _roman_to_int(roman: str) -> int:
         vals = {"I": 1, "V": 5, "X": 10}
         roman.replace("IV", "IIII")
@@ -71,7 +71,7 @@ def extract_document(document_content: bytes, document_title: str) -> Document:
             chapter = Chapter(title=ch_title, number=_roman_to_int(ch_num), paragraphs=paragraph_items)
             chapter_items.append(chapter)
 
-    return Document(title=document_title, chapters=chapter_items)
+    return RegulationAct(name=document_title, _chapters=chapter_items)
 
 
 def extract_text(pdf_bytes: bytes, top_margin: float = 50, bottom_margin: float = 60) -> str:

@@ -1,10 +1,9 @@
-from uuid import UUID
-
 from grpc.aio import AioRpcError
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
 
-from app.domain.exceptions import RegulationsNotPreparedToSearch
+from app.domain.exceptions import RegulationAlreadyInitialized, RegulationsNotPreparedToSearch
+from app.domain.value_objects.documents import EmbeddedDocument
 
 
 class QdrantRegulationsRepository:
@@ -12,17 +11,18 @@ class QdrantRegulationsRepository:
         self._client = client
         self._collection_name = collection_name
 
-    async def add_point(self, point_id: UUID, vector: list[float], payload: dict) -> None:
-        await self._client.upsert(
-            collection_name=self._collection_name,
-            points=[
-                PointStruct(
-                    id=str(point_id),
-                    vector=vector,
-                    payload=payload,
-                )
-            ],
-        )
+    async def add_documents(self, documents: list[EmbeddedDocument]) -> None:
+
+        points = []
+        for document in documents:
+            point = PointStruct(
+                id=str(document.id),
+                vector=document.vector,
+                payload=document.payload,
+            )
+            points.append(point)
+
+        await self._client.upsert(collection_name=self._collection_name, points=points)
 
     async def search(
         self,
@@ -48,4 +48,7 @@ class QdrantRegulationsRepository:
 
     async def initialize_law_act(self, act_name: str):
         vectors_config = VectorParams(size=768, distance=Distance.COSINE)
-        await self._client.create_collection(act_name, vectors_config)
+        try:
+            await self._client.create_collection(act_name, vectors_config)
+        except AioRpcError:
+            raise RegulationAlreadyInitialized

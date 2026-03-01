@@ -28,7 +28,7 @@ def mock_tokens_repo():
 
 
 @pytest.fixture
-def mock_storage_repo():
+def mock_files_repo():
     repo = MagicMock()
     repo.upload_file = AsyncMock()
     repo.list_files = AsyncMock()

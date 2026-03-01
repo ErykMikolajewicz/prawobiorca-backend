@@ -13,10 +13,12 @@ from app.domain.exceptions import FileNameTooLong, InvalidCharacterInFileName
         ("test\x00file.txt", b"content", "Nazwa test\x00file.txt zawiera niedozwolone znaki!"),
     ],
 )
-def test_add_file_validation_errors(client, override_get_file_storage, file_name, file_content, expected_error_message):
+def test_add_file_validation_errors(
+    client, override_get_users_file_repository, file_name, file_content, expected_error_message
+):
     files = {"file": (file_name, file_content, "text/plain")}
 
-    response = client.post("/files", files=files, follow_redirects=False)
+    response = client.post("/user/files", files=files, follow_redirects=False)
 
     assert response.status_code == 303
     assert response.headers["location"] == "/"

@@ -1,0 +1,7 @@
+{% extends "base_search.html" %}
+
+{% block search_extras %}
+    <form action="/user/files/{{ filename }}/preparation" method="post">
+      <button type="submit">Przygotuj plik</button>
+    </form>
+{% endblock %}

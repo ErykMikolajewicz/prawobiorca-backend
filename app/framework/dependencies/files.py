@@ -2,11 +2,13 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from app.application.interfaces.file_storage import StorageRepository
-from app.application.use_cases.files import ListFiles
-from app.framework.dependencies.file_storage import get_file_storage
+from app.application.interfaces.file_storage import PublicFilesRepository
+from app.application.use_cases.files import ListPublicFiles
+from app.framework.dependencies.file_storage import get_public_file_repository
 
 
-async def get_list_files(storage_repository: Annotated[StorageRepository, Depends(get_file_storage)]) -> ListFiles:
+async def get_list_public_files(
+    files_repository: Annotated[PublicFilesRepository, Depends(get_public_file_repository)],
+) -> ListPublicFiles:
 
-    return ListFiles(storage_repository)
+    return ListPublicFiles(files_repository)

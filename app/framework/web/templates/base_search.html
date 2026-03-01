@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% from "macros.html" import auth_button, show_error, show_info %}
+
+{% block title %}Przeszukiwanie: {{ filename }}{% endblock %}
+
+{% block content %}
+    {{ auth_button(is_user_logged) }}
+
+    {{ show_error(error_message) }}
+    {{ show_info(info_message) }}
+
+    <p><a href="/">← Powrót do listy plików</a></p>
+
+    {% block search_extras %}{% endblock %}
+
+    {% if is_user_logged %}
+      <label for="case_select">Wybierz sprawę:</label>
+      <select id="case_select" name="current_case_id" form="search_form" autocomplete="off">
+        <option value="" {% if not selected_case %}selected{% endif %}>-- Wybierz z listy --</option>
+        {% for case in cases %}
+          <option value="{{ case.id }}" {% if current_case_id == case.id %}selected{% endif %}>
+            {{ case.name }}
+          </option>
+        {% endfor %}
+      </select>
+    {% endif %}
+
+    <h1>Przeszukaj plik: {{ filename }}</h1>
+
+    <form id="search_form" method="post">
+      <label for="query">Twoje zapytanie:</label>
+      <input type="text" id="query" name="query" placeholder="Wpisz treść..." value="{{ query }}" required />
+      <button type="submit" class="btn btn-primary">Przeszukaj</button>
+    </form>
+
+    {% if results %}
+      <hr />
+      <h2>Wyniki:</h2>
+      <ul>
+        {% for result in results %}
+          <li>{{ result }}</li>
+        {% endfor %}
+      </ul>
+    {% elif query %}
+      <hr />
+      <p>Brak wyników dla zapytania: "{{ query }}"</p>
+    {% endif %}
+{% endblock %}

@@ -7,8 +7,8 @@ from app.application.dtos.account import LoginData
 from app.application.dtos.auth import LoginOutput
 from app.application.interfaces.relational import AsyncSession
 from app.application.interfaces.users import UsersRepository, UsersTokensRepository
+from app.application.services.accounts import check_user_can_log
 from app.domain.exceptions import UserCantLog
-from app.domain.services.accounts import check_user_can_log
 from app.domain.services.security import generate_session_id, prevent_timing_attack
 from app.framework.dependencies.file_storage import app_settings
 

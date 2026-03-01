@@ -11,3 +11,21 @@
     {% endif %}
   </div>
 {% endmacro %}
+
+
+{% macro show_error(message) %}
+  {% if message %}
+    <div role="alert" style="padding: 12px; border: 1px solid #c00; background: #fee; color: #900; margin: 12px 0;">
+      <strong>Błąd:</strong> {{ message }}
+    </div>
+  {% endif %}
+{% endmacro %}
+
+
+{% macro show_info(message) %}
+  {% if message %}
+    <div role="status">
+      <strong>Info:</strong> {{ message }}
+    </div>
+  {% endif %}
+{% endmacro %}

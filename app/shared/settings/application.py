@@ -31,6 +31,8 @@ class ApplicationSettings(BaseSettings):
 
     HTTP_CLIENT: HttpClientType = ...
 
+    EMBED_DOCS_CHUNK_SIZE: int = 10
+
     model_config = SettingsConfigDict(
         env_file=Path(".env"), extra="ignore", case_sensitive=True, frozen=True, env_prefix="APP_"
     )

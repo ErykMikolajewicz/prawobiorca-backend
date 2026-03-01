@@ -41,8 +41,20 @@ Plans include:
 To check how the application works, launch it using the script below. Note that you must have **Podman** installed for it to work!
 
 ```bash
-bash/run_app.sh
+scripts/run_app.sh
 ```
+
+## Initialize relational database
+To initialize tables in a database, use command:
+```bash
+alembic upgrade head
+```
+
+Then, seed the database with data:
+```bash
+python scripts/seed_db.py
+```
+
 
 Then visit the main application page:
 [https://127.0.0.1:8000/](https://127.0.0.1:8000/)

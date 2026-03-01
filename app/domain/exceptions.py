@@ -24,3 +24,7 @@ class FileNameTooLong(Exception):
 class InvalidCharacterInFileName(Exception):
     def __init__(self, filename: str):
         self.file_name = filename
+
+
+class RegulationAlreadyInitialized(Exception):
+    pass
