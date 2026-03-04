@@ -1,10 +1,11 @@
-{% extends "base.html" %}
-{% from "macros.html" import show_error %}
+{% extends 'base.html' %}
+{% from 'macros.html' import show_error %}
 
-{% block title %}Strona startowa - PRAWOBIORCA{% endblock %}
+{% block title %}
+  Strona startowa - PRAWOBIORCA
+{% endblock %}
 
 {% block content %}
-
   {{ show_error(error_message) }}
 
   <h2>Pliki publiczne</h2>
@@ -28,7 +29,6 @@
   <hr />
 
   {% if is_user_logged %}
-
     <h2>Pliki użytkownika</h2>
 
     {% if user_files %}
@@ -55,7 +55,7 @@
         <label for="addFile" class="form-label">Dodaj plik</label>
         <input id="addFile" class="form-control" type="file" name="file" /><br />
         <button type="submit" class="btn btn-primary">dodaj plik</button>
-    </div>
+      </div>
     </form>
 
     <hr />
@@ -83,7 +83,6 @@
         <button type="submit" class="btn btn-primary">Utwórz sprawę</button>
       </form>
     </div>
-
   {% endif %}
 {% endblock %}
 

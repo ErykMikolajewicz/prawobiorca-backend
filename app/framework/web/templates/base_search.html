@@ -1,46 +1,57 @@
-{% extends "base.html" %}
-{% from "macros.html" import show_error, show_info %}
+{% extends 'base.html' %}
+{% from 'macros.html' import show_error, show_info %}
 
-{% block title %}Przeszukiwanie: {{ filename }}{% endblock %}
+{% block title %}
+  Przeszukiwanie: {{ filename }}
+{% endblock %}
 
 {% block content %}
-    {{ show_error(error_message) }}
-    {{ show_info(info_message) }}
+  {{ show_error(error_message) }}
+  {{ show_info(info_message) }}
 
-    <p><a href="/">← Powrót do listy plików</a></p>
+  <p>
+    <a href="/">← Powrót do listy plików</a>
+  </p>
 
-    {% block search_extras %}{% endblock %}
+  {% block search_extras %}
 
-    {% if is_user_logged %}
-      <label for="case_select">Wybierz sprawę:</label>
-      <select id="case_select" name="current_case_id" form="search_form" autocomplete="off">
-        <option value="" {% if not selected_case %}selected{% endif %}>-- Wybierz z listy --</option>
+  {% endblock %}
+
+  {% if is_user_logged %}
+    <div class="dropdown">
+      <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdown-button" data-bs-toggle="dropdown" aria-expanded="false">-- Wybierz z listy --</button>
+      <ul class="dropdown-menu" aria-labelledby="dropdown-button">
         {% for case in cases %}
-          <option value="{{ case.id }}" {% if current_case_id == case.id %}selected{% endif %}>
-            {{ case.name }}
-          </option>
-        {% endfor %}
-      </select>
-    {% endif %}
-
-    <h1>Przeszukaj plik: {{ filename }}</h1>
-
-    <form id="search_form" method="post">
-      <label for="query">Twoje zapytanie:</label>
-      <input type="text" id="query" name="query" placeholder="Wpisz treść..." value="{{ query }}" required />
-      <button type="submit" class="btn btn-primary">Przeszukaj</button>
-    </form>
-
-    {% if results %}
-      <hr />
-      <h2>Wyniki:</h2>
-      <ul>
-        {% for result in results %}
-          <li>{{ result }}</li>
+          <li>
+            <a class="dropdown-item" href="#">{{ case.name }}</a>
+          </li>
         {% endfor %}
       </ul>
-    {% elif query %}
-      <hr />
-      <p>Brak wyników dla zapytania: "{{ query }}"</p>
-    {% endif %}
+    </div>
+  {% endif %}
+
+  <h1>Przeszukaj plik: {{ filename }}</h1>
+
+  <form id="search_form" method="post">
+    <label for="query">Twoje zapytanie:</label>
+    <input type="text" id="query" name="query" placeholder="Wpisz treść..." value="{{ query }}" required />
+    <button type="submit" class="btn btn-primary">Przeszukaj</button>
+  </form>
+
+  {% if results %}
+    <hr />
+    <h2>Wyniki:</h2>
+    <ul>
+      {% for result in results %}
+        <li>{{ result }}</li>
+      {% endfor %}
+    </ul>
+  {% elif query %}
+    <hr />
+    <p>Brak wyników dla zapytania: "{{ query }}"</p>
+  {% endif %}
+{% endblock %}
+
+{% block javascript %}
+  <script src="{{ url_for('static', path='js/dropdown.js') }}" defer></script>
 {% endblock %}
