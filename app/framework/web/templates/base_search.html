@@ -18,12 +18,12 @@
   {% endblock %}
 
   {% if is_user_logged %}
-    <div class="dropdown">
+    <div class="dropdown mb-3">
       <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdown-button" data-bs-toggle="dropdown" aria-expanded="false">-- Wybierz z listy --</button>
       <ul class="dropdown-menu" aria-labelledby="dropdown-button">
         {% for case in cases %}
           <li>
-            <a class="dropdown-item" href="#">{{ case.name }}</a>
+            <a class="dropdown-item" href="#" data-case-id="{{ case.id }}">{{ case.name }}</a>
           </li>
         {% endfor %}
       </ul>
@@ -32,7 +32,7 @@
 
   <h1>Przeszukaj plik: {{ filename }}</h1>
 
-  <form id="search_form" method="post">
+  <form id="search_form" method="post" class="mb-4">
     <label for="query">Twoje zapytanie:</label>
     <input type="text" id="query" name="query" placeholder="Wpisz treść..." value="{{ query }}" required />
     <button type="submit" class="btn btn-primary">Przeszukaj</button>
@@ -41,9 +41,19 @@
   {% if results %}
     <hr />
     <h2>Wyniki:</h2>
-    <ul>
+    <ul class="list-group">
       {% for result in results %}
-        <li>{{ result }}</li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <div>{{ result }}</div>
+          {% if is_user_logged %}
+          <form action="/user/cases/articles" method="post" class="ms-3 d-inline">
+            <input type="hidden" name="case_id" class="selected-case-id" value="">
+            <input type="hidden" name="document_name" value="{{ filename }}">
+            <input type="hidden" name="article_content" value="{{ result }}">
+            <button type="submit" class="btn btn-sm btn-success add-article-btn" disabled>Dodaj do sprawy</button>
+          </form>
+  {% endif %}
+        </li>
       {% endfor %}
     </ul>
   {% elif query %}

@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from app.application.dtos.cases import NewCase
-from app.application.interfaces.cases import CasesRepository
+from app.application.dtos.cases import NewCase, NewCaseArticle
+from app.application.interfaces.cases import CaseArticlesRepository, CasesRepository
 from app.application.interfaces.relational import AsyncSession
 from app.domain.value_objects.cases import CaseData
 
@@ -40,4 +40,28 @@ class AddCase:
     async def execute(self) -> None:
         async with self.session as session:
             await self.cases_repo.add(self.new_case)
+            await session.commit()
+
+
+@dataclass
+class AddCaseArticle:
+    session: AsyncSession
+    case_articles_repo: CaseArticlesRepository
+    new_article: NewCaseArticle
+
+    async def execute(self) -> None:
+        async with self.session as session:
+            await self.case_articles_repo.add(self.new_article)
+            await session.commit()
+
+
+@dataclass
+class DeleteCaseArticle:
+    session: AsyncSession
+    case_articles_repo: CaseArticlesRepository
+    article_id: UUID
+
+    async def execute(self) -> None:
+        async with self.session as session:
+            await self.case_articles_repo.delete(self.article_id)
             await session.commit()
