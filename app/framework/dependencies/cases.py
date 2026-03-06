@@ -1,13 +1,20 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, Form, Request
+from fastapi import Depends, Form, Path, Request
 
 import app.infrastructure.relational_db.repositories.cases as sqla_repos
 from app.application.dtos.cases import NewCase, NewCaseArticle
 from app.application.interfaces.cases import CaseArticlesRepository, CasesRepository
 from app.application.interfaces.relational import AsyncSession
-from app.application.use_cases.cases import AddCase, AddCaseArticle, DeleteCase, DeleteCaseArticle, ListCases
+from app.application.use_cases.cases import (
+    AddCase,
+    AddCaseArticle,
+    DeleteCase,
+    DeleteCaseArticle,
+    ListCaseArticles,
+    ListCases,
+)
 from app.framework.dependencies.relational import get_relational_session
 
 
@@ -39,10 +46,10 @@ def get_add_user_case(
     return AddCase(session, cases_repository, new_case)
 
 
-def delete_user_case(
+def get_delete_user_case(
     session: Annotated[AsyncSession, Depends(get_relational_session)],
     cases_repository: Annotated[CasesRepository, Depends(get_cases_repo)],
-    case_id: Annotated[UUID, Form(...)],
+    case_id: Annotated[UUID, Path(alias="caseId")],
 ) -> DeleteCase:
     return DeleteCase(session, cases_repository, case_id)
 
@@ -61,6 +68,14 @@ def get_add_case_article(
 def get_delete_case_article(
     session: Annotated[AsyncSession, Depends(get_relational_session)],
     case_articles_repo: Annotated[CaseArticlesRepository, Depends(get_case_articles_repo)],
-    article_id: Annotated[UUID, Form(...)],
+    article_id: Annotated[UUID, Path(alias="articleId")],
 ) -> DeleteCaseArticle:
     return DeleteCaseArticle(session, case_articles_repo, article_id)
+
+
+def get_list_case_articles(
+    session: Annotated[AsyncSession, Depends(get_relational_session)],
+    case_articles_repo: Annotated[CaseArticlesRepository, Depends(get_case_articles_repo)],
+    case_id: UUID,
+) -> ListCaseArticles:
+    return ListCaseArticles(session, case_articles_repo, case_id)

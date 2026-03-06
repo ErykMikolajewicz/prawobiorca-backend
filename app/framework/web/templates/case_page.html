@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Widok Sprawy - Prawobiorca{% endblock %}
+
+{% block content %}
+<div>
+    <h1>Szczegóły Sprawy</h1>
+
+    <section>
+        <h2>Przypięte Artykuły</h2>
+        <ul>
+            {% for article in articles %}
+            <li>
+                <p><strong>Źródło:</strong> <em>{{ article.document_name }}</em></p>
+                <p>{{ article.content }}</p>
+                <form action="/case/unpin" method="post">
+                    <input type="hidden" name="article_id" value="{{ article.id }}">
+                    <button type="submit">Odepnij</button>
+                </form>
+            </li>
+            {% else %}
+            <li>Brak przypiętych artykułów do tej sprawy.</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <section>
+        <h2>Kontekst / Opis Wniosku</h2>
+        <form action="/case/generate-pdf" method="post">
+            <div>
+                <label for="description">Opisz swoją sytuację lub cel pisma:</label><br>
+                <textarea id="description" name="description" rows="10" cols="60" placeholder="np. Proszę o zapomogę finansową ze względu na trudną sytuację, w której znalazłem się po śmierci rodzica..."></textarea>
+            </div>
+            <br>
+            <button type="submit">Generuj Wniosek (PDF)</button>
+        </form>
+    </section>
+</div>
+{% endblock %}

@@ -47,7 +47,7 @@ class CaseArticlesRepository:
                 id=str(article.id),
                 case_id=str(article.case_id),
                 document_name=article.document_name,
-                article_content=article.article_content,
+                content=article.article_content,
             )
             articles.append(article_data)
         return articles

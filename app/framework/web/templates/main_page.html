@@ -66,6 +66,7 @@
         {% for case in cases %}
           <li class="list-group-item">
             {{ case.name }}
+            <a href="/user/cases/{{ case.id }}" class="btn btn-primary">Przejdź</a>
             <input type="hidden" name="case_id" value="{{ case.id }}" />
             <button type="button" class="btn btn-danger" data-bs-toggle="popover">Usuń</button>
           </li>

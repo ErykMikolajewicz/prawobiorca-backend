@@ -4,7 +4,7 @@ from uuid import UUID
 from app.application.dtos.cases import NewCase, NewCaseArticle
 from app.application.interfaces.cases import CaseArticlesRepository, CasesRepository
 from app.application.interfaces.relational import AsyncSession
-from app.domain.value_objects.cases import CaseData
+from app.domain.value_objects.cases import CaseArticleData, CaseData
 
 
 @dataclass
@@ -65,3 +65,14 @@ class DeleteCaseArticle:
         async with self.session as session:
             await self.case_articles_repo.delete(self.article_id)
             await session.commit()
+
+
+@dataclass
+class ListCaseArticles:
+    session: AsyncSession
+    case_articles_repo: CaseArticlesRepository
+    case_id: UUID
+
+    async def execute(self) -> list[CaseArticleData]:
+        async with self.session:
+            return await self.case_articles_repo.list_by_case_id(self.case_id)
