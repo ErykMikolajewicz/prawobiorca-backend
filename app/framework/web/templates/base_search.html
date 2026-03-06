@@ -10,7 +10,7 @@
   {{ show_info(info_message) }}
 
   <p>
-    <a href="/">← Powrót do listy plików</a>
+    <a href="/">← Powrót do głównego ekranu</a>
   </p>
 
   {% block search_extras %}
@@ -19,6 +19,7 @@
 
   {% if is_user_logged %}
     <div class="dropdown mb-3">
+      <label for="dropdown-button" class="form-label">Bieżąca sprawa:</label>
       <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdown-button" data-bs-toggle="dropdown" aria-expanded="false">-- Wybierz z listy --</button>
       <ul class="dropdown-menu" aria-labelledby="dropdown-button">
         {% for case in cases %}
@@ -50,7 +51,7 @@
             <input type="hidden" name="case_id" class="selected-case-id" value="">
             <input type="hidden" name="document_name" value="{{ filename }}">
             <input type="hidden" name="article_content" value="{{ result }}">
-            <button type="submit" class="btn btn-sm btn-success add-article-btn" disabled>Dodaj do sprawy</button>
+            <button type="submit" class="btn btn-sm btn-success btn-on-list" disabled>Dodaj do sprawy</button>
           </form>
   {% endif %}
         </li>

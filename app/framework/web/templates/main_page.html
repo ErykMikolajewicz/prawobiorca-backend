@@ -11,13 +11,13 @@
   <h2>Pliki publiczne</h2>
 
   {% if public_files %}
-    <ul class="list-group list-group-flush">
+    <ul class="list-group">
       {% for name in public_files %}
         <li class="list-group-item">
           {{ name }}
           <form action="/search/public-file" method="get" style="display: inline;">
             <input type="hidden" name="filename" value="{{ name }}" />
-            <button type="submit" class="btn btn-primary">Przeszukaj</button>
+            <button type="submit" class="btn btn-primary btn-on-list">Przeszukaj</button>
           </form>
         </li>
       {% endfor %}
@@ -32,13 +32,13 @@
     <h2>Pliki użytkownika</h2>
 
     {% if user_files %}
-      <ul>
+      <ul  class="list-group">
         {% for name in user_files %}
-          <li>
+          <li class="list-group-item">
             {{ name }}
             <form action="/search/user/file" method="get" style="display: inline;">
               <input type="hidden" name="filename" value="{{ name }}" />
-              <button type="submit" class="btn btn-primary">Przeszukaj</button>
+              <button type="submit" class="btn btn-primary btn-on-list">Przeszukaj</button>
             </form>
           </li>
         {% endfor %}
@@ -52,7 +52,6 @@
     <h2>Dodaj plik</h2>
     <form method="post" action="/user/files" enctype="multipart/form-data">
       <div class="mb-3">
-        <label for="addFile" class="form-label">Dodaj plik</label>
         <input id="addFile" class="form-control" type="file" name="file" /><br />
         <button type="submit" class="btn btn-primary">dodaj plik</button>
       </div>
@@ -66,9 +65,9 @@
         {% for case in cases %}
           <li class="list-group-item">
             {{ case.name }}
-            <a href="/user/cases/{{ case.id }}" class="btn btn-primary">Przejdź</a>
+            <a href="/user/cases/{{ case.id }}" class="btn btn-primary btn-on-list">Przejdź</a>
             <input type="hidden" name="case_id" value="{{ case.id }}" />
-            <button type="button" class="btn btn-danger" data-bs-toggle="popover">Usuń</button>
+            <button type="button" class="btn btn-danger btn-on-list" data-bs-toggle="popover">Usuń</button>
           </li>
         {% endfor %}
       </ol>
@@ -81,7 +80,7 @@
     <div class="mb-3">
       <form action="/user/cases" method="post">
         <input class="form-control" type="text" id="case_name" name="case_name" required placeholder="Podanie o urlop.." /><br />
-        <button type="submit" class="btn btn-primary">Utwórz sprawę</button>
+        <button type="submit" class="btn btn-primary btn-on-list">Utwórz sprawę</button>
       </form>
     </div>
   {% endif %}

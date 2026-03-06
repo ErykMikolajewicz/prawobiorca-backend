@@ -3,6 +3,11 @@
 {% block title %}Widok Sprawy - Prawobiorca{% endblock %}
 
 {% block content %}
+
+<p>
+    <a href="/">← Powrót do głównego ekranu</a>
+</p>
+
 <div>
     <h1>Szczegóły Sprawy</h1>
 
@@ -15,7 +20,7 @@
                 <p>{{ article.content }}</p>
                 <form action="/case/unpin" method="post">
                     <input type="hidden" name="article_id" value="{{ article.id }}">
-                    <button type="submit">Odepnij</button>
+                    <button type="submit" class="btn btn-danger btn-on-list">Odepnij</button>
                 </form>
             </li>
             {% else %}
@@ -32,7 +37,7 @@
                 <textarea id="description" name="description" rows="10" cols="60" placeholder="np. Proszę o zapomogę finansową ze względu na trudną sytuację, w której znalazłem się po śmierci rodzica..."></textarea>
             </div>
             <br>
-            <button type="submit">Generuj Wniosek (PDF)</button>
+            <button type="submit" class="btn btn-primary">Generuj Wniosek (PDF)</button>
         </form>
     </section>
 </div>
