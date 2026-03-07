@@ -11,19 +11,9 @@ class RegulationsNotPreparedToSearch(Exception):
         self.regulations_name = regulations_name
 
 
-class FileNameExist(Exception):
-    def __init__(self, filename: str):
-        self.file_name = filename
-
-
-class FileNameTooLong(Exception):
-    def __init__(self, filename: str):
-        self.file_name = filename
-
-
-class InvalidCharacterInFileName(Exception):
-    def __init__(self, filename: str):
-        self.file_name = filename
+class FileHashExist(Exception):
+    def __init__(self, file_hash: bytes):
+        self.file_hash = file_hash
 
 
 class RegulationAlreadyInitialized(Exception):

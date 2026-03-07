@@ -37,10 +37,9 @@ async def test_prepare_user_file_execute(
     mock_user_files_repo_extended.get_file.return_value = file_content
 
     mock_regulation_act = MagicMock()
-    mock_doc_to_embed_1 = DocumentToEmbed(title="Ch1", text="Short text")
-    mock_doc_to_embed_2 = DocumentToEmbed(title="Ch1", text="Longer text for sorting check")
+    mock_docs_to_embed = [DocumentToEmbed(title="Ch1", text="Text 1"), DocumentToEmbed(title="Ch1", text="Text 2")]
 
-    mock_regulation_act.get_documents_to_embed.return_value = [mock_doc_to_embed_2, mock_doc_to_embed_1]
+    mock_regulation_act.get_documents_to_embed.return_value = mock_docs_to_embed
 
     with patch("app.application.use_cases.user_files.extract_document", return_value=mock_regulation_act):
         mock_embedded_docs = [
@@ -64,7 +63,6 @@ async def test_prepare_user_file_execute(
 
     mock_document_embedder.embed_documents.assert_awaited_once()
     call_args = mock_document_embedder.embed_documents.call_args[0][0]
-    assert call_args[0] == mock_doc_to_embed_1
-    assert call_args[1] == mock_doc_to_embed_2
+    assert call_args == mock_docs_to_embed
 
     mock_regulations_repo_extended.add_documents.assert_awaited_once_with(mock_embedded_docs)

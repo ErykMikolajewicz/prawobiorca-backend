@@ -4,7 +4,6 @@ import aiofiles
 import aiofiles.os
 
 from app.application.dtos.files import FileData
-from app.domain.exceptions import FileNameExist
 
 
 class LocalPublicFileStorage:
@@ -17,13 +16,6 @@ class LocalPublicFileStorage:
 
         return bytes_read
 
-    async def list_files(self) -> list[str]:
-        filenames = []
-        for file in self._files_dir.iterdir():
-            filenames.append(file.name)
-
-        return filenames
-
 
 class LocalUsersFileStorage:
     _users_dir = Path("files/users")
@@ -32,9 +24,9 @@ class LocalUsersFileStorage:
         self._files_dir = self._users_dir / user_id
 
     async def upload_file(self, file_data: FileData):
-        file_path = self._files_dir / file_data.file_name
+        file_path = self._files_dir / file_data.name
         if file_path.exists():
-            raise FileNameExist(file_data.file_name)
+            raise FileExistsError
         self._files_dir.mkdir(exist_ok=True)
         async with aiofiles.open(file_path, "wb") as file:
             await file.write(file_data.file)
@@ -49,10 +41,3 @@ class LocalUsersFileStorage:
             bytes_read = await file.read()
 
         return bytes_read
-
-    async def list_files(self) -> list[str]:
-        filenames = []
-        for file in self._files_dir.iterdir():
-            filenames.append(file.name)
-
-        return filenames

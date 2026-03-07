@@ -1,17 +1,14 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
-from app.domain.exceptions import FileNameTooLong, InvalidCharacterInFileName
+from app.shared.consts import HASH_LENGTH, MAX_FILENAME_LENGTH, MIN_FILENAME_LENGTH
 
 
 class FileData(BaseModel):
-    file_name: str
+    name: str = Field(min_length=MIN_FILENAME_LENGTH, max_length=MAX_FILENAME_LENGTH)
     file: bytes = Field(min_length=1)
 
-    @field_validator("file_name", mode="before")
-    @classmethod
-    def validate_file_name(cls, file_name: str) -> str:
-        if "/" in file_name or "\x00" in file_name:
-            raise InvalidCharacterInFileName(file_name)
-        if len(file_name.encode("utf-8")) > 255:
-            raise FileNameTooLong(file_name)
-        return file_name
+
+class FileRepresentation(BaseModel):
+    file_hash: bytes = Field(min_length=HASH_LENGTH, max_length=HASH_LENGTH)
+    presentation_name: str = Field(min_length=MIN_FILENAME_LENGTH, max_length=MAX_FILENAME_LENGTH)
+    is_prepared: bool

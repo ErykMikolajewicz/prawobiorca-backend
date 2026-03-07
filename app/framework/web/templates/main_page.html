@@ -12,12 +12,12 @@
 
   {% if public_files %}
     <ul class="list-group">
-      {% for name in public_files %}
+      {% for public_file in public_files %}
         <li class="list-group-item">
-          {{ name }}
+          {{ public_file.presentation_name }}
           <form action="/search/public-file" method="get" style="display: inline;">
-            <input type="hidden" name="filename" value="{{ name }}" />
-            <button type="submit" class="btn btn-primary btn-on-list">Przeszukaj</button>
+            <input type="hidden" name="filename" value="{{ public_file.file_hash }}" />
+            <button type="submit" class="btn btn-primary btn-on-list"{% if not public_file.is_prepared %} disabled{% endif %}>Przeszukaj</button>
           </form>
         </li>
       {% endfor %}
@@ -33,12 +33,12 @@
 
     {% if user_files %}
       <ul  class="list-group">
-        {% for name in user_files %}
+        {% for user_file in user_files %}
           <li class="list-group-item">
-            {{ name }}
+            {{ user_file.presentation_name }}
             <form action="/search/user/file" method="get" style="display: inline;">
-              <input type="hidden" name="filename" value="{{ name }}" />
-              <button type="submit" class="btn btn-primary btn-on-list">Przeszukaj</button>
+              <input type="hidden" name="filename" value="{{ user_file.file_hash }}" />
+              <button type="submit" class="btn btn-primary btn-on-list"{% if not public_file.is_prepared %} disabled{% endif %}>Przeszukaj</button>
             </form>
           </li>
         {% endfor %}

@@ -11,6 +11,7 @@ class DocumentEmbedder:
         self._embedding_port: EmbeddingPort = embedding_port
 
     async def embed_documents(self, documents: list[DocumentToEmbed]) -> list[EmbeddedDocument]:
+        documents.sort(key=lambda doc: len(doc.text))
         embedded_documents = []
         for chunk in batched(documents, app_settings.EMBED_DOCS_CHUNK_SIZE, strict=False):
             chunk_vectors = await self._embedding_port.embed_documents(chunk)

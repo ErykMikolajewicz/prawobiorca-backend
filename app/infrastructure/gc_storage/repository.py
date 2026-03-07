@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 from fastapi.concurrency import run_in_threadpool
 from google.cloud import storage
@@ -21,7 +20,7 @@ class GCSStorageRepository:
         self.bucket = self.client.bucket("user_files")
 
     async def upload_file(self, file_data: FileData):
-        blob: Blob = self.bucket.blob(file_data.file_name)
+        blob: Blob = self.bucket.blob(file_data.name)
         await run_in_threadpool(blob.upload_from_string, file_data.file)
 
     async def delete_file(self, file_name: str) -> None:
@@ -32,13 +31,3 @@ class GCSStorageRepository:
         blob: Blob = self.bucket.blob(file_name)
         file = await run_in_threadpool(blob.download_as_bytes)
         return file
-
-    async def list_files(
-        self,
-        prefix: Optional[str] = None,
-    ) -> list[str]:
-        def _list_blobs():
-            return list(self.client.list_blobs(self.bucket, prefix=prefix))
-
-        blobs = await run_in_threadpool(_list_blobs)
-        return [blob.name for blob in blobs]

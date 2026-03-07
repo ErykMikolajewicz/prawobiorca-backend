@@ -1,10 +1,9 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from app.application.dtos.cases import NewCase, NewCaseArticle
+from app.application.dtos.cases import CaseArticleData, CaseData, NewCase, NewCaseArticle
 from app.application.interfaces.cases import CaseArticlesRepository, CasesRepository
 from app.application.interfaces.relational import AsyncSession
-from app.domain.value_objects.cases import CaseArticleData, CaseData
 
 
 @dataclass
@@ -75,4 +74,5 @@ class ListCaseArticles:
 
     async def execute(self) -> list[CaseArticleData]:
         async with self.session:
-            return await self.case_articles_repo.list_by_case_id(self.case_id)
+            case_articles = await self.case_articles_repo.list_by_case_id(self.case_id)
+            return case_articles

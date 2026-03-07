@@ -61,7 +61,7 @@ def get_add_case_article(
     document_name: Annotated[str, Form(...)],
     article_content: Annotated[str, Form(...)],
 ) -> AddCaseArticle:
-    new_article = NewCaseArticle(case_id=case_id, document_name=document_name, article_content=article_content)
+    new_article = NewCaseArticle(case_id=case_id, document_name=document_name, content=article_content)
     return AddCaseArticle(session, case_articles_repo, new_article)
 
 

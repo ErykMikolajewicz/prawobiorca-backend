@@ -1,4 +1,3 @@
-from dataclasses import asdict
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, Query, Request, status
@@ -30,7 +29,6 @@ async def get_search_user_file_view(
 
     if is_user_logged:
         cases = await list_cases.execute()
-        cases = [asdict(case) for case in cases]
     else:
         cases = []
 
@@ -63,7 +61,6 @@ async def post_search_user_file(
 
     if is_user_logged:
         cases = await list_cases.execute()
-        cases = [asdict(case) for case in cases]
     else:
         cases = []
 
