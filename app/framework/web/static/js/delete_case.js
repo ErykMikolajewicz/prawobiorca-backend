@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", () => {
     .querySelectorAll('[data-bs-toggle="popover"]')
     .forEach((button) => {
 
-      const caseId = button.closest("li")
+      const caseId = button.closest("div")
         .querySelector("input[name='caseId']")
         ?.value;
 

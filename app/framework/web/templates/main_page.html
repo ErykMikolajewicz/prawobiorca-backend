@@ -11,47 +11,51 @@
   <h2>Pliki publiczne</h2>
 
   {% if public_files %}
-    <ul class="list-group">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
       {% for public_file in public_files %}
-        <li class="list-group-item">
-          {{ public_file.presentation_name }}
-          <form action="/search/public-file" method="get" style="display: inline;">
+        <div class="col">
+          <div class="p-3 border rounded d-flex justify-content-between align-items-center bg-light">
+            <span class="text-truncate me-2" title="{{ public_file.presentation_name }}">{{ public_file.presentation_name }}</span>
+            <form action="/search/public-file" method="get" class="m-0">
             <input type="hidden" name="fileHashStr" value="{{ public_file.file_hash_str }}" />
             <input type="hidden" name="filename" value="{{ public_file.presentation_name }}" />
-            <button type="submit" class="btn btn-primary btn-on-list"{% if not public_file.is_prepared %} disabled{% endif %}>Przeszukaj</button>
+              <button type="submit" class="btn btn-primary btn-sm"{% if not public_file.is_prepared %} disabled{% endif %}>Przeszukaj</button>
           </form>
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
+          </div>
+      </div>
+        {% endfor %}
+    </div>
+    {% else %}
     <p>Brak plików.</p>
-  {% endif %}
+    {% endif %}
 
-  <hr />
+    <hr />
 
   {% if is_user_logged %}
     <h2>Pliki użytkownika</h2>
 
     {% if user_files %}
-      <ul  class="list-group">
+      <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
         {% for user_file in user_files %}
-          <li class="list-group-item">
-            {{ user_file.presentation_name }}
-            {% if user_file.is_prepared %}
-              <form action="/search/user/file" method="get" style="display: inline;">
-                <input type="hidden" name="fileHashStr" value="{{ user_file.file_hash_str }}" />
-                <input type="hidden" name="filename" value="{{ user_file.presentation_name }}" />
-                <button type="submit" class="btn btn-primary btn-on-list">Przeszukaj</button>
-              </form>
-            {% else %}
-              <form action="/user/files/{{ user_file.presentation_name }}/preparation" method="post" class="mb-3">
-                <input type="hidden" name="fileHashStr" value="{{ user_file.file_hash_str }}" />
-                <button type="submit" class="btn btn-primary">Przygotuj plik</button>
-              </form>
-            {% endif %}
-          </li>
+          <div class="col">
+            <div class="p-3 border rounded d-flex justify-content-between align-items-center bg-light">
+              <span class="text-truncate me-2" title="{{ user_file.presentation_name }}">{{ user_file.presentation_name }}</span>
+              {% if user_file.is_prepared %}
+                <form action="/search/user/file" method="get" class="m-0">
+                  <input type="hidden" name="fileHashStr" value="{{ user_file.file_hash_str }}" />
+                  <input type="hidden" name="filename" value="{{ user_file.presentation_name }}" />
+                  <button type="submit" class="btn btn-primary btn-sm">Przeszukaj</button>
+      </form>
+              {% else %}
+                <form action="/user/files/{{ user_file.presentation_name }}/preparation" method="post" class="m-0">
+                  <input type="hidden" name="fileHashStr" value="{{ user_file.file_hash_str }}" />
+                  <button type="submit" class="btn btn-primary btn-sm">Przygotuj plik</button>
+                </form>
+  {% endif %}
+            </div>
+          </div>
         {% endfor %}
-      </ul>
+      </div>
     {% else %}
       <p>Brak plików.</p>
     {% endif %}
@@ -70,16 +74,25 @@
 
     <h2>Moje sprawy</h2>
     {% if cases %}
-      <ol class="list-group list-group-numbered">
+      <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
         {% for case in cases %}
-          <li class="list-group-item">
-            {{ case.name }}
-            <a href="/user/cases/{{ case.id }}" class="btn btn-primary btn-on-list">Przejdź</a>
-            <input type="hidden" name="caseId" value="{{ case.id }}" />
-            <button type="button" class="btn btn-danger btn-on-list" data-bs-toggle="popover">Usuń</button>
-          </li>
+          <div class="col">
+            <div class="p-3 border rounded d-flex flex-column h-100 bg-light">
+              <div class="d-flex align-items-center mb-3">
+                <span class="badge bg-secondary me-2">{{ loop.index }}</span>
+                <span class="text-truncate fw-bold" title="{{ case.name }}">{{ case.name }}</span>
+              </div>
+              <div class="mt-auto d-flex justify-content-end gap-2">
+                <a href="/user/cases/{{ case.id }}" class="btn btn-primary btn-sm">Przejdź</a>
+                <div>
+                  <input type="hidden" name="caseId" value="{{ case.id }}" />
+                  <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="popover">Usuń</button>
+                </div>
+              </div>
+            </div>
+          </div>
         {% endfor %}
-      </ol>
+      </div>
     {% else %}
       <p>Brak spraw.</p>
     {% endif %}
