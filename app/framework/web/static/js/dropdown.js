@@ -17,7 +17,7 @@ dropdownItems.forEach(item => {
         });
 
         // Odblokuj przyciski dodawania po wybraniu sprawy
-        const addButtons = document.querySelectorAll('.add-article-btn');
+        const addButtons = document.querySelectorAll('.btn-on-list');
         addButtons.forEach(btn => {
             btn.disabled = false;
         });

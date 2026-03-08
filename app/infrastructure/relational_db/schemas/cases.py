@@ -20,4 +20,4 @@ class CaseArticles(Base, UuidIdMixin, CreateDateMixin):
 
     case_id: Mapped[UUID] = mapped_column(sqla.ForeignKey("cases.id"), nullable=False, index=True)
     document_name: Mapped[str] = mapped_column(sqla.String(MAX_FILENAME_LENGTH), nullable=False)
-    article_content: Mapped[str] = mapped_column(sqla.Text, nullable=False)
+    content: Mapped[str] = mapped_column(sqla.Text, nullable=False)

@@ -64,7 +64,7 @@ async def post_search_user_file(
 
     return render_page_template(
         request,
-        "search_user_file.html",
+        "search.html",
         filename=filename,
         query=query,
         results=results,

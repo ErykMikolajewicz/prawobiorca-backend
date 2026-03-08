@@ -65,7 +65,7 @@ async def post_search_public_file(
 
     return render_page_template(
         request,
-        "search_public.html",
+        "search.html",
         filename=filename,
         query=query,
         results=results,

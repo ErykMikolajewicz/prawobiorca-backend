@@ -39,6 +39,7 @@
             {% if user_file.is_prepared %}
               <form action="/search/user/file" method="get" style="display: inline;">
                 <input type="hidden" name="fileHashStr" value="{{ user_file.file_hash_str }}" />
+                <input type="hidden" name="filename" value="{{ user_file.presentation_name }}" />
                 <button type="submit" class="btn btn-primary btn-on-list">Przeszukaj</button>
               </form>
             {% else %}
