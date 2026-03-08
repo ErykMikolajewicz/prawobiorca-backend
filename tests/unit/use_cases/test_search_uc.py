@@ -30,7 +30,7 @@ async def test_search_file_success(mock_embedding_port, mock_regulations_repo):
     assert result == correct_result
     mock_embedding_port.embed_queries.assert_awaited_once_with([query])
     mock_regulations_repo.search.assert_awaited_once_with(
-        embedding_vector, limit=5, threshold=0.0, source_file_hash="abcd"
+        embedding_vector, limit=10, threshold=0.5, source_file_hash="abcd"
     )
 
 
@@ -57,7 +57,7 @@ async def test_search_file_no_results(mock_embedding_port, mock_regulations_repo
     assert result == []
     mock_embedding_port.embed_queries.assert_awaited_once_with([query])
     mock_regulations_repo.search.assert_awaited_once_with(
-        embedding_vector, limit=5, threshold=0.0, source_file_hash="abcd"
+        embedding_vector, limit=10, threshold=0.5, source_file_hash="abcd"
     )
 
 
@@ -104,5 +104,5 @@ async def test_search_file_repository_error(mock_embedding_port, mock_regulation
 
     mock_embedding_port.embed_queries.assert_awaited_once_with([query])
     mock_regulations_repo.search.assert_awaited_once_with(
-        embedding_vector, limit=5, threshold=0.0, source_file_hash="abcd"
+        embedding_vector, limit=10, threshold=0.5, source_file_hash="abcd"
     )

@@ -14,8 +14,8 @@ PARAGRAPH_CORE = r"^§\s+(?P<p_num>\d+)\.\s+(?P<p_title>[^\n]+)"
 PARAGRAPH_PLAIN = r"§\s+\d+\.\s+[^\n]+$"
 PARAGRAPH_BLOCK = rf"{PARAGRAPH_CORE}\n(?P<p_body>.*?)(?={PARAGRAPH_PLAIN}|\Z)"
 
-POINT_CORE = r"^(?P<pt_num>\d+)[\.|\)].*?"
-POINT_PLAIN = r"\d+[\.|\)]\s+.*?"
+POINT_CORE = r"^(?P<pt_num>\d+)[.].*?"
+POINT_PLAIN = r"\n\d+[.]\s+.*?"
 POINT_BLOCK = rf"{POINT_CORE}\s+(?P<pt_body>.*?)(?={POINT_PLAIN}|\Z)"
 
 FLAGS = re.MULTILINE | re.DOTALL
