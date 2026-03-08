@@ -73,6 +73,10 @@ async def fulfill_public_collection():
             await session.commit()
 
 
+async def main():
+    await initialize_vector_db()
+    await fulfill_public_collection()
+
+
 if __name__ == "__main__":
-    # asyncio.run(initialize_vector_db())
-    asyncio.run(fulfill_public_collection())
+    asyncio.run(main())

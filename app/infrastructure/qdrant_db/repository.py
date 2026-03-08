@@ -2,11 +2,11 @@ from uuid import UUID
 
 from grpc.aio import AioRpcError
 from qdrant_client import AsyncQdrantClient
-from qdrant_client.models import PointStruct
+from qdrant_client.models import FieldCondition, Filter, MatchValue, PointStruct
 
 from app.domain.exceptions import RegulationsNotPreparedToSearch
 from app.domain.value_objects.documents import DocumentsCollection
-from app.shared.consts import VECTOR_DB_USERS_COLLECTION_NAME
+from app.shared.consts import VECTOR_DB_PUBLIC_COLLECTION_NAME, VECTOR_DB_USERS_COLLECTION_NAME
 
 
 class QdrantUserRegulationsRepository:
@@ -33,18 +33,49 @@ class QdrantUserRegulationsRepository:
 
         await self._client.upsert(collection_name=self._collection_name, points=points)
 
-    async def search(
-        self,
-        vector: list[float],
-        limit: int,
-        threshold: float,
-    ) -> list[dict]:
+    async def search(self, vector: list[float], limit: int, threshold: float, source_file_hash: str) -> list[dict]:
+
+        query_filter = Filter(
+            must=[
+                FieldCondition(key="user_id", match=MatchValue(value=self._user_id)),
+                FieldCondition(key="source_file_hash", match=MatchValue(value=source_file_hash)),
+            ]
+        )
+
         try:
             search_result = await self._client.query_points(
                 collection_name=self._collection_name,
                 query=vector,
                 limit=limit,
                 score_threshold=threshold,
+                query_filter=query_filter,
+            )
+        except AioRpcError:
+            raise RegulationsNotPreparedToSearch(self._collection_name)
+
+        results = []
+        for point in search_result.points:
+            results.append(point.payload)
+
+        return results
+
+
+class QdrantPublicRegulationsRepository:
+    _collection_name = VECTOR_DB_PUBLIC_COLLECTION_NAME
+
+    def __init__(self, client: AsyncQdrantClient):
+        self._client = client
+
+    async def search(self, vector: list[float], limit: int, threshold: float, source_file_hash: str) -> list[dict]:
+        query_filter = Filter(must=[FieldCondition(key="source_file_hash", match=MatchValue(value=source_file_hash))])
+
+        try:
+            search_result = await self._client.query_points(
+                collection_name=self._collection_name,
+                query=vector,
+                limit=limit,
+                score_threshold=threshold,
+                query_filter=query_filter,
             )
         except AioRpcError:
             raise RegulationsNotPreparedToSearch(self._collection_name)

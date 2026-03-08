@@ -16,7 +16,8 @@
         <li class="list-group-item">
           {{ public_file.presentation_name }}
           <form action="/search/public-file" method="get" style="display: inline;">
-            <input type="hidden" name="filename" value="{{ public_file.file_hash }}" />
+            <input type="hidden" name="fileHashStr" value="{{ public_file.file_hash_str }}" />
+            <input type="hidden" name="filename" value="{{ public_file.presentation_name }}" />
             <button type="submit" class="btn btn-primary btn-on-list"{% if not public_file.is_prepared %} disabled{% endif %}>Przeszukaj</button>
           </form>
         </li>

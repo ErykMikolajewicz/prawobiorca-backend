@@ -32,6 +32,8 @@
   <form id="search_form" method="post" class="mb-4">
     <label for="query">Twoje zapytanie:</label>
     <input type="text" id="query" name="query" placeholder="Wpisz treść..." value="{{ query }}" required />
+    <input type="hidden" name="fileHashStr" value="{{ file_hash_str }}" />
+    <input type="hidden" name="filename" value="{{ filename }}" />
     <button type="submit" class="btn btn-primary">Przeszukaj</button>
   </form>
 

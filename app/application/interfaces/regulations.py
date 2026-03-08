@@ -6,9 +6,8 @@ from app.domain.value_objects.documents import DocumentsCollection
 class UserRegulationsRepository(Protocol):
     async def add_documents(self, documents: DocumentsCollection) -> None: ...
 
-    async def search(
-        self,
-        vector: list[float],
-        limit: int,
-        threshold: float,
-    ) -> list[dict]: ...
+    async def search(self, vector: list[float], limit: int, threshold: float, source_file_hash: str) -> list[dict]: ...
+
+
+class PublicRegulationsRepository(Protocol):
+    async def search(self, vector: list[float], limit: int, threshold: float, source_file_hash: str) -> list[dict]: ...
