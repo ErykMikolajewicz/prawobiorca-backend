@@ -49,7 +49,7 @@ def get_add_user_case(
 def get_delete_user_case(
     session: Annotated[AsyncSession, Depends(get_relational_session)],
     cases_repository: Annotated[CasesRepository, Depends(get_cases_repo)],
-    case_id: Annotated[UUID, Path(alias="caseId")],
+    case_id: Annotated[UUID, Form(alias="caseId")],
 ) -> DeleteCase:
     return DeleteCase(session, cases_repository, case_id)
 

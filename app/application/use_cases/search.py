@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 
-from app.application.interfaces.regulations import RegulationsRepository
+from app.application.interfaces.regulations import UserRegulationsRepository
 from app.application.ports.embeddings import EmbeddingPort
 
 
 @dataclass
 class SearchFile:
     embedding_port: EmbeddingPort
-    regulations_repository: RegulationsRepository
+    regulations_repository: UserRegulationsRepository
     query: str
 
     async def execute(self) -> list[str]:

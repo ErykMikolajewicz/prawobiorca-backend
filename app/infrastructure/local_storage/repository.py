@@ -1,4 +1,5 @@
 from pathlib import Path
+from uuid import UUID
 
 import aiofiles
 import aiofiles.os
@@ -20,8 +21,8 @@ class LocalPublicFileStorage:
 class LocalUsersFileStorage:
     _users_dir = Path("files/users")
 
-    def __init__(self, user_id: str):
-        self._files_dir = self._users_dir / user_id
+    def __init__(self, user_id: UUID):
+        self._files_dir = self._users_dir / str(user_id)
 
     async def upload_file(self, file_data: FileData):
         file_path = self._files_dir / file_data.name

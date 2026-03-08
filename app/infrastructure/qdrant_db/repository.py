@@ -1,24 +1,33 @@
+from uuid import UUID
+
 from grpc.aio import AioRpcError
 from qdrant_client import AsyncQdrantClient
-from qdrant_client.models import Distance, PointStruct, VectorParams
+from qdrant_client.models import PointStruct
 
-from app.domain.exceptions import RegulationAlreadyInitialized, RegulationsNotPreparedToSearch
-from app.domain.value_objects.documents import EmbeddedDocument
+from app.domain.exceptions import RegulationsNotPreparedToSearch
+from app.domain.value_objects.documents import DocumentsCollection
+from app.shared.consts import VECTOR_DB_USERS_COLLECTION_NAME
 
 
-class QdrantRegulationsRepository:
-    def __init__(self, client: AsyncQdrantClient, collection_name: str):
+class QdrantUserRegulationsRepository:
+    _collection_name = VECTOR_DB_USERS_COLLECTION_NAME
+
+    def __init__(self, client: AsyncQdrantClient, user_id: UUID):
         self._client = client
-        self._collection_name = collection_name
+        self._user_id = str(user_id)
 
-    async def add_documents(self, documents: list[EmbeddedDocument]) -> None:
-
+    async def add_documents(self, documents: DocumentsCollection) -> None:
         points = []
         for document in documents:
+            payload = {
+                "text": document.text,
+                "user_id": self._user_id,
+                "source_file_hash": documents.source_file_hash_str,
+            }
             point = PointStruct(
                 id=str(document.id),
                 vector=document.vector,
-                payload=document.payload,
+                payload=payload,
             )
             points.append(point)
 
@@ -45,10 +54,3 @@ class QdrantRegulationsRepository:
             results.append(point.payload)
 
         return results
-
-    async def initialize_law_act(self, act_name: str):
-        vectors_config = VectorParams(size=768, distance=Distance.COSINE)
-        try:
-            await self._client.create_collection(act_name, vectors_config)
-        except AioRpcError:
-            raise RegulationAlreadyInitialized

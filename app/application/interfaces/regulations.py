@@ -1,10 +1,10 @@
 from typing import Protocol
 
-from app.domain.value_objects.documents import EmbeddedDocument
+from app.domain.value_objects.documents import DocumentsCollection
 
 
-class RegulationsRepository(Protocol):
-    async def add_documents(self, documents: list[EmbeddedDocument]) -> None: ...
+class UserRegulationsRepository(Protocol):
+    async def add_documents(self, documents: DocumentsCollection) -> None: ...
 
     async def search(
         self,
@@ -12,5 +12,3 @@ class RegulationsRepository(Protocol):
         limit: int,
         threshold: float,
     ) -> list[dict]: ...
-
-    async def initialize_law_act(self, act_name: str): ...

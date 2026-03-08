@@ -4,12 +4,12 @@ document.addEventListener("DOMContentLoaded", () => {
     .forEach((button) => {
 
       const caseId = button.closest("li")
-        .querySelector("input[name='case_id']")
+        .querySelector("input[name='caseId']")
         ?.value;
 
       const content = `
         <form action="/user/cases/delete" method="post">
-          <input type="hidden" name="case_id" value="${caseId}">
+          <input type="hidden" name="caseId" value="${caseId}">
           <p class="mb-2">Na pewno usunąć?</p>
           <button type="submit" class="btn btn-sm btn-danger w-100">
             Potwierdź

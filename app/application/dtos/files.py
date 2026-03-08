@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from app.shared.consts import HASH_LENGTH, MAX_FILENAME_LENGTH, MIN_FILENAME_LENGTH
+from app.shared.consts import HASH_LENGTH_BASE64, MAX_FILENAME_LENGTH, MIN_FILENAME_LENGTH
 
 
 class FileData(BaseModel):
@@ -9,6 +9,6 @@ class FileData(BaseModel):
 
 
 class FileRepresentation(BaseModel):
-    file_hash: bytes = Field(min_length=HASH_LENGTH, max_length=HASH_LENGTH)
+    file_hash_str: str = Field(min_length=HASH_LENGTH_BASE64, max_length=HASH_LENGTH_BASE64)
     presentation_name: str = Field(min_length=MIN_FILENAME_LENGTH, max_length=MAX_FILENAME_LENGTH)
     is_prepared: bool

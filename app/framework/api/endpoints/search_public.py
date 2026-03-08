@@ -32,9 +32,7 @@ async def get_search_public_file_view(
     else:
         cases = []
 
-    return render_page_template(
-        request, "search_public.html", filename=filename, cases=cases, current_case_id=current_case_id
-    )
+    return render_page_template(request, "search.html", filename=filename, cases=cases, current_case_id=current_case_id)
 
 
 @public_search_router.post(

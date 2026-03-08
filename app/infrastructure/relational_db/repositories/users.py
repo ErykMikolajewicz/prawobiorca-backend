@@ -40,20 +40,20 @@ class UsersTokensRepository:
         self._session = session
         self._model = UsersTokens
 
-    async def get_user_id_by_session_id(self, session_id: str) -> str | None:
+    async def get_user_id_by_session_id(self, session_id: str) -> UUID | None:
         statement = (
             select(self._model.user_id)
             .where(self._model.session_id == session_id and self._model.valid_until > datetime.now(timezone.utc))
             .limit(1)
         )
 
-        result = await self._session.execute(statement)
-        user = result.first()
+        user_id = await self._session.scalar(statement)
 
-        if user is None:
+        if user_id is None:
             return None
 
-        user_id = str(user[0])
+        user_id = UUID(str(user_id))
+
         return user_id
 
     async def add_session(self, user_id: UUID, session_id: str, valid_until: datetime) -> None:

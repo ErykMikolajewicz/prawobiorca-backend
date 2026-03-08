@@ -2,7 +2,7 @@ from typing import Iterable
 
 from httpx import AsyncClient
 
-from app.domain.value_objects.preparation import DocumentToEmbed
+from app.domain.value_objects.documents import Document
 
 
 class HttpxEmbeddingsPort:
@@ -10,7 +10,7 @@ class HttpxEmbeddingsPort:
         self._client = client
         self._embedding_url = embedding_url
 
-    async def embed_documents(self, documents: Iterable[DocumentToEmbed]) -> list[list[float]]:
+    async def embed_documents(self, documents: Iterable[Document]) -> list[list[float]]:
         prefixed_docs = []
         for document in documents:
             title = document.title

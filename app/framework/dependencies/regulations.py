@@ -1,20 +1,17 @@
-from typing import Annotated
+from fastapi import Request
 
-from fastapi import Query
-
-from app.application.interfaces.regulations import RegulationsRepository
+from app.application.interfaces.regulations import UserRegulationsRepository
 from app.shared.settings.application import VectorDBType, app_settings
 
 
-def get_regulations_repository(filename: Annotated[str, Query()]) -> RegulationsRepository:
+def get_regulations_repository(request: Request) -> UserRegulationsRepository:
     match app_settings.VECTOR_DB:
         case VectorDBType.QDRANT:
             from app.infrastructure.qdrant_db.connection import qdrant_client
-            from app.infrastructure.qdrant_db.repository import QdrantRegulationsRepository
+            from app.infrastructure.qdrant_db.repository import QdrantUserRegulationsRepository
 
-            return QdrantRegulationsRepository(
-                client=qdrant_client,
-                collection_name=filename,
-            )
+            user_id = request.state.user_id
+
+            return QdrantUserRegulationsRepository(qdrant_client, user_id)
         case _:
             raise Exception(f"Invalid vector db configuration {app_settings.VECTOR_DB} !")

@@ -36,10 +36,17 @@
         {% for user_file in user_files %}
           <li class="list-group-item">
             {{ user_file.presentation_name }}
-            <form action="/search/user/file" method="get" style="display: inline;">
-              <input type="hidden" name="filename" value="{{ user_file.file_hash }}" />
-              <button type="submit" class="btn btn-primary btn-on-list"{% if not public_file.is_prepared %} disabled{% endif %}>Przeszukaj</button>
-            </form>
+            {% if user_file.is_prepared %}
+              <form action="/search/user/file" method="get" style="display: inline;">
+                <input type="hidden" name="fileHashStr" value="{{ user_file.file_hash_str }}" />
+                <button type="submit" class="btn btn-primary btn-on-list">Przeszukaj</button>
+              </form>
+            {% else %}
+              <form action="/user/files/{{ user_file.presentation_name }}/preparation" method="post" class="mb-3">
+                <input type="hidden" name="fileHashStr" value="{{ user_file.file_hash_str }}" />
+                <button type="submit" class="btn btn-primary">Przygotuj plik</button>
+              </form>
+            {% endif %}
           </li>
         {% endfor %}
       </ul>
@@ -66,7 +73,7 @@
           <li class="list-group-item">
             {{ case.name }}
             <a href="/user/cases/{{ case.id }}" class="btn btn-primary btn-on-list">Przejdź</a>
-            <input type="hidden" name="case_id" value="{{ case.id }}" />
+            <input type="hidden" name="caseId" value="{{ case.id }}" />
             <button type="button" class="btn btn-danger btn-on-list" data-bs-toggle="popover">Usuń</button>
           </li>
         {% endfor %}

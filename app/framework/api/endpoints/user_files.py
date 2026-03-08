@@ -45,14 +45,13 @@ async def add_file(
 ):
     file_bytes = await file.read()
     file_name = file.filename
-    user_id = request.state.user_id
     try:
         file_data = FileData(name=file_name, file=file_bytes)
     except ValueError:
         request.session[FLASH_KEY] = {"error_message": f"Plik {file_name} jest pusty, nie można dodać pustego pliku!"}
         return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
 
-    add_file_ = AddUserFile(session, user_file_manager, user_id, file_data, files_repository)
+    add_file_ = AddUserFile(session, user_file_manager, file_data, files_repository)
     try:
         await add_file_.execute()
     except FileExistsError:

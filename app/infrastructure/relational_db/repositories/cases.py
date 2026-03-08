@@ -63,9 +63,10 @@ class CaseArticlesRepository:
             )
             .returning(self._model.id)
         )
-        result = await self._session.scalar(statement)
-        result = UUID(str(result))
-        return result
+
+        case_article_id = await self._session.scalar(statement)
+        case_article_id = UUID(str(case_article_id))
+        return case_article_id
 
     async def delete(self, article_id: UUID) -> None:
         statement = delete(self._model).where(self._model.id == article_id)

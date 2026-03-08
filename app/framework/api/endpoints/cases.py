@@ -32,7 +32,7 @@ async def add_user_case(add_user_case_: Annotated[AddCase, Depends(get_add_user_
     return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@cases_router.delete("/user/cases/{caseId}")
+@cases_router.post("/user/cases/delete")
 async def delete_user_case(delete_user_case_: Annotated[DeleteCase, Depends(get_delete_user_case)]):
     await delete_user_case_.execute()
 

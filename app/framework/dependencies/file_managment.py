@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, Request
 
 from app.application.interfaces.file_managment import PublicFileManager, UserFileManager
 from app.application.interfaces.relational import AsyncSession
@@ -19,5 +19,7 @@ async def get_public_file_manager(
 
 async def get_user_file_manager(
     session: Annotated[AsyncSession, Depends(get_relational_session)],
+    request: Request,
 ) -> UserFileManager:
-    return UserFileManagerRepository(session)
+    user_id = request.state.user_id
+    return UserFileManagerRepository(session, user_id)
