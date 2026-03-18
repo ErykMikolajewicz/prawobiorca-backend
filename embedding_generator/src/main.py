@@ -1,8 +1,10 @@
 from contextlib import asynccontextmanager
+from typing import Annotated
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, File, Request, UploadFile
 from src.models import Embeddings, Texts
 from src.onnx_encoding import OnnxEncoder
+from unstructured.partition.pdf import partition_pdf
 
 
 @asynccontextmanager
@@ -22,6 +24,13 @@ def embed(texts: Texts, request: Request):
     embeddings = texts_encoder(texts)
     embeddings = Embeddings.model_validate(embeddings)
     return embeddings
+
+
+@app.post("/api/parse-pdf")
+async def parse_pdf(file: Annotated[UploadFile, File(...)]):
+    elements = partition_pdf(file=file.file)
+
+    return {"filename": file.filename, "elements": [element.to_dict() for element in elements]}
 
 
 @app.get("/health", tags=["health"])

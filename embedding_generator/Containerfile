@@ -1,20 +1,29 @@
 FROM python:3.13-slim-trixie
 
-WORKDIR /embedding_generator
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    libxcb1 \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir uv
 
-COPY pyproject.toml pyproject.toml
+RUN useradd -m embedding_generator
+WORKDIR /embedding_generator
+RUN chown -R embedding_generator /embedding_generator
+USER embedding_generator
 
-RUN uv sync --no-cache
+COPY pyproject.toml pyproject.toml
+COPY --chown=embedding_generator:embedding_generator uv.lock uv.lock
+
+RUN uv --no-cache sync
 
 COPY model_download.py model_download.py
 
 RUN .venv/bin/python model_download.py
-
-RUN useradd -r embedding_generator
-
-USER embedding_generator
 
 COPY src src
 
@@ -22,4 +31,4 @@ EXPOSE 8080
 
 ENV PATH="/embedding_generator/.venv/bin:$PATH"
 
-ENTRYPOINT ["uvicorn", "--port", "8080", "--host", "0.0.0.0", "src.main:app"]
+ENTRYPOINT ["granian", "--port", "8080", "--host", "0.0.0.0", "--interface", "asgi", "src.main:app"]
