@@ -28,3 +28,8 @@ class OnnxEncoder:
         embeddings = embeddings.tolist()
 
         return embeddings
+
+    def count_tokens(self, text: str) -> int:
+        encoding = self.__tokenizer.encode(text)
+        tokens_number = encoding.n_sequences
+        return tokens_number

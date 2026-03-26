@@ -1,10 +1,15 @@
+import tempfile
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Annotated
 
+from docling.document_converter import DocumentConverter
 from fastapi import FastAPI, File, Request, UploadFile
 from src.models import Embeddings, Texts
 from src.onnx_encoding import OnnxEncoder
-from unstructured.partition.pdf import partition_pdf
+from src.services import add_tokens_info
+
+converter = DocumentConverter()
 
 
 @asynccontextmanager
@@ -27,10 +32,20 @@ def embed(texts: Texts, request: Request):
 
 
 @app.post("/api/parse-pdf")
-async def parse_pdf(file: Annotated[UploadFile, File(...)]):
-    elements = partition_pdf(file=file.file)
+def parse_pdf(file: Annotated[UploadFile, File(...)], request: Request):
+    with tempfile.NamedTemporaryFile("wb") as temp_file:
+        file_content = file.file.read()
+        temp_file.write(file_content)
+        file_path = temp_file.name
+        file_path = Path(file_path)
 
-    return {"filename": file.filename, "elements": [element.to_dict() for element in elements]}
+        result = converter.convert(file_path)
+
+    tokens_counter = request.app.state.count_tokens
+    texts = result.document.texts
+    add_tokens_info(texts, tokens_counter)
+
+    return
 
 
 @app.get("/health", tags=["health"])
