@@ -10,6 +10,6 @@ zensical.toml
 .env.example
 tests
 files
-embedding_generator
+text_transformator
 docs
 scripts

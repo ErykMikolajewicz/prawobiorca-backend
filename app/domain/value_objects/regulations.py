@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import StrEnum
 
 from app.domain.value_objects.documents import Document
 
@@ -37,3 +38,16 @@ class RegulationAct:
                     document_to_embed = Document(paragraph_title, point.body)
                     documents.append(document_to_embed)
         return documents
+
+
+class UsefulLabels(StrEnum):
+    SECTION_HEADER = "section_header"
+    LIST_ITEM = "list_item"
+    TEXT = "text"
+
+
+@dataclass
+class RegulationElement:
+    label: str
+    text: str
+    tokens_number: int

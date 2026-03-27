@@ -3,10 +3,10 @@ from typing import Annotated
 from fastapi import Depends, Request
 from httpx import AsyncClient
 
-from app.application.ports.embeddings import EmbeddingPort
+import app.infrastructure.text_transformator.text_embedder as te
+from app.application.ports.texts import TextsEmbedder
 from app.application.services.embedding import DocumentEmbedder
-from app.infrastructure.embeddings.httpx_client.port import HttpxEmbeddingsPort
-from app.shared.settings.embeddings import embeddings_settings
+from app.shared.settings.embeddings import text_transformator_settings
 
 
 def get_embedding_client(request: Request) -> AsyncClient:
@@ -15,9 +15,9 @@ def get_embedding_client(request: Request) -> AsyncClient:
 
 def get_embeddings_port(
     client: Annotated[AsyncClient, Depends(get_embedding_client)],
-) -> EmbeddingPort:
-    return HttpxEmbeddingsPort(client=client, embedding_url=embeddings_settings.URL)
+) -> TextsEmbedder:
+    return te.TextsEmbedder(client=client, texts_transformator_url=text_transformator_settings.URL)
 
 
-def get_document_embedder(embedding_port: Annotated[EmbeddingPort, Depends(get_embeddings_port)]):
+def get_document_embedder(embedding_port: Annotated[TextsEmbedder, Depends(get_embeddings_port)]):
     return DocumentEmbedder(embedding_port)

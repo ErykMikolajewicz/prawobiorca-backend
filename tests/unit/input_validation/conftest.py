@@ -3,7 +3,7 @@ from fastapi import Request
 
 from app.framework.dependencies.authentication import set_user_by_session_id
 from app.framework.dependencies.file_storage import get_public_file_repository, get_users_file_repository
-from main import app
+from main import prawobiorca
 
 
 @pytest.fixture
@@ -12,9 +12,9 @@ def override_set_user_by_session_id(session_id_generator, uuid_generator):
         request.state.user_id = next(uuid_generator)
         request.state.session_id = next(session_id_generator)
 
-    app.dependency_overrides[set_user_by_session_id] = _override
+    prawobiorca.dependency_overrides[set_user_by_session_id] = _override
     yield
-    app.dependency_overrides = {}
+    prawobiorca.dependency_overrides = {}
 
 
 class MockStorageRepository:
@@ -24,13 +24,13 @@ class MockStorageRepository:
 
 @pytest.fixture
 def override_get_public_file_storage():
-    app.dependency_overrides[get_public_file_repository] = lambda: MockStorageRepository()
+    prawobiorca.dependency_overrides[get_public_file_repository] = lambda: MockStorageRepository()
     yield
-    app.dependency_overrides = {}
+    prawobiorca.dependency_overrides = {}
 
 
 @pytest.fixture
 def override_get_users_file_repository():
-    app.dependency_overrides[get_users_file_repository] = lambda: MockStorageRepository()
+    prawobiorca.dependency_overrides[get_users_file_repository] = lambda: MockStorageRepository()
     yield
-    app.dependency_overrides = {}
+    prawobiorca.dependency_overrides = {}

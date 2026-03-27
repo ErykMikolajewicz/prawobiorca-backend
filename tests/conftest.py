@@ -12,7 +12,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.domain.services.security import url_safe_session_id_length
-from main import app
+from main import prawobiorca
 
 
 @pytest.fixture(scope="function")
@@ -63,4 +63,4 @@ def client() -> TestClient:
     Returns:
         fastapi.testclient.TestClient: The FastAPI test client.
     """
-    return TestClient(app)
+    return TestClient(prawobiorca)

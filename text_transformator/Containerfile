@@ -11,13 +11,13 @@ RUN apt-get update && apt-get install -y \
 
 RUN pip install --no-cache-dir uv
 
-RUN useradd -m embedding_generator
-WORKDIR /embedding_generator
-RUN chown -R embedding_generator /embedding_generator
-USER embedding_generator
+RUN useradd -m text_transformator
+WORKDIR /text_transformator
+RUN chown -R text_transformator /text_transformator
+USER text_transformator
 
 COPY pyproject.toml pyproject.toml
-COPY --chown=embedding_generator:embedding_generator uv.lock uv.lock
+COPY --chown=text_transformator:text_transformator uv.lock uv.lock
 
 RUN uv --no-cache sync
 
@@ -29,6 +29,6 @@ COPY src src
 
 EXPOSE 8080
 
-ENV PATH="/embedding_generator/.venv/bin:$PATH"
+ENV PATH="/text_transformator/.venv/bin:$PATH"
 
 ENTRYPOINT ["granian", "--port", "8080", "--host", "0.0.0.0", "--interface", "asgi", "src.main:app"]

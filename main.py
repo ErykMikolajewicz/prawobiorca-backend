@@ -10,8 +10,8 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.framework.api.router import include_all_routers
 from app.framework.dependencies.file_storage import app_settings, check_file_storage_connection
 from app.framework.dependencies.vector_db import check_vector_db_connection
-from app.infrastructure.embeddings.initialization import init_http_client
 from app.infrastructure.relational_db.connection import check_relational_db_connection
+from app.infrastructure.text_transformator.initialization import init_text_transformator_client
 from app.shared.logging_config import setup_logging
 
 setup_logging()
@@ -24,7 +24,7 @@ version = data["project"]["version"]
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(app: FastAPI):
     closing_callbacks = []
 
     logger.info("Connecting to external services.")
@@ -38,7 +38,7 @@ async def lifespan(_: FastAPI):
         file_storage_closing_callback = await check_file_storage_connection()
         closing_callbacks.insert(0, file_storage_closing_callback)
 
-        http_client, http_closing_callback = await init_http_client()
+        http_client, http_closing_callback = await init_text_transformator_client()
         app.state.embedding_client = http_client
         closing_callbacks.insert(0, http_closing_callback)
 
@@ -61,11 +61,11 @@ async def lifespan(_: FastAPI):
                 logger.error(f"Error during clean up: {e}")
 
 
-app = FastAPI(lifespan=lifespan, title="PRAWOBIORCA", version=version)
-app.add_middleware(SessionMiddleware, secret_key=app_settings.SESSION_KEY.get_secret_value())
-app.mount("/static", StaticFiles(directory="app/framework/web/static"), name="static")
+prawobiorca = FastAPI(lifespan=lifespan, title="PRAWOBIORCA", version=version)
+prawobiorca.add_middleware(SessionMiddleware, secret_key=app_settings.SESSION_KEY.get_secret_value())
+prawobiorca.mount("/static", StaticFiles(directory="app/framework/web/static"), name="static")
 
-include_all_routers(app)
+include_all_routers(prawobiorca)
 
 
 if __name__ == "__main__":
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     from granian.server.embed import Server
 
     async def launch_granian():
-        server = Server(app, interface=Interfaces.ASGI)
+        server = Server(prawobiorca, interface=Interfaces.ASGI)
         await server.serve()
 
     asyncio.run(launch_granian())

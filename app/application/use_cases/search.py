@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 
 from app.application.interfaces.regulations import PublicRegulationsRepository, UserRegulationsRepository
-from app.application.ports.embeddings import EmbeddingPort
+from app.application.ports.texts import TextsEmbedder
 
 
 @dataclass
 class SearchUserFile:
-    embedding_port: EmbeddingPort
+    embedding_port: TextsEmbedder
     regulations_repository: UserRegulationsRepository
     query: str
     file_hash_str: str
@@ -23,7 +23,7 @@ class SearchUserFile:
 
 @dataclass
 class SearchPublicFile:
-    embedding_port: EmbeddingPort
+    embedding_port: TextsEmbedder
     regulations_repository: PublicRegulationsRepository
     query: str
     file_hash_str: str
