@@ -12,7 +12,6 @@ class RegulationSplitter:
 
     async def split(self, regulation: bytes) -> Iterable[RegulationElement]:
         response = await self._client.post(self._split_url, timeout=300, files={"file": ("regulation.pdf", regulation)})
-        response.raise_for_status()
 
         return [
             RegulationElement(label=item["label"], text=item["text"], tokens_number=item["tokens_number"])

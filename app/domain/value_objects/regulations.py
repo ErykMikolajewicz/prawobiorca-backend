@@ -5,6 +5,7 @@ from itertools import pairwise
 
 from app.domain.exceptions import ToLongDocument, ToLongHeaderSection
 from app.domain.value_objects.documents import Document, DocumentsCollection
+from app.shared.settings.application import app_settings
 from app.shared.settings.text_transformator import text_transformator_settings
 
 
@@ -57,13 +58,21 @@ class HeaderSection:
                 break
 
             tokens_with_next = document_tokens + next_element.tokens_number
-            if tokens_with_next > text_transformator_settings.MAX_TOKENS:
+            if tokens_with_next > app_settings.DOCUMENT_DESIRED_TOKENS_LENGTH:
                 document = Document(self._header_text, document_text)
                 documents.append(document)
                 document_text = ""
                 document_tokens = self._header_tokens
 
         return documents
+
+    def filter_useful_elements(self):
+        useful_elements = []
+        for element in self._other_elements:
+            match element.label:
+                case UsefulLabels.TEXT | UsefulLabels.LIST_ITEM:
+                    useful_elements.append(element)
+        self._other_elements = useful_elements
 
 
 @dataclass
@@ -76,6 +85,7 @@ class RegulationAct:
 
         documents = []
         for header_section in grouped_elements:
+            header_section.filter_useful_elements()
             section_documents = header_section.create_section_documents()
             documents.extend(section_documents)
 

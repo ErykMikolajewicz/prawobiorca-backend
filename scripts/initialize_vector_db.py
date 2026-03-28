@@ -7,16 +7,18 @@ from pathlib import Path
 sys.path.append(".")
 
 import httpx
-from app.application.services.texts_extraction import extract_document
-from app.infrastructure.embeddings.httpx_client.port import HttpxEmbeddingsPort
-from app.shared.settings.embeddings import embeddings_settings
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
 
+from app.application.services.embedding import DocumentEmbedder
+from app.application.services.regulations import RegulationPreparator
 from app.infrastructure.relational_db.connection import async_session_maker
 from app.infrastructure.relational_db.schemas.files import PublicFiles
+from app.infrastructure.text_transformator.regulation_splitter import RegulationSplitter
+from app.infrastructure.text_transformator.text_embedder import TextsEmbedder
 from app.shared.consts import VECTOR_DB_PUBLIC_COLLECTION_NAME, VECTOR_DB_USERS_COLLECTION_NAME
 from app.shared.settings.qdrant_database import qdrant_settings
+from app.shared.settings.text_transformator import text_transformator_settings
 
 qdrant_client: AsyncQdrantClient = AsyncQdrantClient(
     host=qdrant_settings.HOST, grpc_port=qdrant_settings.GRPC_PORT, prefer_grpc=True, https=False
@@ -40,25 +42,28 @@ async def fulfill_public_collection():
         file_hash = sha256(file_content).digest()
         file_hash_str = base64.urlsafe_b64encode(file_hash).decode()
 
-        regulation = extract_document(file_content, file_name)
-        documents_to_embed = regulation.get_documents_to_embed()
-
         async with httpx.AsyncClient(timeout=300) as client:
-            embeddings_port = HttpxEmbeddingsPort(client=client, embedding_url=embeddings_settings.URL)
-            vectors = await embeddings_port.embed_documents(documents_to_embed)
-
-        points = []
-        for vector, document in zip(vectors, documents_to_embed, strict=True):
-            payload = {
-                "text": document.text,
-                "source_file_hash": file_hash_str,
-            }
-            point = PointStruct(
-                id=str(document.id),
-                vector=vector,
-                payload=payload,
+            texts_embedder = TextsEmbedder(client=client, texts_transformator_url=text_transformator_settings.URL)
+            regulation_spliter = RegulationSplitter(
+                client=client, texts_transformator_url=text_transformator_settings.URL
             )
-            points.append(point)
+            document_embedder = DocumentEmbedder(texts_embedder)
+            regulation_preparator = RegulationPreparator(regulation_spliter, document_embedder)
+            documents_to_embed = await regulation_preparator.prepare_regulation(file_content)
+        documents_batch_iterator = documents_to_embed.get_batch_iterator()
+        points = []
+        for documents_batch in documents_batch_iterator:
+            for document in documents_batch:
+                payload = {
+                    "text": document.text,
+                    "source_file_hash": file_hash_str,
+                }
+                point = PointStruct(
+                    id=str(document.id),
+                    vector=document.vector,
+                    payload=payload,
+                )
+                points.append(point)
 
         async with async_session_maker() as session:
             public_file = PublicFiles(hash=file_hash, presentation_name=file_name, is_prepared=True)

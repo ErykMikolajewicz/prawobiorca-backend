@@ -56,18 +56,11 @@ Alternatives:
 
 ---
 
-### google-cloud-storage
-
-The official Google Cloud client for file handling, chosen because the application uses GCP for file storage.  
-The downside is that it is synchronous — currently, asynchronous wrappers must be created. If an async version becomes available, implementing it would be a significant improvement.
-
----
-
 ### granian
 
 An HTTP server written in Rust, supporting HTTP/2.  
 Pros: high performance.  
-Cons: harder debugging compared to Python-based servers (e.g., Hypercorn).
+Cons: harder debugging compared to Python-based servers (e.g., hypercorn).
 
 ---
 
@@ -98,7 +91,7 @@ A library for handling file uploads in applications based on [FastAPI](#fastapi)
 
 ### qdrant-client
 
-The official client for the Qdrant database — essentially the only option.
+The official client for the qdrant database — essentially the only option.
 
 ---
 
@@ -115,6 +108,20 @@ Cons:
 - documentation covers both legacy (1.4) and modern (2.x) versions, which can be confusing.  
 
 Alternative: **[Tortoise ORM](https://tortoise.github.io/){target=_blank}** — natively asynchronous and simpler to use, though less popular.
+
+## Storage Dependencies - choose one option
+
+Actually work only local storage with aiofiles, due to developing app in scientific club, perhaps in futureGoogle Cloud will be implemented again.
+
+### aiofiles
+
+Use to access local files, without blocking main thread.
+
+### google-cloud-storage
+
+The official Google Cloud client for file handling, chosen because the application uses GCP for file storage.  
+The downside is that it is synchronous — currently, asynchronous wrappers must be created. If an async version becomes available, implementing it would be a significant improvement.
+
 
 
 ## Dev/Test Dependencies
@@ -133,22 +140,17 @@ An extension of [Granian](#granian) that enables automatic reload when code chan
 
 ---
 
-### MkDocs
+### zensical
 A documentation generator that outputs a website. You are most likely reading documentation generated with it right now.
 
 ---
 
-### mkdocs-material
-A visual theme for documentation generated with [MkDocs](#mkdocs).
-
----
-
 ### mkdocstrings\[python\]
-A plugin that integrates Python docstrings into documentation generated with [MkDocs](#mkdocs).
+A plugin that integrates Python docstrings into documentation generated with [zensical](#zensical).
 
 ---
 
-### psycopg
+### psycopg\[binary\]
 PostgreSQL driver (version 3, despite the name not indicating it). Supports both synchronous and asynchronous connections. Required by [Alembic](#alembic), which needs a synchronous connection.
 
 ---

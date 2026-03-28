@@ -18,6 +18,12 @@ Replacing Postgres is considered unlikely but possible.
 
 ---
 
+## TextTransformator
+
+Api with option to embed document, and split PDF files for elements.
+
+---
+
 ## Cloud Storage
 Currently not used, replaced by just local file hierarchy.
 

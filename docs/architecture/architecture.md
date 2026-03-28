@@ -49,7 +49,7 @@ This layer corresponds to the **Frameworks** (and partly Interface Adapters) lay
 ### `app/shared`
 This folder contains common utilities and configuration shared across the application. While Clean Architecture emphasizes separation, some cross-cutting concerns reside here.
 - **Settings**: Application configuration.
-- **Constants & Enums**: Shared static values.
+- **Constants**: Shared static values.
 - **Logging**: Logging configuration.
 - **Exceptions**: Common base exceptions.
 
