@@ -7,11 +7,9 @@ from app.application.interfaces.file_managment import UserFileManager
 from app.application.interfaces.file_storage import UsersFilesRepository
 from app.application.interfaces.regulations import UserRegulationsRepository
 from app.application.interfaces.relational import AsyncSession
-from app.application.services.embedding import DocumentEmbedder
-from app.application.services.texts_extraction import extract_document
+from app.application.services.regulations import RegulationPreparator
 from app.domain.exceptions import FileHashExist, RegulationAlreadyInitialized
 from app.domain.services.files import hash_file
-from app.domain.value_objects.documents import DocumentsCollection
 from app.domain.value_objects.user_file import FileRegistrationData
 
 logger = logging.getLogger(__name__)
@@ -20,11 +18,11 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PrepareUserFile:
     session: AsyncSession
-    document_embedder: DocumentEmbedder
     files_repository: UsersFilesRepository
     regulations_repository: UserRegulationsRepository
     file_hash_str: str
     user_file_manager: UserFileManager
+    regulation_preparator: RegulationPreparator
 
     async def execute(self):
         file_hash = base64.urlsafe_b64decode(self.file_hash_str)
@@ -40,16 +38,11 @@ class PrepareUserFile:
             logger.warning("Tried prepare already prepared file!")
             raise RegulationAlreadyInitialized
 
-        file_content = await self.files_repository.get_file(self.file_hash_str)
+        regulation_content = await self.files_repository.get_file(self.file_hash_str)
 
-        regulation_act = extract_document(file_content, file_representation.presentation_name)
+        documents_collection = await self.regulation_preparator.prepare_regulation(regulation_content)
 
-        documents_to_embed = regulation_act.get_documents_to_embed()
-
-        documents_collection = DocumentsCollection(self.file_hash_str, documents_to_embed)
-        await self.document_embedder.embed_documents(documents_collection)
-
-        await self.regulations_repository.add_documents(documents_collection)
+        await self.regulations_repository.add_documents(self.file_hash_str, documents_collection)
 
         async with self.session as session:
             await self.user_file_manager.mark_as_prepared(file_hash)

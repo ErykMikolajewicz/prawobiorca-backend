@@ -18,3 +18,11 @@ class FileHashExist(Exception):
 
 class RegulationAlreadyInitialized(Exception):
     pass
+
+
+class ToLongHeaderSection(Exception):
+    pass
+
+
+class ToLongDocument(Exception):
+    pass

@@ -7,15 +7,15 @@ from pathlib import Path
 sys.path.append(".")
 
 import httpx
+from app.application.services.texts_extraction import extract_document
+from app.infrastructure.embeddings.httpx_client.port import HttpxEmbeddingsPort
+from app.shared.settings.embeddings import embeddings_settings
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
 
-from app.application.services.texts_extraction import extract_document
-from app.infrastructure.embeddings.httpx_client.port import HttpxEmbeddingsPort
 from app.infrastructure.relational_db.connection import async_session_maker
 from app.infrastructure.relational_db.schemas.files import PublicFiles
 from app.shared.consts import VECTOR_DB_PUBLIC_COLLECTION_NAME, VECTOR_DB_USERS_COLLECTION_NAME
-from app.shared.settings.embeddings import embeddings_settings
 from app.shared.settings.qdrant_database import qdrant_settings
 
 qdrant_client: AsyncQdrantClient = AsyncQdrantClient(

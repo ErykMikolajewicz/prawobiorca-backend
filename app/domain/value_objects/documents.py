@@ -8,7 +8,7 @@ from app.shared.settings.application import app_settings
 
 @dataclass
 class Document:
-    title: str | None
+    title: str
     text: str
     vector: list[float] | None = None
     id: UUID = field(default_factory=uuid4)
@@ -16,7 +16,6 @@ class Document:
 
 @dataclass
 class DocumentsCollection:
-    source_file_hash_str: str
     _documents: list[Document]
 
     def __iter__(self) -> Iterable[Document]:

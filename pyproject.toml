@@ -1,6 +1,6 @@
 [project]
 name = "prawobiorca-backend"
-version = "0.25.3"
+version = "0.26.0"
 description = "Law acts search engine with AI features."
 readme = "README.md"
 requires-python = ">=3.13"
@@ -13,7 +13,6 @@ dependencies = [
     "httpx==0.28.*",
     "itsdangerous==2.2.*",
     "jinja2==3.1.*",
-    "pdfminer-six==20260107",
     "pydantic-settings==2.13.*",
     "python-multipart==0.0.22",
     "qdrant-client==1.17.*",
@@ -27,10 +26,10 @@ dev = [
 ]
 docs = [
     "mkdocstrings[python]==1.0.*",
-    "zensical==0.0.24",
+    "zensical==0.0.29",
 ]
 google-cloud = [
-    "google-cloud-storage==3.9.*",
+    "google-cloud-storage==3.10.*",
 ]
 local-storage = [
     "aiofiles==25.1.*",
@@ -41,7 +40,7 @@ test = [
     "psycopg[binary]==3.3.*",
     "pytest==9.0.*",
     "pytest-asyncio==1.3.*",
-    "pytest-cov==7.0.*",
+    "pytest-cov==7.1.*",
     "testcontainers[postgres]==4.14.*",
 ]
 

@@ -16,13 +16,13 @@ class QdrantUserRegulationsRepository:
         self._client = client
         self._user_id = str(user_id)
 
-    async def add_documents(self, documents: DocumentsCollection) -> None:
+    async def add_documents(self, source_file_hash: str, documents: DocumentsCollection) -> None:
         points = []
         for document in documents:
             payload = {
                 "text": document.text,
                 "user_id": self._user_id,
-                "source_file_hash": documents.source_file_hash_str,
+                "source_file_hash": source_file_hash,
             }
             point = PointStruct(
                 id=str(document.id),
