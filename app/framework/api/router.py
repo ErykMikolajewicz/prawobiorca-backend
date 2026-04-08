@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 import app.framework.api.endpoints.v2.auth as v2_auth
+import app.framework.api.endpoints.v2.public_files as v2_files
 from app.framework.api.endpoints.accounts import account_router
 from app.framework.api.endpoints.auth import auth_router
 from app.framework.api.endpoints.cases import cases_router
@@ -22,3 +23,4 @@ def include_all_routers(app: FastAPI):
     app.include_router(user_file_search_router)
 
     app.include_router(v2_auth.auth_router)
+    app.include_router(v2_files.public_files_router)

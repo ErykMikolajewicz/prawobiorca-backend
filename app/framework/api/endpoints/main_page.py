@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Request
 
 from app.application.use_cases.cases import ListCases
 from app.application.use_cases.files import ListPublicFiles
@@ -14,10 +14,7 @@ from app.framework.web.helpers import render_page_template
 main_page_router = APIRouter(tags=["main_page"], dependencies=(Depends(set_user_by_session_id),))
 
 
-@main_page_router.get(
-    "/",
-    status_code=status.HTTP_200_OK,
-)
+@main_page_router.get("/")
 async def get_main_page(
     list_public_files: Annotated[ListPublicFiles, Depends(get_list_public_files)],
     list_user_files: Annotated[ListUserFiles, Depends(get_list_user_files)],

@@ -4,6 +4,7 @@ import tomllib
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -15,11 +16,10 @@ from app.infrastructure.text_transformator.initialization import init_text_trans
 from app.shared.logging_config import setup_logging
 
 setup_logging()
-
 logger = logging.getLogger("app")
+
 with open("pyproject.toml", "rb") as f:
     data = tomllib.load(f)
-
 version = data["project"]["version"]
 
 
@@ -62,6 +62,17 @@ async def lifespan(app: FastAPI):
 
 
 prawobiorca = FastAPI(lifespan=lifespan, title="PRAWOBIORCA", version=version)
+
+origins = ["http://localhost:5173"]
+
+prawobiorca.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 prawobiorca.add_middleware(SessionMiddleware, secret_key=app_settings.SESSION_KEY.get_secret_value())
 prawobiorca.mount("/static", StaticFiles(directory="app/framework/web/static"), name="static")
 
