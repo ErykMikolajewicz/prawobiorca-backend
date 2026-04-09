@@ -14,17 +14,17 @@ Plans include:
 ## How to Contribute
 
 1. **Clone the project and install dependencies**, preferably with [uv](https://docs.astral.sh/uv/):
-    ```bash
+    ```sh
     uv sync --all-groups
     ```
 
 2. **Set up the commit hook**:
-    ```bash
+    ```sh
     git config core.hooksPath .githooks
     ```
 
 3. **Open the documentation**:
-    ```bash
+    ```sh
     zensical serve
     ```
     - Read the section about **Workflow**, especially regarding the commit format.
@@ -38,23 +38,46 @@ Plans include:
 
 ## Running the Application
 
-To check how the application works, launch it using the script below. Note that you must have **Podman** installed for it to work!
+Download tool to create certs from:
+https://github.com/FiloSottile/mkcert/releases
+Move it to the same directory as repo, and rename to mkcert.
 
+Then create cert file, and key file:
+```sh
+./mkcert --cert-file certificate.crt --key-file private.key localhost 127.0.0.1
+```
+
+Install certificate in system trust store;
+```sh
+./mkcert -install
+```
+
+To check how the application works, launch it using the script below. Note that you must have **Podman** installed for it to work!
+Firstly activate virtual environment
+- on Linux:
 ```bash
-scripts/run_app.sh
+source .venv/bin/activate
+```
+- on Windows:
+```powershell
+.venv/Scripts/activate
+```
+
+Then run:
+```sh
+python scripts/run_app.py
 ```
 
 ## Initialize relational database
 To initialize tables in a database, use command:
-```bash
-alembic upgrade head
+```sh
+python -m alembic upgrade head
 ```
 
 Then, seed the database with data:
-```bash
+```sh
 python scripts/seed_db.py
 ```
-
 
 Then visit the main application page:
 [https://127.0.0.1:8000/](https://127.0.0.1:8000/)

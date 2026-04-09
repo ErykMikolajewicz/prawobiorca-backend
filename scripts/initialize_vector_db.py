@@ -9,6 +9,8 @@ sys.path.append(".")
 import httpx
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
+from grpc.aio import AioRpcError
+import grpc
 
 from app.application.services.embedding import DocumentEmbedder
 from app.application.services.regulations import RegulationPreparator
@@ -27,9 +29,21 @@ qdrant_client: AsyncQdrantClient = AsyncQdrantClient(
 
 async def initialize_vector_db():
     vectors_config = VectorParams(size=768, distance=Distance.COSINE)
+    try:
+        await qdrant_client.create_collection(VECTOR_DB_USERS_COLLECTION_NAME, vectors_config)
+    except AioRpcError as e:
+        if e.code() == grpc.StatusCode.ALREADY_EXISTS:
+            pass
+        else:
+            raise
 
-    await qdrant_client.create_collection(VECTOR_DB_USERS_COLLECTION_NAME, vectors_config)
-    await qdrant_client.create_collection(VECTOR_DB_PUBLIC_COLLECTION_NAME, vectors_config)
+    try:
+        await qdrant_client.create_collection(VECTOR_DB_PUBLIC_COLLECTION_NAME, vectors_config)
+    except AioRpcError as e:
+        if e.code() == grpc.StatusCode.ALREADY_EXISTS:
+            pass
+        else:
+            raise
 
 
 async def fulfill_public_collection():
@@ -42,7 +56,7 @@ async def fulfill_public_collection():
         file_hash = sha256(file_content).digest()
         file_hash_str = base64.urlsafe_b64encode(file_hash).decode()
 
-        async with httpx.AsyncClient(timeout=300) as client:
+        async with httpx.AsyncClient(timeout=900) as client:
             texts_embedder = TextsEmbedder(client=client, texts_transformator_url=text_transformator_settings.URL)
             regulation_spliter = RegulationSplitter(
                 client=client, texts_transformator_url=text_transformator_settings.URL
@@ -50,6 +64,7 @@ async def fulfill_public_collection():
             document_embedder = DocumentEmbedder(texts_embedder)
             regulation_preparator = RegulationPreparator(regulation_spliter, document_embedder)
             documents_to_embed = await regulation_preparator.prepare_regulation(file_content)
+            print(f'Embedded regulation: {file_name}')
         documents_batch_iterator = documents_to_embed.get_batch_iterator()
         points = []
         for documents_batch in documents_batch_iterator:
@@ -69,7 +84,9 @@ async def fulfill_public_collection():
             public_file = PublicFiles(hash=file_hash, presentation_name=file_name, is_prepared=True)
             session.add(public_file)
 
-            file_destination = Path("files/public") / file_hash_str
+            pubic_files_dir = Path("files/public")
+            pubic_files_dir.mkdir(exist_ok=True)
+            file_destination = pubic_files_dir / file_hash_str
             with open(file_destination, "wb") as file:
                 file.write(file_content)
 
