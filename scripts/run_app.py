@@ -31,32 +31,31 @@ def run_container_if_not_running(name, args):
 if __name__ == "__main__":
     run_container_if_not_running(
         "postgres_db_prawobiorca",
-        "-e POSTGRES_PASSWORD=postgres "
-        "-p 127.0.0.1:5432:5432 "
-        "-v pg_data:/var/lib/postgresql "
-        "postgres:18"
+        "-e POSTGRES_PASSWORD=postgres -p 127.0.0.1:5432:5432 -v pg_data:/var/lib/postgresql postgres:18",
     )
 
     run_container_if_not_running(
         "qdrant_db_prawobiorca",
-        "-p 127.0.0.1:6333:6333 "
-        "-p 127.0.0.1:6334:6334 "
-        "-v qdrant_data:/qdrant/storage "
-        "qdrant/qdrant:latest"
+        "-p 127.0.0.1:6333:6333 -p 127.0.0.1:6334:6334 -v qdrant_data:/qdrant/storage qdrant/qdrant:latest",
     )
 
-    run_container_if_not_running(
-        "text_transformator",
-        "-p 127.0.0.1:8080:8080 "
-        "text_transformator"
-    )
+    run_container_if_not_running("text_transformator", "-p 127.0.0.1:8080:8080 text_transformator")
 
-    subprocess.run([
-        "granian",
-        "--port", "8000",
-        "--host", "127.0.0.1",
-        "--interface", "asgi",
-        "--ssl-certificate", "certificate.crt",
-        "--ssl-keyfile", "private.key",
-        "--reload", "main:prawobiorca"
-    ], check=True)
+    subprocess.run(
+        [
+            "granian",
+            "--port",
+            "8000",
+            "--host",
+            "127.0.0.1",
+            "--interface",
+            "asgi",
+            "--ssl-certificate",
+            "certificate.crt",
+            "--ssl-keyfile",
+            "private.key",
+            "--reload",
+            "main:prawobiorca",
+        ],
+        check=True,
+    )

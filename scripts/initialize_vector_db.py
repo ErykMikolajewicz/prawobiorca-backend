@@ -6,11 +6,11 @@ from pathlib import Path
 
 sys.path.append(".")
 
+import grpc
 import httpx
+from grpc.aio import AioRpcError
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import Distance, PointStruct, VectorParams
-from grpc.aio import AioRpcError
-import grpc
 
 from app.application.services.embedding import DocumentEmbedder
 from app.application.services.regulations import RegulationPreparator
@@ -64,7 +64,7 @@ async def fulfill_public_collection():
             document_embedder = DocumentEmbedder(texts_embedder)
             regulation_preparator = RegulationPreparator(regulation_spliter, document_embedder)
             documents_to_embed = await regulation_preparator.prepare_regulation(file_content)
-            print(f'Embedded regulation: {file_name}')
+            print(f"Embedded regulation: {file_name}")
         documents_batch_iterator = documents_to_embed.get_batch_iterator()
         points = []
         for documents_batch in documents_batch_iterator:

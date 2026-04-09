@@ -36,7 +36,7 @@ Plans include:
 5. **Submit**:
     - If everything works, push your code to the repository (remember to do it on a feature branch) and contact **Eryk Mikołajewicz** for a code review.
 
-## Running the Application
+## Generating and adding a certificate to the browser
 
 Download tool to create certs from:
 https://github.com/FiloSottile/mkcert/releases
@@ -47,11 +47,24 @@ Then create cert file, and key file:
 ./mkcert --cert-file certificate.crt --key-file private.key localhost 127.0.0.1
 ```
 
-Install certificate in system trust store;
+Install certificate in system trust store:
+On linux previously install libnss3-tools
+```bash
+sudo apt install libnss3-tools
+```
+
+Then on both Windows and Linux:
 ```sh
 ./mkcert -install
 ```
 
+If still not work add root certificate to your browser. The directory of cert you can find by:
+```sh
+./mkcert -CAROOT
+```
+Then find instruction, how add cert, for your browser
+
+## Running the Application
 To check how the application works, launch it using the script below. Note that you must have **Podman** installed for it to work!
 Firstly activate virtual environment
 - on Linux:
