@@ -55,6 +55,7 @@ if __name__ == "__main__":
             "--ssl-keyfile",
             "private.key",
             "--reload",
+            "--access-log",
             "main:prawobiorca",
         ],
         check=True,

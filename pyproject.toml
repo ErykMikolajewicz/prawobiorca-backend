@@ -1,6 +1,6 @@
 [project]
 name = "prawobiorca-backend"
-version = "0.29.0"
+version = "0.30.0"
 description = "Law acts search engine with AI features."
 readme = "README.md"
 requires-python = ">=3.13"
@@ -14,7 +14,7 @@ dependencies = [
     "itsdangerous==2.2.*",
     "jinja2==3.1.*",
     "pydantic-settings==2.13.*",
-    "python-multipart==0.0.24",
+    "python-multipart==0.0.26",
     "qdrant-client==1.17.*",
     "sqlalchemy[asyncio]==2.0.*",
 ]
