@@ -15,10 +15,7 @@ from app.shared.consts import FLASH_KEY
 user_file_search_router = APIRouter(tags=["search_user_file"], dependencies=(Depends(set_user_by_session_id),))
 
 
-@user_file_search_router.get(
-    "/search/user/file",
-    status_code=status.HTTP_200_OK,
-)
+@user_file_search_router.get("/search/user/file")
 async def get_search_user_file_view(
     request: Request,
     list_cases: Annotated[ListCases, Depends(get_list_user_cases)],

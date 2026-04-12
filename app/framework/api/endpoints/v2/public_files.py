@@ -4,7 +4,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.application.dtos.files import FileRepresentation
 from app.application.use_cases.files import ListPublicFiles
+from app.application.use_cases.search import SearchPublicFile
+from app.domain.exceptions import RegulationsNotPreparedToSearch
 from app.framework.dependencies.files import get_list_public_files
+from app.framework.dependencies.search import get_search_public_file_v2
 
 public_files_router = APIRouter(tags=["public_fies"], prefix="/v2")
 
@@ -18,3 +21,23 @@ async def get_public_files(
     if public_files:
         return public_files
     raise HTTPException(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@public_files_router.get(
+    "/search/public-file",
+    responses={
+        status.HTTP_204_NO_CONTENT: {"description": "No search results."},
+        status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Regulation not prepared, normally should not occur"},
+    },
+)
+async def post_search_public_file(search_file: Annotated[SearchPublicFile, Depends(get_search_public_file_v2)]):
+    try:
+        results = await search_file.execute()
+    except RegulationsNotPreparedToSearch as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Nie przygotowano do wyszukiwania pliku {e.regulations_name},"
+            f" zgłoś problem administratorowi aplikacji.",
+        )
+
+    return results
