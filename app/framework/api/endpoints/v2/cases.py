@@ -1,11 +1,12 @@
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.application.dtos.cases import CaseData
-from app.application.use_cases.cases import ListCases
+from app.application.use_cases.cases import AddCase, ListCases
 from app.framework.dependencies.authentication import set_user_by_session_id
-from app.framework.dependencies.cases import get_list_user_cases
+from app.framework.dependencies.cases import get_add_user_case, get_list_user_cases
 
 cases_router = APIRouter(tags=["cases"], dependencies=(Depends(set_user_by_session_id),), prefix="/v2")
 
@@ -19,3 +20,9 @@ async def get_cases_list(
         return cases
     else:
         raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="No cases for that user.")
+
+
+@cases_router.post("/user/cases")
+async def add_user_case(add_user_case_: Annotated[AddCase, Depends(get_add_user_case)]) -> UUID:
+    case_id = await add_user_case_.execute()
+    return case_id

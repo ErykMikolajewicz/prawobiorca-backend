@@ -36,10 +36,11 @@ class AddCase:
     cases_repo: CasesRepository
     new_case: NewCase
 
-    async def execute(self) -> None:
+    async def execute(self) -> UUID:
         async with self.session as session:
-            await self.cases_repo.add(self.new_case)
+            case_id = await self.cases_repo.add(self.new_case)
             await session.commit()
+        return case_id
 
 
 @dataclass

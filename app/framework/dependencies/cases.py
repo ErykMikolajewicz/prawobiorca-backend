@@ -39,7 +39,7 @@ def get_add_user_case(
     session: Annotated[AsyncSession, Depends(get_relational_session)],
     cases_repository: Annotated[CasesRepository, Depends(get_cases_repo)],
     request: Request,
-    case_name: Annotated[str, Form(...)],
+    case_name: Annotated[str, Form(..., alias="caseName")],
 ) -> AddCase:
     user_id = request.state.user_id
     new_case = NewCase(user_id=user_id, name=case_name)
