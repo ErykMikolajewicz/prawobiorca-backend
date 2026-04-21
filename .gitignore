@@ -1,8 +1,6 @@
-# Python-generated files
 __pycache__/
 *.pyc
 
-# Virtual environments
 .venv
 
 .env
@@ -16,3 +14,5 @@ private.key
 
 .cache
 /files/
+
+/cicd/kubectl
