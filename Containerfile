@@ -22,4 +22,4 @@ COPY --chown=prawobiorca_app:prawobiorca_app main.py main.py
 EXPOSE 8000
 
 CMD ["granian", "--port", "8000", "--host", "0.0.0.0", "--interface", "asgi", "--ssl-certificate", "certificate.crt", \
- "--ssl-keyfile", "private.key", "main:app"]
+ "--ssl-keyfile", "private.key", "main:prawobiorca"]

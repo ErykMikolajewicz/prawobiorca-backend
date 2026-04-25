@@ -16,3 +16,4 @@ private.key
 /files/
 
 /cicd/kubectl
+/cicd/secrets

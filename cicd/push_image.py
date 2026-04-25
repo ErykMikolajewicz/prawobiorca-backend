@@ -5,7 +5,7 @@ import google.auth
 from google.auth import impersonated_credentials
 from google.auth.transport.requests import Request
 
-IMAGES_NAMES = ("prawobiorca-backend", "postgres", "qdrant", "text_transformator")
+IMAGES_NAMES = ("prawobiorca_backend", "text_transformator")
 
 parser = argparse.ArgumentParser(description="Script to actualize image in artifact registry.")
 
