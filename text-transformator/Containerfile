@@ -9,17 +9,19 @@ RUN apt-get update && apt-get install -y \
     libxcb1 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN pip install --no-cache-dir uv
+RUN pip install --no-cache uv==0.11.*
 
 RUN useradd -m text_transformator
-WORKDIR /text_transformator
-RUN chown -R text_transformator /text_transformator
+
+WORKDIR /text-transformator
+RUN chown text_transformator /text-transformator
+
 USER text_transformator
 
 COPY pyproject.toml pyproject.toml
-COPY --chown=text_transformator:text_transformator uv.lock uv.lock
+COPY uv.lock uv.lock
 
-RUN uv --no-cache sync
+RUN uv sync --compile-bytecode --no-cache
 
 COPY model_download.py model_download.py
 
@@ -29,6 +31,6 @@ COPY src src
 
 EXPOSE 8080
 
-ENV PATH="/text_transformator/.venv/bin:$PATH"
+ENV PATH="/text-transformator/.venv/bin:$PATH"
 
 ENTRYPOINT ["granian", "--port", "8080", "--host", "0.0.0.0", "--interface", "asgi", "src.main:app"]

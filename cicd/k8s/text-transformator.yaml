@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: text-transformator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prawobiorca
+      component: text-transformator
+  template:
+    metadata:
+      labels:
+        app: prawobiorca
+        component: text-transformator
+    spec:
+      containers:
+        - name: text-transformator
+          image: europe-central2-docker.pkg.dev/prawobiorca/prawobiorca-repo/text-transformator:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "4Gi"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: text-transformator
+spec:
+  selector:
+    app: prawobiorca
+    component: text-transformator
+  ports:
+    - port: 8080
+      targetPort: 8080

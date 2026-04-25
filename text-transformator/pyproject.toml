@@ -4,11 +4,10 @@ version = "0.3.0"
 description = "Service to make various ai operations on texts: splitting, embeddding."
 requires-python = "==3.13.*"
 dependencies = [
-    "docling==2.82.*",
-    "fastapi==0.135.*",
+    "docling==2.91.*",
+    "fastapi==0.136.*",
     "granian==2.7.*",
-    "onnxruntime==1.24.*",
-    "pydantic-settings==2.13.*",
-    "python-multipart==0.0.22",
-    "transformers==4.57.*",
+    "onnxruntime==1.25.*",
+    "python-multipart==0.0.26",
+    "transformers==5.6.*",
 ]

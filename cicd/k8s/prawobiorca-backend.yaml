@@ -1,0 +1,111 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prawobiorca-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prawobiorca
+      component: prawobiorca-backend
+  template:
+    metadata:
+      labels:
+        app: prawobiorca
+        component: prawobiorca-backend
+    spec:
+      serviceAccountName: prawobiorca-runner
+      containers:
+        - name: prawobiorca-backend
+          image: europe-central2-docker.pkg.dev/prawobiorca/prawobiorca-repo/prawobiorca-backend:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health/liveness
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          volumeMounts:
+            - name: secrets-store
+              mountPath: "/mnt/secrets-store"
+              readOnly: true
+          envFrom:
+            - configMapRef:
+                name: prawobiorca-backend-config
+          env:
+            - name: RELATIONAL_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: prawobiorca-secrets
+                  key: POSTGRES_PASSWORD
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store-gke.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: prawobiorca-secrets
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prawobiorca-backend
+spec:
+  type: LoadBalancer
+  selector:
+    app: prawobiorca
+    component: prawobiorca-backend
+  ports:
+    - port: 80
+      targetPort: 8000
+
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prawobiorca-backend-config
+data:
+  APP_LOGGING_LEVEL: "INFO"
+  APP_SESSION_ID_EXPIRATION_SECONDS: "500"
+  APP_FILE_STORAGE: "LOCAL_FILES"
+  APP_VECTOR_DB: "QDRANT"
+  APP_HTTP_CLIENT: "HTTPX"
+  APP_DOCUMENT_DESIRED_TOKENS_LENGTH: "300"
+  APP_SESSION_KEY: "ablllllarblabar"
+
+  GC_PRIVATE_COLLECTION: ""
+  GC_PUBLIC_COLLECTION: ""
+
+  RELATIONAL_DB_DRIVER: "postgresql+asyncpg"
+  RELATIONAL_DB_USER: "postgres"
+  RELATIONAL_DB_HOST: "postgres"
+  RELATIONAL_DB_PORT: "5432"
+  RELATIONAL_DB_NAME: "postgres"
+  RELATIONAL_DB_POOL_SIZE: "50"
+  RELATIONAL_DB_MAX_OVERFLOW: "20"
+  RELATIONAL_DB_POOL_TIMEOUT: "30"
+  RELATIONAL_DB_POOL_RECYCLE: "5"
+
+  HTTPX_TIMEOUT: "30"
+  HTTPX_MAX_CONNECTIONS: "20"
+  HTTPX_MAX_KEEP_ALIVE_CONNECTIONS: "5"
+
+  QDRANT_HOST: "qdrant"
+  QDRANT_GRPC_PORT: "6334"
+
+  TEXT_TRANSFORMATOR_URL: "http://text-transformator:8080"
+  TEXT_TRANSFORMATOR_MAX_TOKENS: "2048"
+  TEXT_TRANSFORMATOR_MAX_TITLE_TOKENS_OVERHEAD: "16"

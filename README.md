@@ -36,34 +36,6 @@ Plans include:
 5. **Submit**:
     - If everything works, push your code to the repository (remember to do it on a feature branch) and contact **Eryk Mikołajewicz** for a code review.
 
-## Generating and adding a certificate to the browser
-
-Download tool to create certs from:
-https://github.com/FiloSottile/mkcert/releases
-Move it to the same directory as repo, and rename to mkcert.
-
-Then create cert file, and key file:
-```sh
-./mkcert --cert-file certificate.crt --key-file private.key localhost 127.0.0.1
-```
-
-Install certificate in system trust store:
-On linux previously install libnss3-tools
-```bash
-sudo apt install libnss3-tools
-```
-
-Then on both Windows and Linux:
-```sh
-./mkcert -install
-```
-
-If still not work add root certificate to your browser. The directory of cert you can find by:
-```sh
-./mkcert -CAROOT
-```
-Then find instruction, how add cert, for your browser
-
 ## Running the Application
 To check how the application works, launch it using the script below. Note that you must have **Podman** installed for it to work!
 Firstly activate virtual environment
@@ -76,9 +48,20 @@ source .venv/bin/activate
 .venv/Scripts/activate
 ```
 
+Start with building main service image with:
+```sh
+podman image build --tag=prawobiorca-backend .
+```
+
+next step build supporting service:
+
+```sh
+python cicd/scripts/build_text_transformator.py
+```
+
 Then run:
 ```sh
-python scripts/run_app.py
+python cicd/scripts/run_locally.py
 ```
 
 ## Initialize relational database
@@ -89,11 +72,18 @@ python -m alembic upgrade head
 
 Then, seed the database with data:
 ```sh
-python scripts/seed_db.py
+python cicd/init/seed_relational_db.py
+```
+
+## Initialize vector db
+This step can last some time
+
+```sh
+python cicd/init/seed_vector_db.py
 ```
 
 Then visit the main application page:
-[https://127.0.0.1:8000/](https://127.0.0.1:8000/)
+[http://127.0.0.1:8000/](https://127.0.0.1:8000/)
 
 Or view the Swagger documentation:
-[https://127.0.0.1:8000/docs](https://127.0.0.1:8000/docs)
+[http://127.0.0.1:8000/docs](https://127.0.0.1:8000/docs)

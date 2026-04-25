@@ -10,6 +10,6 @@ zensical.toml
 .env.example
 tests
 files
-text_transformator
+text-transformator
 docs
-scripts
+cicd/init

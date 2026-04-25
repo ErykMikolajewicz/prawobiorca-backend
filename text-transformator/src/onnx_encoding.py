@@ -11,10 +11,10 @@ class OnnxEncoder:
         self.__initialize_session()
 
     def __initialize_session(self):
-        model_path = "/text_transformator/onnx/model.onnx"
+        model_path = "/text-transformator/onnx/model.onnx"
         self.__session = ort.InferenceSession(model_path, providers=["CPUExecutionProvider"])
 
-        self.__tokenizer = Tokenizer.from_file("/text_transformator/onnx/tokenizer/tokenizer.json")
+        self.__tokenizer = Tokenizer.from_file("/text-transformator/onnx/tokenizer/tokenizer.json")
         self.__tokenizer.enable_padding(length=None, pad_id=0)
 
     def encode(self, texts: Iterable[str]) -> list[list[float]]:

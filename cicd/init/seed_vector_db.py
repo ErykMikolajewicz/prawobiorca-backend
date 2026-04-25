@@ -4,7 +4,7 @@ import sys
 from hashlib import sha256
 from pathlib import Path
 
-sys.path.append(".")
+sys.path.append("")
 
 import grpc
 import httpx

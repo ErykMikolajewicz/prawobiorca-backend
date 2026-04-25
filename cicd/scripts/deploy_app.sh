@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Applying shared resources..."
+kubectl apply -f cicd/k8s/rbac.yaml
+kubectl apply -f cicd/k8s/secrets.yaml
+
+echo "Applying databases..."
+kubectl apply -f cicd/k8s/postgres.yaml
+kubectl apply -f cicd/k8s/qdrant.yaml
+
+echo "Applying text-transformator..."
+kubectl apply -f cicd/k8s/text-transformator.yaml
+
+echo "Waiting for databases..."
+kubectl rollout status deployment/postgres --timeout=180s
+kubectl rollout status deployment/qdrant --timeout=180s
+
+echo "Waiting for text-transformator..."
+kubectl rollout status deployment/text-transformator --timeout=180s
+
+echo "Applying backend..."
+kubectl apply -f cicd/k8s/prawobiorca-backend.yaml
+
+echo "Waiting for backend..."
+kubectl rollout status deployment/prawobiorca-backend --timeout=180s
+
+echo "Deployment completed."

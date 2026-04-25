@@ -36,10 +36,10 @@ if __name__ == "__main__":
 
     run_container_if_not_running(
         "qdrant_db_prawobiorca",
-        "-p 127.0.0.1:6333:6333 -p 127.0.0.1:6334:6334 -v qdrant_data:/qdrant/storage qdrant/qdrant:latest",
+        "-p 127.0.0.1:6333:6333 -p 127.0.0.1:6334:6334 -v qdrant_data:/qdrant/storage qdrant/qdrant:v1.17",
     )
 
-    run_container_if_not_running("text_transformator", "-p 127.0.0.1:8080:8080 text_transformator")
+    run_container_if_not_running("text-transformator", "-p 127.0.0.1:8080:8080 text-transformator")
 
     subprocess.run(
         [
@@ -50,10 +50,6 @@ if __name__ == "__main__":
             "127.0.0.1",
             "--interface",
             "asgi",
-            "--ssl-certificate",
-            "certificate.crt",
-            "--ssl-keyfile",
-            "private.key",
             "--reload",
             "--access-log",
             "main:prawobiorca",
