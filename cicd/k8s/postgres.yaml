@@ -35,8 +35,11 @@ spec:
               value: "/mnt/secrets-store/postgres-password"
           resources:
             requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
               cpu: "500m"
-              memory: "512Mi"
+              memory: "1Gi"
       volumes:
         - name: secrets-store
           csi:

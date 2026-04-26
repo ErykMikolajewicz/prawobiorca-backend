@@ -19,10 +19,16 @@ spec:
           image: europe-central2-docker.pkg.dev/prawobiorca/prawobiorca-repo/text-transformator:latest
           ports:
             - containerPort: 8080
+          env:
+            - name: OMP_NUM_THREADS
+              value: "2"
           resources:
             requests:
               cpu: "500m"
-              memory: "4Gi"
+              memory: "1.5Gi"
+            limits:
+              cpu: "2"
+              memory: "5"
 
 ---
 apiVersion: v1

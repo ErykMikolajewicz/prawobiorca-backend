@@ -19,9 +19,12 @@ spec:
         - name: prawobiorca-backend
           image: europe-central2-docker.pkg.dev/prawobiorca/prawobiorca-repo/prawobiorca-backend:latest
           ports:
-            - containerPort: 8080
+            - containerPort: 8000
           resources:
             requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
               cpu: "500m"
               memory: "512Mi"
           readinessProbe:
@@ -40,6 +43,8 @@ spec:
             - name: secrets-store
               mountPath: "/mnt/secrets-store"
               readOnly: true
+            - name: files-volume
+              mountPath: "/files"
           envFrom:
             - configMapRef:
                 name: prawobiorca-backend-config
@@ -56,6 +61,9 @@ spec:
             readOnly: true
             volumeAttributes:
               secretProviderClass: prawobiorca-secrets
+        - name: files-volume
+          persistentVolumeClaim:
+            claimName: prawobiorca-files
 
 ---
 apiVersion: v1
@@ -63,12 +71,12 @@ kind: Service
 metadata:
   name: prawobiorca-backend
 spec:
-  type: LoadBalancer
+  type: NodePort
   selector:
     app: prawobiorca
     component: prawobiorca-backend
   ports:
-    - port: 80
+    - port: 8000
       targetPort: 8000
 
 
@@ -109,3 +117,16 @@ data:
   TEXT_TRANSFORMATOR_URL: "http://text-transformator:8080"
   TEXT_TRANSFORMATOR_MAX_TOKENS: "2048"
   TEXT_TRANSFORMATOR_MAX_TITLE_TOKENS_OVERHEAD: "16"
+
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: prawobiorca-files
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi

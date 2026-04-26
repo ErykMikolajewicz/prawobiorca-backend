@@ -4,8 +4,12 @@ RUN pip install --no-cache uv==0.11.*
 
 RUN useradd -r prawobiorca_app
 
+RUN mkdir /files
+RUN chown prawobiorca_app /files
+
 WORKDIR /prawobiorca
 RUN chown prawobiorca_app /prawobiorca
+
 
 USER prawobiorca_app
 

@@ -1,0 +1,28 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: prawobiorca-backend-cert
+spec:
+  domains:
+    - www.prawobiorca.pl
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prawobiorca-backend
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    networking.gke.io/managed-certificates: prawobiorca-backend-cert
+spec:
+  rules:
+    - host: www.prawobiorca.pl
+      http:
+        paths:
+          - path: /*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: prawobiorca-backend
+                port:
+                  number: 8000

@@ -47,7 +47,7 @@ async def initialize_vector_db():
 
 
 async def fulfill_public_collection():
-    init_files_dir = Path("scripts/init_files")
+    init_files_dir = Path("cicd/init/files")
     for file_path in init_files_dir.iterdir():
         file_name = file_path.name
         with open(file_path, "rb") as file:

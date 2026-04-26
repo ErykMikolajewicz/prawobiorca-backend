@@ -4,6 +4,7 @@ set -euo pipefail
 echo "Applying shared resources..."
 kubectl apply -f cicd/k8s/rbac.yaml
 kubectl apply -f cicd/k8s/secrets.yaml
+kubectl apply -f cicd/k8s/ingress.yaml
 
 echo "Applying databases..."
 kubectl apply -f cicd/k8s/postgres.yaml

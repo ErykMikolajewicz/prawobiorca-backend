@@ -3,7 +3,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated
 
-from docling.document_converter import DocumentConverter
+import torch
+from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
+from docling.datamodel.base_models import InputFormat
+from docling.datamodel.pipeline_options import PdfPipelineOptions
+from docling.document_converter import DocumentConverter, PdfFormatOption
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile, status
 from src.consts import MAX_TOKENS
 from src.models import Embeddings, Texts
@@ -13,9 +17,19 @@ from src.services import add_tokens_info
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
+    if torch.cuda.is_available():
+        accelerator_options = AcceleratorOptions(device=AcceleratorDevice.CUDA)
+    else:
+        accelerator_options = AcceleratorOptions(device=AcceleratorDevice.CPU)
+
+    pipeline_options = PdfPipelineOptions()
+    pipeline_options.accelerator_options = accelerator_options
+
+    application.state.converter = DocumentConverter(
+        format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)}
+    )
     encoder = OnnxEncoder()
     application.state.encoder = encoder
-    application.state.converter = DocumentConverter()
     yield
 
 
