@@ -19,10 +19,38 @@ spec:
     - host: www.prawobiorca.pl
       http:
         paths:
-          - path: /*
-            pathType: ImplementationSpecific
+          - path: /api/v2
+            pathType: Prefix
             backend:
               service:
                 name: prawobiorca-backend
+                port:
+                  number: 8000
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: prawobiorca-backend
+                port:
+                  number: 8000
+          - path: /docs
+            pathType: Prefix
+            backend:
+              service:
+                name: prawobiorca-backend
+                port:
+                  number: 8000
+          - path: /openapi.json
+            pathType: Exact
+            backend:
+              service:
+                name: prawobiorca-backend
+                port:
+                  number: 8000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: prawobiorca-frontend
                 port:
                   number: 8000

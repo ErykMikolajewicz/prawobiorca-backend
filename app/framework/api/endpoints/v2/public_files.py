@@ -9,7 +9,7 @@ from app.domain.exceptions import RegulationsNotPreparedToSearch
 from app.framework.dependencies.files import get_list_public_files
 from app.framework.dependencies.search import get_search_public_file_v2
 
-public_files_router = APIRouter(tags=["public_fies"], prefix="/v2")
+public_files_router = APIRouter(tags=["public_fies"], prefix="/api/v2")
 
 
 @public_files_router.get("/files", responses={status.HTTP_204_NO_CONTENT: {"description": "No public files."}})

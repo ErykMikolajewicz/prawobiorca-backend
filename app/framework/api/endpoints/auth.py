@@ -16,7 +16,7 @@ from app.framework.dependencies.users import get_users_repository, get_users_tok
 from app.framework.web.helpers import render_page_template
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME, FLASH_KEY
 
-auth_router = APIRouter(tags=["auth"])
+auth_router = APIRouter(tags=["auth"], prefix="/api")
 
 
 @auth_router.get("/auth/login")
@@ -39,7 +39,7 @@ async def log_user(
     except ValueError as e:
         error_message = str(e)
         request.session[FLASH_KEY] = {"error_message": error_message}
-        return RedirectResponse(url="/auth/login", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url="/api/auth/login", status_code=status.HTTP_303_SEE_OTHER)
 
     log_user_ = LogUser(session, users_repo, tokens_repo, login_data)
     try:
@@ -47,9 +47,9 @@ async def log_user(
     except UserCantLog:
         error_message = "Nieprawidłowe dane logowania!"
         request.session[FLASH_KEY] = {"error_message": error_message}
-        return RedirectResponse(url="/auth/login", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url="/api/auth/login", status_code=status.HTTP_303_SEE_OTHER)
 
-    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    response = RedirectResponse(url="/api/", status_code=status.HTTP_303_SEE_OTHER)
 
     login_output = login_output.model_dump()
     session_data = json.dumps(login_output)
@@ -73,7 +73,7 @@ async def log_user(
 async def logout_user(logout_user_: Annotated[LogoutUser, Depends(get_logout_user)]):
     await logout_user_.execute()
 
-    response = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    response = RedirectResponse(url="/api/", status_code=status.HTTP_303_SEE_OTHER)
 
     response.delete_cookie(
         key=AUTHORIZATION_COOKIE_NAME,

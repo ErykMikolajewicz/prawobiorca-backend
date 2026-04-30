@@ -16,7 +16,7 @@ from app.framework.dependencies.relational import get_relational_session
 from app.framework.dependencies.user_files import get_prepare_user_file
 from app.shared.consts import FLASH_KEY
 
-user_files_router = APIRouter(tags=["user_files"], dependencies=(Depends(set_user_by_session_id),))
+user_files_router = APIRouter(tags=["user_files"], dependencies=(Depends(set_user_by_session_id),), prefix="/api")
 
 
 @user_files_router.post("/user/files/{fileName}/preparation")
@@ -32,7 +32,7 @@ async def prepare_user_file(
     else:
         request.session[FLASH_KEY] = {"info_message": f"Przygotowano plik {file_name}!"}
 
-    return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url="/api/", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @user_files_router.post("/user/files")
@@ -49,7 +49,7 @@ async def add_file(
         file_data = FileData(name=file_name, file=file_bytes)
     except ValueError:
         request.session[FLASH_KEY] = {"error_message": f"Plik {file_name} jest pusty, nie można dodać pustego pliku!"}
-        return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url="/api/", status_code=status.HTTP_303_SEE_OTHER)
 
     add_file_ = AddUserFile(session, user_file_manager, file_data, files_repository)
     try:
@@ -59,4 +59,4 @@ async def add_file(
             "error_message": f"Plik o identycznych danych, jak {file_name} już istnieje, nie można go dodać!"
         }
 
-    return RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url="/api/", status_code=status.HTTP_303_SEE_OTHER)

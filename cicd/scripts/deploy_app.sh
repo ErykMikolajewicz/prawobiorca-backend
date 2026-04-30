@@ -26,4 +26,10 @@ kubectl apply -f cicd/k8s/prawobiorca-backend.yaml
 echo "Waiting for backend..."
 kubectl rollout status deployment/prawobiorca-backend --timeout=180s
 
+echo "Applying frontend..."
+kubectl apply -f cicd/k8s/prawobiorca-frontend.yaml
+
+echo "Waiting for frontend..."
+kubectl rollout status deployment/prawobiorca-frontend --timeout=180s
+
 echo "Deployment completed."

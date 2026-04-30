@@ -14,7 +14,7 @@ from app.framework.dependencies.users import get_users_repository
 from app.framework.web.helpers import render_page_template
 from app.shared.consts import FLASH_KEY
 
-account_router = APIRouter(tags=["account"])
+account_router = APIRouter(tags=["account"], prefix="/api")
 
 
 @account_router.post("/accounts/register")
@@ -30,7 +30,7 @@ async def create_account(
     except ValueError as e:
         password_verification_error = str(e)
         request.session[FLASH_KEY] = {"error_message": password_verification_error}
-        return RedirectResponse(url="/accounts/register", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url="/api/accounts/register", status_code=status.HTTP_303_SEE_OTHER)
 
     create_account_ = CreateAccount(session, users_repo, login_data)
 
@@ -38,9 +38,9 @@ async def create_account(
         await create_account_.execute()
     except UserExists:
         request.session[FLASH_KEY] = {"error_message": f"Użytkownik o nazwie {username} już istnieje!"}
-        return RedirectResponse(url="/accounts/register", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url="/api/accounts/register", status_code=status.HTTP_303_SEE_OTHER)
 
-    return RedirectResponse(url="/auth/login", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url="/api/auth/login", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @account_router.get("/accounts/register", status_code=status.HTTP_200_OK)

@@ -12,7 +12,9 @@ from app.framework.dependencies.search import get_search_user_file
 from app.framework.web.helpers import render_page_template
 from app.shared.consts import FLASH_KEY
 
-user_file_search_router = APIRouter(tags=["search_user_file"], dependencies=(Depends(set_user_by_session_id),))
+user_file_search_router = APIRouter(
+    tags=["search_user_file"], dependencies=(Depends(set_user_by_session_id),), prefix="/api"
+)
 
 
 @user_file_search_router.get("/search/user/file")
@@ -59,7 +61,7 @@ async def post_search_user_file(
     except RegulationsNotPreparedToSearch as e:
         error_message = f"Plik {e.regulations_name}, nie został przygotowany do przeszukiwania!"
         request.session[FLASH_KEY] = {"error_message": error_message}
-        return RedirectResponse(url="/search/user/file", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url="/api/search/user/file", status_code=status.HTTP_303_SEE_OTHER)
 
     is_user_logged = request.state.user_id is not None
 

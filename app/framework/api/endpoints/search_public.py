@@ -12,7 +12,7 @@ from app.framework.dependencies.search import get_search_public_file
 from app.framework.web.helpers import render_page_template
 from app.shared.consts import FLASH_KEY
 
-public_search_router = APIRouter(tags=["search_public"], dependencies=(Depends(set_user_by_session_id),))
+public_search_router = APIRouter(tags=["search_public"], dependencies=(Depends(set_user_by_session_id),), prefix="/api")
 
 
 @public_search_router.get("/search/public-file")
@@ -60,7 +60,7 @@ async def post_search_public_file(
             f"Nie przygotowano do wyszukiwania pliku {e.regulations_name}, zgłoś problem administratorowi aplikacji."
         )
         request.session[FLASH_KEY] = {"error_message": error_message}
-        return RedirectResponse(url="/search/public-file", status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url="/api/search/public-file", status_code=status.HTTP_303_SEE_OTHER)
 
     is_user_logged = request.state.user_id is not None
 

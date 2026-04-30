@@ -14,7 +14,7 @@ from app.framework.dependencies.relational import get_relational_session
 from app.framework.dependencies.users import get_users_repository, get_users_tokens_repository
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME
 
-auth_router = APIRouter(tags=["auth"], prefix="/v2")
+auth_router = APIRouter(tags=["auth"], prefix="/api/v2")
 
 
 @auth_router.post("/auth/login")

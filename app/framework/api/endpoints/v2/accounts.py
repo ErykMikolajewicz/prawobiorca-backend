@@ -11,7 +11,7 @@ from app.domain.exceptions import UserExists
 from app.framework.dependencies.relational import get_relational_session
 from app.framework.dependencies.users import get_users_repository
 
-account_router = APIRouter(tags=["account"], prefix="/v2")
+account_router = APIRouter(tags=["account"], prefix="/api/v2")
 
 
 @account_router.post(

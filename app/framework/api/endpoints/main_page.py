@@ -11,7 +11,7 @@ from app.framework.dependencies.files import get_list_public_files
 from app.framework.dependencies.user_files import get_list_user_files
 from app.framework.web.helpers import render_page_template
 
-main_page_router = APIRouter(tags=["main_page"], dependencies=(Depends(set_user_by_session_id),))
+main_page_router = APIRouter(tags=["main_page"], dependencies=(Depends(set_user_by_session_id),), prefix="/api")
 
 
 @main_page_router.get("/")

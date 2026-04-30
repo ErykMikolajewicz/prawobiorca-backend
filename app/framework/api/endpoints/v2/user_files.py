@@ -13,7 +13,7 @@ from app.framework.dependencies.file_storage import get_users_file_repository
 from app.framework.dependencies.relational import get_relational_session
 from app.framework.dependencies.user_files import get_list_user_files
 
-user_files_router = APIRouter(tags=["user_files"], dependencies=(Depends(set_user_by_session_id),), prefix="/v2")
+user_files_router = APIRouter(tags=["user_files"], dependencies=(Depends(set_user_by_session_id),), prefix="/api/v2")
 
 
 @user_files_router.get("/user/files", responses={status.HTTP_204_NO_CONTENT: {"description": "No user files."}})

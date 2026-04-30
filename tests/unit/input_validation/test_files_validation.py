@@ -15,10 +15,10 @@ def test_add_file_validation_errors(
 ):
     files = {"file": (file_name, file_content, "text/plain")}
 
-    response = client.post("/user/files", files=files, follow_redirects=False)
+    response = client.post("/api/user/files", files=files, follow_redirects=False)
 
     assert response.status_code == 303
-    assert response.headers["location"] == "/"
+    assert response.headers["location"] == "/api/"
 
 
 def test_file_data_validation_direct():

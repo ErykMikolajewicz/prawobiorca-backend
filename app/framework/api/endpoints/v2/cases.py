@@ -8,7 +8,7 @@ from app.application.use_cases.cases import AddCase, ListCases
 from app.framework.dependencies.authentication import set_user_by_session_id
 from app.framework.dependencies.cases import get_add_user_case, get_list_user_cases
 
-cases_router = APIRouter(tags=["cases"], dependencies=(Depends(set_user_by_session_id),), prefix="/v2")
+cases_router = APIRouter(tags=["cases"], dependencies=(Depends(set_user_by_session_id),), prefix="/api/v2")
 
 
 @cases_router.get("/user/cases", responses={status.HTTP_204_NO_CONTENT: {"description": "No user cases."}})

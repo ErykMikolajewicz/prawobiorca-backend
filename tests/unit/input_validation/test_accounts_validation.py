@@ -15,7 +15,7 @@ def test_create_account_weak_passwords(client, password, error_detail):
     payload = {"username": "example@example.com", "password": password}
 
     response = client.post(
-        "/accounts/register", data=payload, headers={"Content-Type": "application/x-www-form-urlencoded"}
+        "/api/accounts/register", data=payload, headers={"Content-Type": "application/x-www-form-urlencoded"}
     )
 
     assert error_detail in response.text
