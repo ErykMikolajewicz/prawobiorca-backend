@@ -4,9 +4,10 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.application.dtos.cases import CaseData
-from app.application.use_cases.cases import AddCase, ListCases
+from app.application.use_cases.cases import AddCase, DeleteCase, ListCases
+from app.domain.exceptions import CaseNotFound
 from app.framework.dependencies.authentication import set_user_by_session_id
-from app.framework.dependencies.cases import get_add_user_case, get_list_user_cases
+from app.framework.dependencies.cases import get_add_user_case, get_delete_user_case_v2, get_list_user_cases
 
 cases_router = APIRouter(tags=["cases"], dependencies=(Depends(set_user_by_session_id),), prefix="/api/v2")
 
@@ -26,3 +27,18 @@ async def get_cases_list(
 async def add_user_case(add_user_case_: Annotated[AddCase, Depends(get_add_user_case)]) -> UUID:
     case_id = await add_user_case_.execute()
     return case_id
+
+
+@cases_router.delete(
+    "/user/cases/{caseId}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_204_NO_CONTENT: {"description": "Case deleted."},
+        status.HTTP_404_NOT_FOUND: {"description": "No case with that id!"},
+    },
+)
+async def delete_user_case(delete_user_case_: Annotated[DeleteCase, Depends(get_delete_user_case_v2)]):
+    try:
+        await delete_user_case_.execute()
+    except CaseNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No case with that id!")

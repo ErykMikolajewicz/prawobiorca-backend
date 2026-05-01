@@ -26,3 +26,7 @@ class ToLongHeaderSection(Exception):
 
 class ToLongDocument(Exception):
     pass
+
+
+class CaseNotFound(Exception):
+    pass

@@ -4,6 +4,7 @@ from sqlalchemy import delete, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.dtos.cases import CaseArticleData, CaseData, NewCase, NewCaseArticle
+from app.domain.exceptions import CaseNotFound
 from app.infrastructure.relational_db.schemas.cases import CaseArticles, Cases
 
 
@@ -70,4 +71,7 @@ class CaseArticlesRepository:
 
     async def delete(self, article_id: UUID) -> None:
         statement = delete(self._model).where(self._model.id == article_id)
-        await self._session.execute(statement)
+        result = await self._session.execute(statement)
+
+        if result.rowcount == 0:
+            raise CaseNotFound

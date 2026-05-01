@@ -1,9 +1,13 @@
+import logging
 from dataclasses import dataclass
 from uuid import UUID
 
 from app.application.dtos.cases import CaseArticleData, CaseData, NewCase, NewCaseArticle
 from app.application.interfaces.cases import CaseArticlesRepository, CasesRepository
 from app.application.interfaces.relational import AsyncSession
+from app.domain.exceptions import CaseNotFound
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -26,7 +30,11 @@ class DeleteCase:
 
     async def execute(self) -> None:
         async with self.session as session:
-            await self.cases_repo.delete(self.case_id)
+            try:
+                await self.cases_repo.delete(self.case_id)
+            except CaseNotFound:
+                logger.warning("Case not found!")
+                raise
             await session.commit()
 
 
