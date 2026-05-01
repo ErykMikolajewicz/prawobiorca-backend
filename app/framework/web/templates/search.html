@@ -10,7 +10,7 @@
   {{ show_info(info_message) }}
 
   <p>
-    <a href="/">← Powrót do głównego ekranu</a>
+    <a href="/api/">← Powrót do głównego ekranu</a>
   </p>
 
   {% if is_user_logged %}
@@ -45,7 +45,7 @@
         <li class="list-group-item d-flex justify-content-between align-items-center">
           <div>{{ result }}</div>
           {% if is_user_logged %}
-          <form action="/user/cases/articles" method="post" class="ms-3 d-inline">
+          <form action="/api/user/cases/articles" method="post" class="ms-3 d-inline">
             <input type="hidden" name="case_id" class="selected-case-id" value="">
             <input type="hidden" name="document_name" value="{{ filename }}">
             <input type="hidden" name="article_content" value="{{ result }}">

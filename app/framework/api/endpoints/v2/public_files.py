@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.application.dtos.files import FileRepresentation
+from app.application.dtos.search import SearchResult
 from app.application.use_cases.files import ListPublicFiles
 from app.application.use_cases.search import SearchPublicFile
 from app.domain.exceptions import RegulationsNotPreparedToSearch
@@ -30,7 +31,9 @@ async def get_public_files(
         status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Regulation not prepared, normally should not occur"},
     },
 )
-async def post_search_public_file(search_file: Annotated[SearchPublicFile, Depends(get_search_public_file_v2)]):
+async def post_search_public_file(
+    search_file: Annotated[SearchPublicFile, Depends(get_search_public_file_v2)],
+) -> list[SearchResult]:
     try:
         results = await search_file.execute()
     except RegulationsNotPreparedToSearch as e:

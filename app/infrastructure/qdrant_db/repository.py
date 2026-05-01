@@ -4,6 +4,7 @@ from grpc.aio import AioRpcError
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import FieldCondition, Filter, MatchValue, PointStruct
 
+from app.application.dtos.search import SearchResult
 from app.domain.exceptions import RegulationsNotPreparedToSearch
 from app.domain.value_objects.documents import DocumentsCollection
 from app.shared.consts import VECTOR_DB_PUBLIC_COLLECTION_NAME, VECTOR_DB_USERS_COLLECTION_NAME
@@ -33,7 +34,9 @@ class QdrantUserRegulationsRepository:
 
         await self._client.upsert(collection_name=self._collection_name, points=points)
 
-    async def search(self, vector: list[float], limit: int, threshold: float, source_file_hash: str) -> list[dict]:
+    async def search(
+        self, vector: list[float], limit: int, threshold: float, source_file_hash: str
+    ) -> list[SearchResult]:
 
         query_filter = Filter(
             must=[
@@ -55,7 +58,9 @@ class QdrantUserRegulationsRepository:
 
         results = []
         for point in search_result.points:
-            results.append(point.payload)
+            text = point.payload["text"]
+            result = SearchResult(id=point.id, text=text)
+            results.append(result)
 
         return results
 
@@ -66,7 +71,9 @@ class QdrantPublicRegulationsRepository:
     def __init__(self, client: AsyncQdrantClient):
         self._client = client
 
-    async def search(self, vector: list[float], limit: int, threshold: float, source_file_hash: str) -> list[dict]:
+    async def search(
+        self, vector: list[float], limit: int, threshold: float, source_file_hash: str
+    ) -> list[SearchResult]:
         query_filter = Filter(must=[FieldCondition(key="source_file_hash", match=MatchValue(value=source_file_hash))])
 
         try:
@@ -82,6 +89,8 @@ class QdrantPublicRegulationsRepository:
 
         results = []
         for point in search_result.points:
-            results.append(point.payload)
+            text = point.payload["text"]
+            result = SearchResult(id=point.id, text=text)
+            results.append(result)
 
         return results

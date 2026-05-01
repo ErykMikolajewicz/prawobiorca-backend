@@ -70,6 +70,7 @@ async def post_search_user_file(
     else:
         cases = []
 
+    results = [result.text for result in results]
     return render_page_template(
         request,
         "search.html",

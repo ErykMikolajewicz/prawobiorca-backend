@@ -8,10 +8,9 @@ async def test_search_file_success(mock_embedding_port, mock_regulations_repo):
     query = "test query"
     embedding_vector = [0.1, 0.2, 0.3]
     search_results = [
-        {"id": "doc1", "score": 0.95, "text": "relevant document"},
-        {"id": "doc2", "score": 0.85, "text": "another document"},
+        {"id": "doc1", "text": "relevant document"},
+        {"id": "doc2", "text": "another document"},
     ]
-    correct_result = ["relevant document", "another document"]
 
     mock_embedding_port.embed_queries.return_value = [embedding_vector]
     mock_regulations_repo.search.return_value = search_results
@@ -27,7 +26,7 @@ async def test_search_file_success(mock_embedding_port, mock_regulations_repo):
 
     result = await use_case.execute()
 
-    assert result == correct_result
+    assert result == search_results
     mock_embedding_port.embed_queries.assert_awaited_once_with([query])
     mock_regulations_repo.search.assert_awaited_once_with(
         embedding_vector, limit=10, threshold=0.5, source_file_hash="abcd"

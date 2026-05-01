@@ -16,7 +16,7 @@
         <div class="col">
           <div class="p-3 border rounded d-flex justify-content-between align-items-center bg-light">
             <span class="text-truncate me-2" title="{{ public_file.presentation_name }}">{{ public_file.presentation_name }}</span>
-            <form action="/search/public-file" method="get" class="m-0">
+            <form action="/api/search/public-file" method="get" class="m-0">
             <input type="hidden" name="fileHashStr" value="{{ public_file.file_hash_str }}" />
             <input type="hidden" name="filename" value="{{ public_file.presentation_name }}" />
               <button type="submit" class="btn btn-primary btn-sm"{% if not public_file.is_prepared %} disabled{% endif %}>Przeszukaj</button>
@@ -41,13 +41,13 @@
             <div class="p-3 border rounded d-flex justify-content-between align-items-center bg-light">
               <span class="text-truncate me-2" title="{{ user_file.presentation_name }}">{{ user_file.presentation_name }}</span>
               {% if user_file.is_prepared %}
-                <form action="/search/user/file" method="get" class="m-0">
+                <form action="/api/search/user/file" method="get" class="m-0">
                   <input type="hidden" name="fileHashStr" value="{{ user_file.file_hash_str }}" />
                   <input type="hidden" name="filename" value="{{ user_file.presentation_name }}" />
                   <button type="submit" class="btn btn-primary btn-sm">Przeszukaj</button>
       </form>
               {% else %}
-                <form action="/user/files/{{ user_file.presentation_name }}/preparation" method="post" class="m-0">
+                <form action="/api/user/files/{{ user_file.presentation_name }}/preparation" method="post" class="m-0">
                   <input type="hidden" name="fileHashStr" value="{{ user_file.file_hash_str }}" />
                   <button type="submit" class="btn btn-primary btn-sm">Przygotuj plik</button>
                 </form>
@@ -63,7 +63,7 @@
     <hr />
 
     <h2>Dodaj plik</h2>
-    <form method="post" action="/user/files" enctype="multipart/form-data">
+    <form method="post" action="/api/user/files" enctype="multipart/form-data">
       <div class="mb-3">
         <input id="addFile" class="form-control" type="file" name="file" /><br />
         <button type="submit" class="btn btn-primary">dodaj plik</button>
@@ -83,7 +83,7 @@
                 <span class="text-truncate fw-bold" title="{{ case.name }}">{{ case.name }}</span>
               </div>
               <div class="mt-auto d-flex justify-content-end gap-2">
-                <a href="/user/cases/{{ case.id }}" class="btn btn-primary btn-sm">Przejdź</a>
+                <a href="/api/user/cases/{{ case.id }}" class="btn btn-primary btn-sm">Przejdź</a>
                 <div>
                   <input type="hidden" name="caseId" value="{{ case.id }}" />
                   <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="popover">Usuń</button>
@@ -100,7 +100,7 @@
     <hr />
     <h2>Nowa sprawa</h2>
     <div class="mb-3">
-      <form action="/user/cases" method="post">
+      <form action="/api/user/cases" method="post">
         <input class="form-control" type="text" id="caseName" name="caseName" required placeholder="Podanie o urlop.." /><br />
         <button type="submit" class="btn btn-primary btn-on-list">Utwórz sprawę</button>
       </form>

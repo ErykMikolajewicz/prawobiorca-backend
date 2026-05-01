@@ -8,7 +8,7 @@
 
     {{ show_error(error_message) }}
 
-<form action="/auth/login" method="post">
+<form action="/api/auth/login" method="post">
     <div class="mb-3">
         <label for="username" class="form-label">Nazwa użytkownika:</label>
         <input type="text" id="username" class="form-control w-25" name="username" required>
@@ -23,6 +23,6 @@
 </form>
 
     <p>
-        <a href="/accounts/register">Załóż konto</a>
+        <a href="/api/accounts/register">Załóż konto</a>
     </p>
 {% endblock %}
