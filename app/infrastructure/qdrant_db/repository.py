@@ -64,6 +64,16 @@ class QdrantUserRegulationsRepository:
 
         return results
 
+    async def remove_documents(self, source_file_hash: str) -> None:
+        delete_selector = Filter(
+            must=[
+                FieldCondition(key="user_id", match=MatchValue(value=self._user_id)),
+                FieldCondition(key="source_file_hash", match=MatchValue(value=source_file_hash)),
+            ]
+        )
+
+        await self._client.delete(collection_name=self._collection_name, points_selector=delete_selector)
+
 
 class QdrantPublicRegulationsRepository:
     _collection_name = VECTOR_DB_PUBLIC_COLLECTION_NAME

@@ -11,6 +11,8 @@ class UserRegulationsRepository(Protocol):
         self, vector: list[float], limit: int, threshold: float, source_file_hash: str
     ) -> list[SearchResult]: ...
 
+    async def remove_documents(self, source_file_hash: str) -> None: ...
+
 
 class PublicRegulationsRepository(Protocol):
     async def search(

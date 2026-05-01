@@ -88,3 +88,28 @@ class ListUserFiles:
         async with self.session:
             files = await self.file_manager.list_user_files()
         return files
+
+
+@dataclass
+class DeleteUserFile:
+    session: AsyncSession
+    file_manager: UserFileManager
+    regulations_repository: UserRegulationsRepository
+    file_hash_str: str
+
+    async def execute(self):
+        file_hash = base64.urlsafe_b64decode(self.file_hash_str)
+
+        async with self.session:
+            try:
+                file_representation = await self.file_manager.get_file_representation(file_hash)
+            except FileNotFoundError:
+                logger.warning(f"User file to delete not found! File hash: {self.file_hash_str}")
+                raise
+
+        if file_representation.is_prepared:
+            await self.regulations_repository.remove_documents(self.file_hash_str)
+
+        async with self.session as session:
+            await self.file_manager.unregister_file(file_hash)
+            await session.commit()
