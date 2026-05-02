@@ -25,7 +25,7 @@ async def get_public_files(
 
 
 @public_files_router.get(
-    "/search/public-file",
+    "/search/public-file/{fileHashStr}",
     responses={
         status.HTTP_204_NO_CONTENT: {"description": "No search results."},
         status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Regulation not prepared, normally should not occur"},

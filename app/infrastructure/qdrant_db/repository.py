@@ -4,7 +4,7 @@ from grpc.aio import AioRpcError
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.models import FieldCondition, Filter, MatchValue, PointStruct
 
-from app.application.dtos.search import SearchResult
+from app.application.dtos.search import SearchParams, SearchResult
 from app.domain.exceptions import RegulationsNotPreparedToSearch
 from app.domain.value_objects.documents import DocumentsCollection
 from app.shared.consts import VECTOR_DB_PUBLIC_COLLECTION_NAME, VECTOR_DB_USERS_COLLECTION_NAME
@@ -34,23 +34,24 @@ class QdrantUserRegulationsRepository:
 
         await self._client.upsert(collection_name=self._collection_name, points=points)
 
-    async def search(
-        self, vector: list[float], limit: int, threshold: float, source_file_hash: str
-    ) -> list[SearchResult]:
+    async def search(self, vector: list[float], search_params: SearchParams) -> list[SearchResult]:
 
         query_filter = Filter(
             must=[
                 FieldCondition(key="user_id", match=MatchValue(value=self._user_id)),
-                FieldCondition(key="source_file_hash", match=MatchValue(value=source_file_hash)),
+                FieldCondition(key="source_file_hash", match=MatchValue(value=search_params.file_hash_str)),
             ]
         )
+        limit = search_params.limit
+        if limit is None:
+            limit = 2**64
 
         try:
             search_result = await self._client.query_points(
                 collection_name=self._collection_name,
                 query=vector,
                 limit=limit,
-                score_threshold=threshold,
+                score_threshold=search_params.threshold,
                 query_filter=query_filter,
             )
         except AioRpcError:
@@ -81,17 +82,21 @@ class QdrantPublicRegulationsRepository:
     def __init__(self, client: AsyncQdrantClient):
         self._client = client
 
-    async def search(
-        self, vector: list[float], limit: int, threshold: float, source_file_hash: str
-    ) -> list[SearchResult]:
-        query_filter = Filter(must=[FieldCondition(key="source_file_hash", match=MatchValue(value=source_file_hash))])
+    async def search(self, vector: list[float], search_params: SearchParams) -> list[SearchResult]:
+        query_filter = Filter(
+            must=[FieldCondition(key="source_file_hash", match=MatchValue(value=search_params.file_hash_str))]
+        )
+
+        limit = search_params.limit
+        if limit is None:
+            limit = 2**32
 
         try:
             search_result = await self._client.query_points(
                 collection_name=self._collection_name,
                 query=vector,
                 limit=limit,
-                score_threshold=threshold,
+                score_threshold=search_params.threshold,
                 query_filter=query_filter,
             )
         except AioRpcError:
