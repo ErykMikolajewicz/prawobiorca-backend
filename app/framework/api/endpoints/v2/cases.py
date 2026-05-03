@@ -4,13 +4,14 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.application.dtos.cases import CaseData
-from app.application.use_cases.cases import AddCase, AddCaseArticle, DeleteCase, ListCases
+from app.application.use_cases.cases import AddCase, AddCaseArticle, DeleteCase, ListCaseArticles, ListCases
 from app.domain.exceptions import CaseNotFound
 from app.framework.dependencies.authentication import set_user_by_session_id
 from app.framework.dependencies.cases import (
     get_add_case_article_v2,
     get_add_user_case,
     get_delete_user_case_v2,
+    get_list_case_articles,
     get_list_user_cases,
 )
 
@@ -61,3 +62,9 @@ async def add_case_article(add_case_article_: Annotated[AddCaseArticle, Depends(
         await add_case_article_.execute()
     except CaseNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No case with that id!")
+
+
+@cases_router.get("/user/cases/{caseId}/articles")
+async def get_case_articles(list_case_articles: Annotated[ListCaseArticles, Depends(get_list_case_articles)]):
+    articles = await list_case_articles.execute()
+    return articles

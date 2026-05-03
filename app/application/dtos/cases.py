@@ -22,6 +22,8 @@ class CaseData(BaseModel):
 
 class CaseArticleData(BaseModel):
     id: UUID
-    case_id: UUID
-    presentation_name: str = Field(min_length=MIN_FILENAME_LENGTH, max_length=MAX_FILENAME_LENGTH)
+    case_id: UUID = Field(alias="caseId")
+    presentation_name: str = Field(
+        min_length=MIN_FILENAME_LENGTH, max_length=MAX_FILENAME_LENGTH, alias="presentationName"
+    )
     content: str = Field(min_length=1)

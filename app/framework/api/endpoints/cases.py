@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Path, Request, status
 from fastapi.responses import RedirectResponse
 
 from app.application.use_cases.cases import AddCase, AddCaseArticle, DeleteCase, DeleteCaseArticle, ListCaseArticles
@@ -17,9 +17,11 @@ from app.framework.web.helpers import render_page_template
 cases_router = APIRouter(tags=["cases"], dependencies=(Depends(set_user_by_session_id),), prefix="/api")
 
 
-@cases_router.get("/user/cases/{case_id}")
+@cases_router.get("/user/cases/{caseId}")
 async def get_case_page(
-    request: Request, case_id: str, list_case_articles: Annotated[ListCaseArticles, Depends(get_list_case_articles)]
+    request: Request,
+    case_id: Annotated[str, Path(..., alias="caseId")],
+    list_case_articles: Annotated[ListCaseArticles, Depends(get_list_case_articles)],
 ):
     articles = await list_case_articles.execute()
     return render_page_template(request, "case_page.html", case_id=case_id, articles=articles)

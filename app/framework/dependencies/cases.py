@@ -93,6 +93,6 @@ def get_delete_case_article(
 def get_list_case_articles(
     session: Annotated[AsyncSession, Depends(get_relational_session)],
     case_articles_repo: Annotated[CaseArticlesRepository, Depends(get_case_articles_repo)],
-    case_id: UUID,
+    case_id: Annotated[UUID, Path(..., alias="caseId")],
 ) -> ListCaseArticles:
     return ListCaseArticles(session, case_articles_repo, case_id)

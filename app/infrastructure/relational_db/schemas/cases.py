@@ -18,6 +18,6 @@ class Cases(Base, UuidIdMixin, CreateDateMixin):
 class CaseArticles(Base, UuidIdMixin, CreateDateMixin):
     __tablename__ = "case_articles"
 
-    case_id: Mapped[UUID] = mapped_column(sqla.ForeignKey("cases.id"), nullable=False, index=True)
-    document_name: Mapped[str] = mapped_column(sqla.String(MAX_FILENAME_LENGTH), nullable=False)
+    case_id: Mapped[UUID] = mapped_column(sqla.ForeignKey("cases.id", ondelete="CASCADE"), nullable=False, index=True)
+    presentation_name: Mapped[str] = mapped_column(sqla.String(MAX_FILENAME_LENGTH), nullable=False)
     content: Mapped[str] = mapped_column(sqla.Text, nullable=False)

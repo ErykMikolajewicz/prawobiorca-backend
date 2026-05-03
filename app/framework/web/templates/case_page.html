@@ -16,7 +16,7 @@
         <ul>
             {% for article in articles %}
             <li>
-                <p><strong>Źródło:</strong> <em>{{ article.document_name }}</em></p>
+                <p><strong>Źródło:</strong> <em>{{ article.presentation_name }}</em></p>
                 <p>{{ article.content }}</p>
                 <form action="/api/case/unpin" method="post">
                     <input type="hidden" name="article_id" value="{{ article.id }}">

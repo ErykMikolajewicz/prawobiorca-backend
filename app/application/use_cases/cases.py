@@ -59,7 +59,6 @@ class AddCaseArticle:
     new_article: NewCaseArticle
 
     async def execute(self) -> None:
-        print(self.case_id)
         async with self.session as session:
             try:
                 await self.case_articles_repo.add(self.case_id, self.new_article)

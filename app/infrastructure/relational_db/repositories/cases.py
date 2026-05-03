@@ -48,8 +48,8 @@ class CaseArticlesRepository:
         for article in result.all():
             article_data = CaseArticleData(
                 id=article.id,
-                case_id=article.case_id,
-                presentation_name=article.presentation_name,
+                caseId=article.case_id,
+                presentationName=article.presentation_name,
                 content=article.content,
             )
             articles.append(article_data)
@@ -60,7 +60,7 @@ class CaseArticlesRepository:
             insert(self._model)
             .values(
                 case_id=case_id,
-                document_name=new_article.presentation_name,
+                presentation_name=new_article.presentation_name,
                 content=new_article.content,
             )
             .returning(self._model.id)
