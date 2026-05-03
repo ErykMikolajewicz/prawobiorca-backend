@@ -11,8 +11,7 @@ class NewCase(BaseModel):
 
 
 class NewCaseArticle(BaseModel):
-    case_id: UUID
-    document_name: str = Field(min_length=1)
+    presentation_name: str = Field(min_length=1, alias="presentationName")
     content: str = Field(min_length=1)
 
 

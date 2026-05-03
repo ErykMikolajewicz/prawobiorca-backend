@@ -69,8 +69,17 @@ def get_add_case_article(
     document_name: Annotated[str, Form(...)],
     article_content: Annotated[str, Form(...)],
 ) -> AddCaseArticle:
-    new_article = NewCaseArticle(case_id=case_id, document_name=document_name, content=article_content)
-    return AddCaseArticle(session, case_articles_repo, new_article)
+    new_article = NewCaseArticle(presentationName=document_name, content=article_content)
+    return AddCaseArticle(session, case_articles_repo, case_id, new_article)
+
+
+def get_add_case_article_v2(
+    session: Annotated[AsyncSession, Depends(get_relational_session)],
+    case_articles_repo: Annotated[CaseArticlesRepository, Depends(get_case_articles_repo)],
+    new_article: NewCaseArticle,
+    case_id: Annotated[UUID, Path(..., alias="caseId")],
+) -> AddCaseArticle:
+    return AddCaseArticle(session, case_articles_repo, case_id, new_article)
 
 
 def get_delete_case_article(

@@ -55,11 +55,17 @@ class AddCase:
 class AddCaseArticle:
     session: AsyncSession
     case_articles_repo: CaseArticlesRepository
+    case_id: UUID
     new_article: NewCaseArticle
 
     async def execute(self) -> None:
+        print(self.case_id)
         async with self.session as session:
-            await self.case_articles_repo.add(self.new_article)
+            try:
+                await self.case_articles_repo.add(self.case_id, self.new_article)
+            except CaseNotFound:
+                logger.warning("No case with that id!")
+                raise
             await session.commit()
 
 

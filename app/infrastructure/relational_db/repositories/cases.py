@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from sqlalchemy import delete, insert, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.dtos.cases import CaseArticleData, CaseData, NewCase, NewCaseArticle
@@ -48,24 +49,26 @@ class CaseArticlesRepository:
             article_data = CaseArticleData(
                 id=article.id,
                 case_id=article.case_id,
-                presentation_name=article.document_name,
+                presentation_name=article.presentation_name,
                 content=article.content,
             )
             articles.append(article_data)
         return articles
 
-    async def add(self, new_article: NewCaseArticle) -> UUID:
+    async def add(self, case_id: UUID, new_article: NewCaseArticle) -> UUID:
         statement = (
             insert(self._model)
             .values(
-                case_id=new_article.case_id,
-                document_name=new_article.document_name,
+                case_id=case_id,
+                document_name=new_article.presentation_name,
                 content=new_article.content,
             )
             .returning(self._model.id)
         )
-
-        case_article_id = await self._session.scalar(statement)
+        try:
+            case_article_id = await self._session.scalar(statement)
+        except IntegrityError:
+            raise CaseNotFound
         case_article_id = UUID(str(case_article_id))
         return case_article_id
 
