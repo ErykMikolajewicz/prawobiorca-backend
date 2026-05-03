@@ -44,7 +44,7 @@ class QdrantUserRegulationsRepository:
         )
         limit = search_params.limit
         if limit is None:
-            limit = 2**64
+            limit = 2**32
 
         try:
             search_result = await self._client.query_points(
@@ -60,7 +60,7 @@ class QdrantUserRegulationsRepository:
         results = []
         for point in search_result.points:
             text = point.payload["text"]
-            result = SearchResult(id=point.id, text=text)
+            result = SearchResult(id=point.id, text=text, score=point.score)
             results.append(result)
 
         return results
@@ -105,7 +105,7 @@ class QdrantPublicRegulationsRepository:
         results = []
         for point in search_result.points:
             text = point.payload["text"]
-            result = SearchResult(id=point.id, text=text)
+            result = SearchResult(id=point.id, text=text, score=point.score)
             results.append(result)
 
         return results

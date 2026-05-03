@@ -7,6 +7,7 @@ from app.shared.consts import HASH_LENGTH_BASE64
 
 class SearchResult(BaseModel):
     id: UUID
+    score: float = Field(ge=-1, le=1)
     text: str
 
 
