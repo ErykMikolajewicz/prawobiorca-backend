@@ -22,17 +22,6 @@ def get_search_user_file(
 
 
 def get_search_public_file(
-    query: Annotated[str, Form()],
-    texts_embedder: Annotated[TextsEmbedder, Depends(get_texts_embedder)],
-    file_hash_str: Annotated[str, Form(alias="fileHashStr")],
-    regulations_repository: Annotated[PublicRegulationsRepository, Depends(get_public_regulations_repository)],
-) -> SearchPublicFile:
-    search_params = SearchParams(threshold=0.5, limit=10, fileHashStr=file_hash_str)
-
-    return SearchPublicFile(texts_embedder, regulations_repository, query, search_params)
-
-
-def get_search_public_file_v2(
     query: Annotated[str, Query()],
     texts_embedder: Annotated[TextsEmbedder, Depends(get_texts_embedder)],
     search_params: Annotated[SearchParams, Depends()],

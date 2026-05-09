@@ -12,7 +12,7 @@ class OnnxEncoder:
 
     def __initialize_session(self):
         model_path = "/text-transformator/onnx/model.onnx"
-        self.__session = ort.InferenceSession(model_path, providers=["CUDAExecutionProvider", "CPUExecutionProvider"])
+        self.__session = ort.InferenceSession(model_path, providers=["CPUExecutionProvider"])
 
         self.__tokenizer = Tokenizer.from_file("/text-transformator/onnx/tokenizer/tokenizer.json")
         self.__tokenizer.enable_padding(length=None, pad_id=0)

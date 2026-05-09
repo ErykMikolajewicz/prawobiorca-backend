@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated
 
-import torch
 from docling.datamodel.accelerator_options import AcceleratorDevice, AcceleratorOptions
 from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options import PdfPipelineOptions
@@ -17,10 +16,7 @@ from src.services import add_tokens_info
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
-    if torch.cuda.is_available():
-        accelerator_options = AcceleratorOptions(device=AcceleratorDevice.CUDA)
-    else:
-        accelerator_options = AcceleratorOptions(device=AcceleratorDevice.CPU)
+    accelerator_options = AcceleratorOptions(device=AcceleratorDevice.CPU)
 
     pipeline_options = PdfPipelineOptions()
     pipeline_options.accelerator_options = accelerator_options

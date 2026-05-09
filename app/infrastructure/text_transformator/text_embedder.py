@@ -14,10 +14,10 @@ class TextsEmbedder:
         prefixed_docs = []
         for document in documents:
             title = document.title
-            if title:
-                prefix = f"title: {title} | text: "
-            else:
-                prefix = "text: "
+            if title is None:
+                title = "none"
+
+            prefix = f"title: {title} | text: "
             prefixed_docs.append(prefix + document.text)
 
         response = await self._client.post(self._embedding_url, json=prefixed_docs)

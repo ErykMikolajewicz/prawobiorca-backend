@@ -1,13 +1,13 @@
 [project]
 name = "text-transformator"
-version = "0.4.0"
+version = "0.5.0"
 description = "Service to make various ai operations on texts: splitting, embeddding."
-requires-python = "==3.13.*"
+requires-python = "==3.14.*"
 dependencies = [
-    "docling==2.91.*",
+    "docling==2.93.*",
     "fastapi==0.136.*",
     "granian==2.7.*",
-    "onnxruntime==1.25.*",
-    "python-multipart==0.0.26",
-    "transformers==5.6.*",
+    "onnxruntime==1.26.*",
+    "python-multipart==0.0.27",
+    "transformers==5.8.*",
 ]

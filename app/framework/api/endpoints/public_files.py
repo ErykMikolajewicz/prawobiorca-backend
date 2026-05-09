@@ -8,9 +8,9 @@ from app.application.use_cases.files import ListPublicFiles
 from app.application.use_cases.search import SearchPublicFile
 from app.domain.exceptions import RegulationsNotPreparedToSearch
 from app.framework.dependencies.files import get_list_public_files
-from app.framework.dependencies.search import get_search_public_file_v2
+from app.framework.dependencies.search import get_search_public_file
 
-public_files_router = APIRouter(tags=["public_fies"], prefix="/api/v2")
+public_files_router = APIRouter(tags=["public_fies"], prefix="/api")
 
 
 @public_files_router.get("/files", responses={status.HTTP_204_NO_CONTENT: {"description": "No public files."}})
@@ -32,7 +32,7 @@ async def get_public_files(
     },
 )
 async def post_search_public_file(
-    search_file: Annotated[SearchPublicFile, Depends(get_search_public_file_v2)],
+    search_file: Annotated[SearchPublicFile, Depends(get_search_public_file)],
 ) -> list[SearchResult]:
     try:
         results = await search_file.execute()

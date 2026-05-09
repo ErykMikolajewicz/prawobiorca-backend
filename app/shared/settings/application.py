@@ -1,7 +1,7 @@
 from enum import StrEnum
 from pathlib import Path
 
-from pydantic import Field, SecretStr
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,8 +20,6 @@ class VectorDBType(StrEnum):
 
 class ApplicationSettings(BaseSettings):
     LOGGING_LEVEL: str = ...
-
-    SESSION_KEY: SecretStr = ...
 
     SESSION_ID_EXPIRATION_SECONDS: int = ...
 

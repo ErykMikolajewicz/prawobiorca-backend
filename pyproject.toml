@@ -1,9 +1,9 @@
 [project]
 name = "prawobiorca-backend"
-version = "0.43.0"
+version = "0.44.0"
 description = "Law acts search engine with AI features."
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = "==3.14"
 dependencies = [
     "asyncpg==0.31.*",
     "bcrypt==5.0.*",
@@ -11,8 +11,6 @@ dependencies = [
     "fastapi==0.136.*",
     "granian==2.7.*",
     "httpx==0.28.*",
-    "itsdangerous==2.2.*",
-    "jinja2==3.1.*",
     "pydantic-settings==2.14.*",
     "python-multipart==0.0.27",
     "qdrant-client==1.17.*",
@@ -26,7 +24,7 @@ dev = [
 ]
 docs = [
     "mkdocstrings[python]==1.0.*",
-    "zensical==0.0.39",
+    "zensical==0.0.41",
 ]
 google-cloud = [
     "google-cloud-storage==3.10.*",
@@ -53,7 +51,7 @@ asyncio_mode = "auto"
 
 [tool.ruff]
 line-length = 120
-target-version = "py313"
+target-version = "py314"
 
 exclude = [
     "alembic",

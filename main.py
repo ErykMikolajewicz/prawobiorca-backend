@@ -5,11 +5,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from starlette.middleware.sessions import SessionMiddleware
 
 from app.framework.api.router import include_all_routers
-from app.framework.dependencies.file_storage import app_settings, check_file_storage_connection
+from app.framework.dependencies.file_storage import check_file_storage_connection
 from app.framework.dependencies.vector_db import check_vector_db_connection
 from app.infrastructure.relational_db.connection import check_relational_db_connection
 from app.infrastructure.text_transformator.initialization import init_text_transformator_client
@@ -72,9 +70,6 @@ prawobiorca.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-prawobiorca.add_middleware(SessionMiddleware, secret_key=app_settings.SESSION_KEY.get_secret_value())
-prawobiorca.mount("/static", StaticFiles(directory="app/framework/web/static"), name="static")
 
 include_all_routers(prawobiorca)
 

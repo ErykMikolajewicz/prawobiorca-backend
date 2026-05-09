@@ -49,31 +49,12 @@ def get_add_user_case(
 def get_delete_user_case(
     session: Annotated[AsyncSession, Depends(get_relational_session)],
     cases_repository: Annotated[CasesRepository, Depends(get_cases_repo)],
-    case_id: Annotated[UUID, Form(alias="caseId")],
-) -> DeleteCase:
-    return DeleteCase(session, cases_repository, case_id)
-
-
-def get_delete_user_case_v2(
-    session: Annotated[AsyncSession, Depends(get_relational_session)],
-    cases_repository: Annotated[CasesRepository, Depends(get_cases_repo)],
     case_id: Annotated[UUID, Path(alias="caseId")],
 ) -> DeleteCase:
     return DeleteCase(session, cases_repository, case_id)
 
 
 def get_add_case_article(
-    session: Annotated[AsyncSession, Depends(get_relational_session)],
-    case_articles_repo: Annotated[CaseArticlesRepository, Depends(get_case_articles_repo)],
-    case_id: Annotated[UUID, Form(...)],
-    document_name: Annotated[str, Form(...)],
-    article_content: Annotated[str, Form(...)],
-) -> AddCaseArticle:
-    new_article = NewCaseArticle(presentationName=document_name, content=article_content)
-    return AddCaseArticle(session, case_articles_repo, case_id, new_article)
-
-
-def get_add_case_article_v2(
     session: Annotated[AsyncSession, Depends(get_relational_session)],
     case_articles_repo: Annotated[CaseArticlesRepository, Depends(get_case_articles_repo)],
     new_article: NewCaseArticle,

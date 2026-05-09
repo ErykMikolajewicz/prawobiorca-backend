@@ -4,21 +4,18 @@ from app.application.dtos.files import FileData
 
 
 @pytest.mark.parametrize(
-    "file_name, file_content, expected_error_message",
+    "file_name, file_content",
     [
-        ("test.txt", b"", "Plik test.txt jest pusty, nie można dodać pustego pliku!"),
-        ("a" * 256, b"content", f"Nazwa {'a' * 256} jest zbyt długa!"),
+        ("test.txt", b""),
+        ("a" * 256, b"content"),
     ],
 )
-def test_add_file_validation_errors(
-    client, override_get_users_file_repository, file_name, file_content, expected_error_message
-):
+def test_add_file_validation_errors(client, override_get_users_file_repository, file_name, file_content):
     files = {"file": (file_name, file_content, "text/plain")}
 
     response = client.post("/api/user/files", files=files, follow_redirects=False)
 
-    assert response.status_code == 303
-    assert response.headers["location"] == "/api/"
+    assert response.status_code == 400
 
 
 def test_file_data_validation_direct():

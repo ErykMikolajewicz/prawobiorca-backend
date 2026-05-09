@@ -21,7 +21,7 @@ spec:
             - containerPort: 8000
           env:
             - name: VITE_PRAWOBIORCA_API_URL
-              value: "https://www.prawobiorca.pl/api/v2"
+              value: "https://www.prawobiorca.pl/api"
           resources:
             requests:
               cpu: "50m"

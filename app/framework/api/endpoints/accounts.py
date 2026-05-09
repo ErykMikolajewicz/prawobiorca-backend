@@ -1,8 +1,7 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, Request, status
-from fastapi.responses import RedirectResponse
-from pydantic import SecretStr
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 
 from app.application.dtos.account import LoginData
 from app.application.interfaces.relational import AsyncSession
@@ -11,38 +10,24 @@ from app.application.use_cases.account import CreateAccount
 from app.domain.exceptions import UserExists
 from app.framework.dependencies.relational import get_relational_session
 from app.framework.dependencies.users import get_users_repository
-from app.framework.web.helpers import render_page_template
-from app.shared.consts import FLASH_KEY
 
 account_router = APIRouter(tags=["account"], prefix="/api")
 
 
-@account_router.post("/accounts/register")
+@account_router.post(
+    "/accounts/register", responses={status.HTTP_409_CONFLICT: {"description": "User with that login already exists."}}
+)
 async def create_account(
-    request: Request,
-    username: Annotated[str, Form(...)],
-    password: Annotated[str, Form(...)],
+    login_data: LoginData,
     session: Annotated[AsyncSession, Depends(get_relational_session)],
     users_repo: Annotated[UsersRepository, Depends(get_users_repository)],
 ):
-    try:
-        login_data = LoginData(username=username, password=SecretStr(password))
-    except ValueError as e:
-        password_verification_error = str(e)
-        request.session[FLASH_KEY] = {"error_message": password_verification_error}
-        return RedirectResponse(url="/api/accounts/register", status_code=status.HTTP_303_SEE_OTHER)
 
     create_account_ = CreateAccount(session, users_repo, login_data)
 
     try:
         await create_account_.execute()
     except UserExists:
-        request.session[FLASH_KEY] = {"error_message": f"Użytkownik o nazwie {username} już istnieje!"}
-        return RedirectResponse(url="/api/accounts/register", status_code=status.HTTP_303_SEE_OTHER)
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User with that login already exists.")
 
-    return RedirectResponse(url="/api/auth/login", status_code=status.HTTP_303_SEE_OTHER)
-
-
-@account_router.get("/accounts/register", status_code=status.HTTP_200_OK)
-async def get_register_page(request: Request):
-    return render_page_template(request, "register.html")
+    return JSONResponse({"ok": True})

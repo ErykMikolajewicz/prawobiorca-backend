@@ -19,13 +19,6 @@ spec:
     - host: www.prawobiorca.pl
       http:
         paths:
-          - path: /api/v2
-            pathType: Prefix
-            backend:
-              service:
-                name: prawobiorca-backend
-                port:
-                  number: 8000
           - path: /api
             pathType: Prefix
             backend:
