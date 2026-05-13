@@ -96,6 +96,7 @@ class DeleteUserFile:
     file_manager: UserFileManager
     regulations_repository: UserRegulationsRepository
     file_hash_str: str
+    files_repository: UsersFilesRepository
 
     async def execute(self):
         file_hash = base64.urlsafe_b64decode(self.file_hash_str)
@@ -112,4 +113,5 @@ class DeleteUserFile:
 
         async with self.session as session:
             await self.file_manager.unregister_file(file_hash)
+            await self.files_repository.delete_file(self.file_hash_str)
             await session.commit()
