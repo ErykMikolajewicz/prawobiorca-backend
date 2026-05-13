@@ -54,13 +54,16 @@ def embed(texts: Texts, request: Request):
 @app.post("/parse-regulation")
 def parse_pdf(file: Annotated[UploadFile, File(...)], request: Request):
     converter = request.app.state.converter
-    with tempfile.NamedTemporaryFile("wb") as temp_file:
+    with tempfile.NamedTemporaryFile("wb", suffix=".pdf", delete=False) as temp_file:
         file_content = file.file.read()
         temp_file.write(file_content)
         file_path = temp_file.name
         file_path = Path(file_path)
 
+    try:
         result = converter.convert(file_path)
+    finally:
+        file_path.unlink()
 
     tokens_counter = request.app.state.encoder.count_tokens
     texts = result.document.texts
