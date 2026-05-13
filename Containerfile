@@ -15,7 +15,7 @@ USER prawobiorca_app
 
 COPY pyproject.toml pyproject.toml
 COPY uv.lock uv.lock
-RUN uv sync --compile-bytecode --no-cache
+RUN uv sync --compile-bytecode --no-cache --group local-storage
 
 ENV PATH="/prawobiorca/.venv/bin:$PATH"
 
