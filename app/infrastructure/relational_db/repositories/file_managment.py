@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.dtos.files import FileRepresentation
 from app.domain.value_objects.user_file import FileRegistrationData
+from app.framework.dependencies.document_types import DocumentType
 from app.infrastructure.relational_db.schemas.files import PublicFiles, UsersFiles
 
 
@@ -15,8 +16,12 @@ class PublicFileManagerRepository:
         self._session = session
         self._model = PublicFiles
 
-    async def list_all_files(self) -> list[FileRepresentation]:
+    async def list_all_files(self, document_type: DocumentType | None = None) -> list[FileRepresentation]:
         statement = select(self._model)
+
+        if document_type is not None:
+            statement = statement.where(self._model.document_type == document_type)
+
         result = await self._session.execute(statement)
         db_files = result.scalars().all()
 
