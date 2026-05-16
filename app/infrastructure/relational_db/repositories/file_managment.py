@@ -42,8 +42,12 @@ class UserFileManagerRepository:
         self._user_id = user_id
         self._model = UsersFiles
 
-    async def list_user_files(self) -> list[FileRepresentation]:
+    async def list_user_files(self, document_type: DocumentType | None = None) -> list[FileRepresentation]:
         statement = select(self._model).where(self._model.user_id == self._user_id)
+
+        if document_type is not None:
+            statement = statement.where(self._model.document_type == document_type)
+
         result = await self._session.execute(statement)
         db_files = result.scalars().all()
 

@@ -6,25 +6,45 @@ from app.application.dtos.files import FileData, FileRepresentation
 from app.application.interfaces.file_managment import UserFileManager
 from app.application.interfaces.file_storage import UsersFilesRepository
 from app.application.interfaces.relational import AsyncSession
-from app.application.use_cases.user_files import AddUserFile, DeleteUserFile, ListUserFiles
+from app.application.use_cases.user_files import (
+    AddUserFile,
+    DeleteUserFile,
+    ListUserFiles,
+)
 from app.framework.dependencies.authentication import set_user_by_session_id
+from app.framework.dependencies.document_types import DocumentType
 from app.framework.dependencies.file_managment import get_user_file_manager
 from app.framework.dependencies.file_storage import get_users_file_repository
 from app.framework.dependencies.relational import get_relational_session
-from app.framework.dependencies.user_files import get_delete_user_file, get_list_user_files
+from app.framework.dependencies.user_files import (
+    get_delete_user_file,
+    get_list_user_files,
+)
 
 user_files_router = APIRouter(tags=["user_files"], dependencies=(Depends(set_user_by_session_id),), prefix="/api")
 
 
-@user_files_router.get("/user/files", responses={status.HTTP_204_NO_CONTENT: {"description": "No user files."}})
+@user_files_router.get(
+    "/user/files",
+    responses={
+        status.HTTP_422_UNPROCESSABLE_CONTENT: {"descriptions": "wrong document type"},
+    },
+)
 async def get_user_files(
     list_user_files: Annotated[ListUserFiles, Depends(get_list_user_files)],
+    document_type: DocumentType | None = None,
 ) -> list[FileRepresentation]:
-    user_files = await list_user_files.execute()
-    if user_files:
+    list_user_files.document_type = document_type
+    try:
+        user_files = await list_user_files.execute()
+
         return user_files
-    else:
-        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="No user files.")
+
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="błędny rodzaj dokumentu",
+        )
 
 
 @user_files_router.post("/user/files")
@@ -48,7 +68,10 @@ async def add_file(
     try:
         await add_file_.execute()
     except FileExistsError:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Plik o podanej nazwie już istnieje!")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Plik o podanej nazwie już istnieje!",
+        )
 
 
 @user_files_router.delete(

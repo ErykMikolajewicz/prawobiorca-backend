@@ -11,6 +11,7 @@ from app.application.services.regulations import RegulationPreparator
 from app.domain.exceptions import FileHashExist, RegulationAlreadyInitialized
 from app.domain.services.files import hash_file
 from app.domain.value_objects.user_file import FileRegistrationData
+from app.framework.dependencies.document_types import DocumentType
 
 logger = logging.getLogger(__name__)
 
@@ -83,10 +84,11 @@ class AddUserFile:
 class ListUserFiles:
     session: AsyncSession
     file_manager: UserFileManager
+    document_type: DocumentType | None = None
 
     async def execute(self) -> list[FileRepresentation]:
         async with self.session:
-            files = await self.file_manager.list_user_files()
+            files = await self.file_manager.list_user_files(self.document_type)
         return files
 
 
