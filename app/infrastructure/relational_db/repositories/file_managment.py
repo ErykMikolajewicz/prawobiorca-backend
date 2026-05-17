@@ -30,7 +30,9 @@ class PublicFileManagerRepository:
             file_hash = base64.urlsafe_b64encode(file.hash)
             file_hash_str = file_hash.decode("utf-8")
             file_representation = FileRepresentation(
-                file_hash_str=file_hash_str, presentation_name=file.presentation_name, is_prepared=file.is_prepared
+                file_hash_str=file_hash_str,
+                presentation_name=file.presentation_name,
+                is_prepared=file.is_prepared,
             )
             files_representation.append(file_representation)
         return files_representation
@@ -56,14 +58,19 @@ class UserFileManagerRepository:
             file_hash = base64.urlsafe_b64encode(file.hash)
             file_hash_str = file_hash.decode("utf-8")
             file_representation = FileRepresentation(
-                file_hash_str=file_hash_str, presentation_name=file.presentation_name, is_prepared=file.is_prepared
+                file_hash_str=file_hash_str,
+                presentation_name=file.presentation_name,
+                is_prepared=file.is_prepared,
             )
             files_representation.append(file_representation)
         return files_representation
 
     async def register_file(self, user_file: FileRegistrationData) -> None:
         statement = insert(self._model).values(
-            user_id=self._user_id, hash=user_file.hash, presentation_name=user_file.presentation_name
+            user_id=self._user_id,
+            hash=user_file.hash,
+            presentation_name=user_file.presentation_name,
+            document_type=user_file.document_type,
         )
 
         try:

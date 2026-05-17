@@ -59,7 +59,7 @@ async def check_is_user_logged(request: Request):
     if user_id is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
     else:
-        return
+        return {"isLogged": True}
 
 
 @auth_router.post(
