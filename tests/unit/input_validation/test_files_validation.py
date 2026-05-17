@@ -10,12 +10,26 @@ from app.application.dtos.files import FileData
         ("a" * 256, b"content"),
     ],
 )
-def test_add_file_validation_errors(client, override_get_users_file_repository, file_name, file_content):
+def test_logged_user_add_file_validation_errors(
+    client,
+    override_set_user_by_session_id,
+    override_get_users_file_repository,
+    file_name,
+    file_content,
+):
     files = {"file": (file_name, file_content, "text/plain")}
 
     response = client.post("/api/user/files", files=files, follow_redirects=False)
 
-    assert response.status_code in [400, 401]
+    assert response.status_code == 400
+
+
+def test_unauthorized_user_cannot_add_file(client):
+    files = {"file": ("test.txt", b"content", "text/plain")}
+
+    response = client.post("/api/user/files", files=files, follow_redirects=False)
+
+    assert response.status_code == 401
 
 
 def test_file_data_validation_direct():

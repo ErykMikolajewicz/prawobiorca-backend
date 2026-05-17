@@ -23,7 +23,7 @@ def session_id_generator() -> Iterator[str]:
     The session id is pre-defined and asserted to match the
     `url_safe_session_id_length`.
 
-    Can be used max 1 time p test, currently sufficient for all test scenarios.
+    Can be used max 1 time per test, currently sufficient for all test scenarios.
 
     Yields:
         str: The next session id from the predefined sequence.
