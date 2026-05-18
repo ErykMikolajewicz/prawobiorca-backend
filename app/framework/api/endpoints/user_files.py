@@ -12,7 +12,6 @@ from app.application.use_cases.user_files import (
     ListUserFiles,
 )
 from app.framework.dependencies.authentication import set_user_by_session_id
-from app.framework.dependencies.document_types import DocumentType
 from app.framework.dependencies.file_managment import get_user_file_manager
 from app.framework.dependencies.file_storage import get_users_file_repository
 from app.framework.dependencies.relational import get_relational_session
@@ -27,24 +26,18 @@ user_files_router = APIRouter(tags=["user_files"], dependencies=(Depends(set_use
 @user_files_router.get(
     "/user/files",
     responses={
-        status.HTTP_422_UNPROCESSABLE_CONTENT: {"descriptions": "wrong document type"},
+        status.HTTP_204_NO_CONTENT: {"descriptions": "Not found user files with that criteria."},
     },
 )
 async def get_user_files(
     list_user_files: Annotated[ListUserFiles, Depends(get_list_user_files)],
-    document_type: DocumentType | None = None,
 ) -> list[FileRepresentation]:
-    list_user_files.document_type = document_type
-    try:
-        user_files = await list_user_files.execute()
+    user_files = await list_user_files.execute()
 
-        return user_files
+    if not user_files:
+        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="No user files for given search criteria.")
 
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="błędny rodzaj dokumentu",
-        )
+    return user_files
 
 
 @user_files_router.post("/user/files", status_code=status.HTTP_201_CREATED, description="Pomyślnie dodano dokument!")

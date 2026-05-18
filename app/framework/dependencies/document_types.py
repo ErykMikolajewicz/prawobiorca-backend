@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import StrEnum
 
 
-class DocumentType(Enum):
+class DocumentType(StrEnum):
     ACT = "ACT"
     DECREE = "DECREE"
-    STATUE = "STATUE"
+    STATUTE = "STATUTE"
