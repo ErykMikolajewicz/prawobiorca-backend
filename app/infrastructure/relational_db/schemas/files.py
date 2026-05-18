@@ -3,7 +3,7 @@ from uuid import UUID
 import sqlalchemy as sqla
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.framework.dependencies.document_types import DocumentType
+from app.domain.value_objects.documents import DocumentType
 from app.infrastructure.relational_db.connection import Base
 from app.infrastructure.relational_db.schemas.mixins import CreateDateMixin
 from app.shared.consts import HASH_LENGTH, MAX_FILENAME_LENGTH

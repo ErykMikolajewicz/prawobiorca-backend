@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from app.framework.dependencies.document_types import DocumentType
+from app.domain.value_objects.documents import DocumentType
 
 
 @dataclass

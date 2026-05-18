@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from app.application.dtos.files import FileRepresentation
 from app.application.interfaces.file_managment import PublicFileManager
-from app.framework.dependencies.document_types import DocumentType
+from app.domain.value_objects.documents import DocumentType
 
 logger = logging.getLogger(__name__)
 

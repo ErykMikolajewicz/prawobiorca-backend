@@ -1,6 +1,6 @@
 from typing import Annotated, cast
 
-from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, status
 
 from app.application.dtos.files import FileData, FileRepresentation
 from app.application.interfaces.file_managment import UserFileManager
@@ -11,14 +11,12 @@ from app.application.use_cases.user_files import (
     DeleteUserFile,
     ListUserFiles,
 )
-from app.framework.dependencies.authentication import set_user_by_session_id
+from app.domain.value_objects.documents import DocumentType
+from app.framework.dependencies.authentication import require_logged_user, set_user_by_session_id
 from app.framework.dependencies.file_managment import get_user_file_manager
 from app.framework.dependencies.file_storage import get_users_file_repository
 from app.framework.dependencies.relational import get_relational_session
-from app.framework.dependencies.user_files import (
-    get_delete_user_file,
-    get_list_user_files,
-)
+from app.framework.dependencies.user_files import get_delete_user_file, get_list_user_files
 
 user_files_router = APIRouter(tags=["user_files"], dependencies=(Depends(set_user_by_session_id),), prefix="/api")
 
@@ -40,13 +38,20 @@ async def get_user_files(
     return user_files
 
 
-@user_files_router.post("/user/files", status_code=status.HTTP_201_CREATED, description="Pomyślnie dodano dokument!")
+@user_files_router.post(
+    "/user/files",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_201_CREATED: {"descriptions": "Successfully add file."},
+    },
+    dependencies=(Depends(require_logged_user),),
+)
 async def add_file(
     session: Annotated[AsyncSession, Depends(get_relational_session)],
     user_file_manager: Annotated[UserFileManager, Depends(get_user_file_manager)],
     file: UploadFile,
     files_repository: Annotated[UsersFilesRepository, Depends(get_users_file_repository)],
-    document_type: DocumentType | None = None,
+    document_type: DocumentType | None = Query(default=None),
 ):
     file_bytes = await file.read()
     file_name = cast(str, file.filename)
@@ -58,18 +63,9 @@ async def add_file(
             detail=f"Plik {file_name} jest pusty, nie można dodać pustego pliku!",
         )
 
-    try:
-        file_data.document_type = document_type
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail=f"Błędny rodzaj dokumentu! Dostępne: {[dt.value for dt in DocumentType]}",
-        )
-
-    add_file_ = AddUserFile(session, user_file_manager, file_data, files_repository, document_type=document_type)
+    add_file_ = AddUserFile(session, user_file_manager, file_data, files_repository, document_type)
     try:
         await add_file_.execute()
-        return Response(status_code=status.HTTP_201_CREATED, content="User file uploaded succesfully!")
     except FileExistsError:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

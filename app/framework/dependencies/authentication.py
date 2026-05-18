@@ -1,6 +1,5 @@
 import json
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import Depends, HTTPException, Request, status
 
@@ -38,17 +37,8 @@ def get_logout_user(
     return LogoutUser(session_id, session, tokens_repo)
 
 
-async def require_logged_user(
-    request: Request,
-    _: Annotated[None, Depends(set_user_by_session_id)],
-) -> UUID:
-
+async def require_logged_user(request: Request, _: Annotated[None, Depends(set_user_by_session_id)]):
     user_id = request.state.user_id
 
     if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="login required",
-        )
-
-    return user_id
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Login required!")

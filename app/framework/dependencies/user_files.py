@@ -8,7 +8,7 @@ from app.application.interfaces.regulations import UserRegulationsRepository
 from app.application.interfaces.relational import AsyncSession
 from app.application.services.regulations import RegulationPreparator
 from app.application.use_cases.user_files import DeleteUserFile, ListUserFiles, PrepareUserFile
-from app.framework.dependencies.document_types import DocumentType
+from app.domain.value_objects.documents import DocumentType
 from app.framework.dependencies.file_managment import get_user_file_manager
 from app.framework.dependencies.file_storage import get_users_file_repository
 from app.framework.dependencies.regulations import get_regulation_preparator, get_user_regulations_repository
@@ -47,10 +47,12 @@ def get_delete_user_file(
     session: Annotated[AsyncSession, Depends(get_relational_session)],
     user_file_manager: Annotated[UserFileManager, Depends(get_user_file_manager)],
     regulations_repository: Annotated[UserRegulationsRepository, Depends(get_user_regulations_repository)],
+    files_repository: Annotated[UsersFilesRepository, Depends(get_users_file_repository)],
 ) -> DeleteUserFile:
     return DeleteUserFile(
         session=session,
         file_manager=user_file_manager,
         regulations_repository=regulations_repository,
         file_hash_str=file_hash_string,
+        files_repository=files_repository,
     )

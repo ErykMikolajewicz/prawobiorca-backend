@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from enum import StrEnum
 from itertools import batched
 from typing import Iterable
 from uuid import UUID, uuid4
@@ -29,3 +30,9 @@ class DocumentsCollection:
 
     def __post_init__(self):
         self._documents.sort(key=lambda doc: len(doc.text))
+
+
+class DocumentType(StrEnum):
+    ACT = "ACT"
+    DECREE = "DECREE"
+    STATUTE = "STATUTE"

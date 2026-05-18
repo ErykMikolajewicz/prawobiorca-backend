@@ -30,7 +30,3 @@ class ToLongDocument(Exception):
 
 class CaseNotFound(Exception):
     pass
-
-
-class DocumentTypeError(Exception):
-    pass

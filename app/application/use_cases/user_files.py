@@ -8,10 +8,10 @@ from app.application.interfaces.file_storage import UsersFilesRepository
 from app.application.interfaces.regulations import UserRegulationsRepository
 from app.application.interfaces.relational import AsyncSession
 from app.application.services.regulations import RegulationPreparator
-from app.domain.exceptions import DocumentTypeError, FileHashExist, RegulationAlreadyInitialized
+from app.domain.exceptions import FileHashExist, RegulationAlreadyInitialized
 from app.domain.services.files import hash_file
+from app.domain.value_objects.documents import DocumentType
 from app.domain.value_objects.user_file import FileRegistrationData
-from app.framework.dependencies.document_types import DocumentType
 
 logger = logging.getLogger(__name__)
 
@@ -56,16 +56,13 @@ class AddUserFile:
     file_manager: UserFileManager
     file_data: FileData
     files_repository: UsersFilesRepository
-    document_type: DocumentType | None = None
+    document_type: DocumentType | None
 
     async def execute(self) -> None:
         file_hash = hash_file(self.file_data.file)
-        user_file_representation = FileRegistrationData(hash=file_hash, presentation_name=self.file_data.name)
-
-        try:
-            user_file_representation.document_type = self.document_type
-        except Exception:
-            raise DocumentTypeError
+        user_file_representation = FileRegistrationData(
+            hash=file_hash, presentation_name=self.file_data.name, document_type=self.document_type
+        )
 
         new_filename = base64.urlsafe_b64encode(file_hash)
         new_filename = new_filename.decode()

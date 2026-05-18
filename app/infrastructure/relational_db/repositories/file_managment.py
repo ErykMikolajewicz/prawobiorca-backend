@@ -6,8 +6,8 @@ from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.dtos.files import FileRepresentation
+from app.domain.value_objects.documents import DocumentType
 from app.domain.value_objects.user_file import FileRegistrationData
-from app.framework.dependencies.document_types import DocumentType
 from app.infrastructure.relational_db.schemas.files import PublicFiles, UsersFiles
 
 

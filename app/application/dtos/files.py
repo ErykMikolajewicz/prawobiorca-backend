@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from app.framework.dependencies.document_types import DocumentType
+from app.domain.value_objects.documents import DocumentType
 from app.shared.consts import HASH_LENGTH_BASE64, MAX_FILENAME_LENGTH, MIN_FILENAME_LENGTH
 
 
