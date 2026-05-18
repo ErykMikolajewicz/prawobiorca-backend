@@ -16,7 +16,7 @@ class PublicFileManagerRepository:
         self._session = session
         self._model = PublicFiles
 
-    async def list_all_files(self, document_type: DocumentType | None = None) -> list[FileRepresentation]:
+    async def list_all_files(self, document_type: DocumentType | None) -> list[FileRepresentation]:
         statement = select(self._model)
 
         if document_type is not None:
@@ -42,7 +42,7 @@ class UserFileManagerRepository:
         self._user_id = user_id
         self._model = UsersFiles
 
-    async def list_user_files(self, document_type: DocumentType | None = None) -> list[FileRepresentation]:
+    async def list_user_files(self, document_type: DocumentType | None) -> list[FileRepresentation]:
         statement = select(self._model).where(self._model.user_id == self._user_id)
 
         if document_type is not None:

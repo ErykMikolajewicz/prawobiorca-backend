@@ -1,6 +1,6 @@
 [project]
 name = "prawobiorca-backend"
-version = "0.44.5"
+version = "0.45.0"
 description = "Law acts search engine with AI features."
 readme = "README.md"
 requires-python = "==3.14.*"
@@ -12,7 +12,7 @@ dependencies = [
     "granian==2.7.*",
     "httpx==0.28.*",
     "pydantic-settings==2.14.*",
-    "python-multipart==0.0.28",
+    "python-multipart==0.0.29",
     "qdrant-client==1.17.*",
     "sqlalchemy[asyncio]==2.0.*",
 ]
@@ -24,7 +24,7 @@ dev = [
 ]
 docs = [
     "mkdocstrings[python]==1.0.*",
-    "zensical==0.0.41",
+    "zensical==0.0.42",
 ]
 google-cloud = [
     "google-cloud-storage==3.10.*",
@@ -59,7 +59,7 @@ exclude = [
 
 [tool.ruff.lint]
 select = ["S", "I", "E", "F", "B"]
-ignore = ["B904"]
+ignore = ["B904", "B008"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S"]

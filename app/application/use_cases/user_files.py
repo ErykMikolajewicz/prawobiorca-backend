@@ -84,7 +84,7 @@ class AddUserFile:
 class ListUserFiles:
     session: AsyncSession
     file_manager: UserFileManager
-    document_type: DocumentType | None = None
+    document_type: DocumentType | None
 
     async def execute(self) -> list[FileRepresentation]:
         async with self.session:

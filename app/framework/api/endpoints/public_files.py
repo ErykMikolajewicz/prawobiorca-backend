@@ -7,7 +7,6 @@ from app.application.dtos.search import SearchResult
 from app.application.use_cases.files import ListPublicFiles
 from app.application.use_cases.search import SearchPublicFile
 from app.domain.exceptions import RegulationsNotPreparedToSearch
-from app.framework.dependencies.document_types import DocumentType
 from app.framework.dependencies.files import get_list_public_files
 from app.framework.dependencies.search import get_search_public_file
 
@@ -16,24 +15,16 @@ public_files_router = APIRouter(tags=["public_fies"], prefix="/api")
 
 @public_files_router.get(
     "/files",
-    responses={
-        status.HTTP_200_OK: {"descriptions": "document type correct, 0 or more files found"},
-        status.HTTP_422_UNPROCESSABLE_CONTENT: {"descriptions": "document type error"},
-    },
+    responses={status.HTTP_204_NO_CONTENT: {"descriptions": "Not found public files with that criteria."}},
 )
 async def get_public_files(
     list_public_files: Annotated[ListPublicFiles, Depends(get_list_public_files)],
-    document_type: DocumentType | None = None,
 ) -> list[FileRepresentation]:
-    list_public_files.document_type = document_type
+    public_files = await list_public_files.execute()
+    if not public_files:
+        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="No public files for given search criteria.")
 
-    try:
-        public_files = await list_public_files.execute()
-
-        return public_files
-
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail="document type error")
+    return public_files
 
 
 @public_files_router.get(
