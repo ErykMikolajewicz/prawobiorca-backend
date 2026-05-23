@@ -52,7 +52,7 @@ async def add_file(
     file: UploadFile,
     files_repository: Annotated[UsersFilesRepository, Depends(get_users_file_repository)],
     document_type: DocumentType | None = Query(default=None),
-):
+) -> FileRepresentation:
     file_bytes = await file.read()
     file_name = cast(str, file.filename)
     try:
@@ -65,12 +65,13 @@ async def add_file(
 
     add_file_ = AddUserFile(session, user_file_manager, file_data, files_repository, document_type)
     try:
-        await add_file_.execute()
+        file_representation = await add_file_.execute()
     except FileExistsError:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Plik o podanej nazwie już istnieje!",
         )
+    return file_representation
 
 
 @user_files_router.delete(

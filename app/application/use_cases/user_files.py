@@ -58,7 +58,7 @@ class AddUserFile:
     files_repository: UsersFilesRepository
     document_type: DocumentType | None
 
-    async def execute(self) -> None:
+    async def execute(self) -> FileRepresentation:
         file_hash = hash_file(self.file_data.file)
         user_file_representation = FileRegistrationData(
             hash=file_hash, presentation_name=self.file_data.name, document_type=self.document_type
@@ -82,6 +82,12 @@ class AddUserFile:
                 logger.error("File, with that hash already exists in storage!")
                 raise
             await session.commit()
+
+        file_representation = FileRepresentation(
+            file_hash_str=new_filename, presentation_name=self.file_data.name, is_prepared=False
+        )
+
+        return file_representation
 
 
 @dataclass
