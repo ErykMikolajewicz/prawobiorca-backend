@@ -1,16 +1,17 @@
 from typing import Annotated
 
+from app.application.ports.reguations import RegulationSpliter
 from fastapi import Depends, Request
 
-from app.application.interfaces.regulations import PublicRegulationsRepository, UserRegulationsRepository
-from app.application.ports.reguations import RegulationSpliter
+from app.application.interfaces.documents import DocumentsRepository
+from app.application.interfaces.regulations import PublicRegulationsRepository
 from app.application.services.embedding import DocumentEmbedder
 from app.application.services.regulations import RegulationPreparator
 from app.framework.dependencies.text_transformation import get_document_embedder, get_regulations_splitter
 from app.shared.settings.application import VectorDBType, app_settings
 
 
-def get_user_regulations_repository(request: Request) -> UserRegulationsRepository:
+def get_user_regulations_repository(request: Request) -> DocumentsRepository:
     match app_settings.VECTOR_DB:
         case VectorDBType.QDRANT:
             from app.infrastructure.qdrant_db.connection import qdrant_client

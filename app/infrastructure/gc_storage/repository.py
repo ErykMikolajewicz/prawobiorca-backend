@@ -1,10 +1,10 @@
 import os
 
+from app.application.dtos.files import RegulationData
 from fastapi.concurrency import run_in_threadpool
 from google.cloud import storage
 from google.cloud.storage import Blob
 
-from app.application.dtos.files import FileData
 from app.shared.settings.google_cloud_storage import gc_file_storage_settings
 
 credentials_path = gc_file_storage_settings.STORAGE_CREDENTIALS
@@ -19,7 +19,7 @@ class GCSStorageRepository:
         self.client = storage_client
         self.bucket = self.client.bucket("user_files")
 
-    async def upload_file(self, file_data: FileData):
+    async def upload_file(self, file_data: RegulationData):
         blob: Blob = self.bucket.blob(file_data.name)
         await run_in_threadpool(blob.upload_from_string, file_data.file)
 

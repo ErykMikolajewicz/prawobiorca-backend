@@ -3,8 +3,7 @@ from uuid import UUID
 
 import aiofiles
 import aiofiles.os
-
-from app.application.dtos.files import FileData
+from app.application.dtos.files import RegulationData
 
 
 class LocalPublicFileStorage:
@@ -24,7 +23,7 @@ class LocalUsersFileStorage:
     def __init__(self, user_id: UUID):
         self._files_dir = self._users_dir / str(user_id)
 
-    async def upload_file(self, file_data: FileData):
+    async def upload_file(self, file_data: RegulationData):
         file_path = self._files_dir / file_data.name
         if file_path.exists():
             raise FileExistsError

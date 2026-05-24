@@ -1,7 +1,7 @@
 import pytest
 
 from app.application.dtos.search import SearchParams
-from app.application.use_cases.search import SearchUserFile
+from app.application.use_cases.regulations import SearchRegulation
 
 
 @pytest.mark.asyncio
@@ -20,7 +20,7 @@ async def test_search_file_success(mock_embedding_port, mock_regulations_repo):
 
     search_params = SearchParams(threshold=0, limit=None, fileHashStr=file_hash_str)
 
-    use_case = SearchUserFile(
+    use_case = SearchRegulation(
         embedding_port=mock_embedding_port,
         regulations_repository=mock_regulations_repo,
         query=query,
@@ -47,7 +47,7 @@ async def test_search_file_no_results(mock_embedding_port, mock_regulations_repo
 
     search_params = SearchParams(threshold=0, limit=None, fileHashStr=file_hash_str)
 
-    use_case = SearchUserFile(
+    use_case = SearchRegulation(
         embedding_port=mock_embedding_port,
         regulations_repository=mock_regulations_repo,
         query=query,
@@ -70,7 +70,7 @@ async def test_search_file_embedding_error(mock_embedding_port, mock_regulations
 
     search_params = SearchParams(threshold=0, limit=None, fileHashStr=file_hash_str)
 
-    use_case = SearchUserFile(
+    use_case = SearchRegulation(
         embedding_port=mock_embedding_port,
         regulations_repository=mock_regulations_repo,
         query=query,
@@ -96,7 +96,7 @@ async def test_search_file_repository_error(mock_embedding_port, mock_regulation
     mock_embedding_port.embed_queries.return_value = [embedding_vector]
     mock_regulations_repo.search.side_effect = Exception("Database error")
 
-    use_case = SearchUserFile(
+    use_case = SearchRegulation(
         embedding_port=mock_embedding_port,
         regulations_repository=mock_regulations_repo,
         query=query,

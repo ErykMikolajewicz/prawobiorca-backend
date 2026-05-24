@@ -1,4 +1,4 @@
-from app.application.ports.reguations import RegulationSpliter
+from app.application.ports.regulations import RegulationSpliter
 from app.application.services.embedding import DocumentEmbedder
 from app.domain.value_objects.documents import DocumentsCollection
 from app.domain.value_objects.regulations import RegulationAct

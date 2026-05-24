@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.framework.api.router import include_all_routers
 from app.framework.dependencies.file_storage import check_file_storage_connection
-from app.framework.dependencies.vector_db import check_vector_db_connection
 from app.infrastructure.relational_db.connection import check_relational_db_connection
 from app.infrastructure.text_transformator.initialization import init_text_transformator_client
 from app.shared.logging_config import setup_logging
@@ -29,9 +28,6 @@ async def lifespan(app: FastAPI):
     try:
         relational_closing_callback = await check_relational_db_connection()
         closing_callbacks.insert(0, relational_closing_callback)
-
-        vector_db_closing_callback = await check_vector_db_connection()
-        closing_callbacks.insert(0, vector_db_closing_callback)
 
         file_storage_closing_callback = await check_file_storage_connection()
         closing_callbacks.insert(0, file_storage_closing_callback)

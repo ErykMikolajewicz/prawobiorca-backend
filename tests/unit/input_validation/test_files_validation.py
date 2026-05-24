@@ -1,6 +1,6 @@
 import pytest
 
-from app.application.dtos.files import FileData
+from app.application.dtos.files import RegulationData
 
 
 @pytest.mark.parametrize(
@@ -34,8 +34,8 @@ def test_unauthorized_user_cannot_add_file(client):
 
 def test_file_data_validation_direct():
     with pytest.raises(ValueError):
-        FileData(name="test.txt", file=b"")
+        RegulationData(name="test.txt", file=b"")
 
-    fd = FileData(name="valid.txt", file=b"content")
+    fd = RegulationData(name="valid.txt", file=b"content")
     assert fd.name == "valid.txt"
     assert fd.file == b"content"

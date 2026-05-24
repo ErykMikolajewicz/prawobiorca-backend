@@ -14,18 +14,12 @@ class HttpClientType(StrEnum):
     HTTPX = "HTTPX"
 
 
-class VectorDBType(StrEnum):
-    QDRANT = "QDRANT"
-
-
 class ApplicationSettings(BaseSettings):
     LOGGING_LEVEL: str = ...
 
     SESSION_ID_EXPIRATION_SECONDS: int = ...
 
     FILE_STORAGE: FileStorageType = ...
-
-    VECTOR_DB: VectorDBType = ...
 
     HTTP_CLIENT: HttpClientType = ...
 

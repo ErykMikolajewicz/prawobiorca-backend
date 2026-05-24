@@ -11,11 +11,6 @@ class RegulationsNotPreparedToSearch(Exception):
         self.regulations_name = regulations_name
 
 
-class FileHashExist(Exception):
-    def __init__(self, file_hash: bytes):
-        self.file_hash = file_hash
-
-
 class RegulationAlreadyInitialized(Exception):
     pass
 

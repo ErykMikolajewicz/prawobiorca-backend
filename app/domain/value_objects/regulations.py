@@ -10,19 +10,6 @@ from app.shared.settings.text_transformator import text_transformator_settings
 
 
 @dataclass
-class RegulationElement:
-    label: str
-    text: str
-    tokens_number: int
-
-
-class UsefulLabels(StrEnum):
-    SECTION_HEADER = "section_header"
-    LIST_ITEM = "list_item"
-    TEXT = "text"
-
-
-@dataclass
 class HeaderSection:
     _header_elements: list[RegulationElement] = field(default_factory=list, init=False)
     _other_elements: list[RegulationElement] = field(default_factory=list, init=False)
@@ -110,3 +97,28 @@ class RegulationAct:
             last_element_type = element.label
 
         return header_sections
+
+
+class RegulationType(StrEnum):
+    ACT = "ACT"
+    DECREE = "DECREE"
+    STATUTE = "STATUTE"
+
+
+@dataclass
+class RegulationElement:
+    label: str
+    text: str
+    tokens_number: int
+
+
+class UsefulLabels(StrEnum):
+    SECTION_HEADER = "section_header"
+    LIST_ITEM = "list_item"
+    TEXT = "text"
+
+
+@dataclass
+class RegulationRegistrationData:
+    presentation_name: str
+    document_type: RegulationType | None = None
