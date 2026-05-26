@@ -13,7 +13,7 @@ class Users(Base, UuidIdMixin, CreateDateMixin):
     __table_args__ = (sqla.UniqueConstraint("username"),)
 
     hashed_password: Mapped[bytes] = mapped_column(sqla.LargeBinary(60))
-    username: Mapped[str] = mapped_column(sqla.String(40), nullable=False, index=True)
+    username: Mapped[str] = mapped_column(sqla.String(40), nullable=False)
 
 
 class UsersTokens(Base, CreateDateMixin):

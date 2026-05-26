@@ -2,7 +2,7 @@ import pytest
 from fastapi import Request
 
 from app.framework.dependencies.authentication import set_user_by_session_id
-from app.framework.dependencies.file_storage import get_public_file_repository, get_users_file_repository
+from app.framework.dependencies.regulations import get_regulations_repository
 from main import prawobiorca
 
 
@@ -24,13 +24,6 @@ class MockStorageRepository:
 
 @pytest.fixture
 def override_get_public_file_storage():
-    prawobiorca.dependency_overrides[get_public_file_repository] = lambda: MockStorageRepository()
-    yield
-    prawobiorca.dependency_overrides = {}
-
-
-@pytest.fixture
-def override_get_users_file_repository():
-    prawobiorca.dependency_overrides[get_users_file_repository] = lambda: MockStorageRepository()
+    prawobiorca.dependency_overrides[get_regulations_repository] = lambda: MockStorageRepository()
     yield
     prawobiorca.dependency_overrides = {}

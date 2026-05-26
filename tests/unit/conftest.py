@@ -44,7 +44,7 @@ def mock_embedding_port():
 
 
 @pytest.fixture
-def mock_regulations_repo():
+def mock_documents_repo():
     repo = MagicMock()
     repo.search = AsyncMock()
     repo.add_point = AsyncMock()

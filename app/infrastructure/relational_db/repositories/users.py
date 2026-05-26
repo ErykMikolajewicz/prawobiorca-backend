@@ -12,22 +12,21 @@ from app.shared.exceptions import ObjectExists
 
 
 class UsersRepository:
-    def __init__(self, session: AsyncSession):
-        self._session = session
+    def __init__(self):
         self._model = Users
 
-    async def add(self, create_data: CreateUserData):
+    async def add(self, session: AsyncSession, create_data: CreateUserData):
         statement = insert(self._model).values(
             username=create_data.username, hashed_password=create_data.hashed_password
         )
         try:
-            await self._session.execute(statement)
+            await session.execute(statement)
         except IntegrityError:
             raise ObjectExists
 
-    async def get_by_username(self, username: str) -> User | None:
+    async def get_by_username(self, session: AsyncSession, username: str) -> User | None:
         statement = select(self._model).where(self._model.username == username)
-        result: Users = await self._session.scalar(statement)
+        result: Users = await session.scalar(statement)
         if result is None:
             return result
 
@@ -36,18 +35,17 @@ class UsersRepository:
 
 
 class UsersTokensRepository:
-    def __init__(self, session: AsyncSession) -> None:
-        self._session = session
+    def __init__(self) -> None:
         self._model = UsersTokens
 
-    async def get_user_id_by_session_id(self, session_id: str) -> UUID | None:
+    async def get_user_id_by_session_id(self, session: AsyncSession, session_id: str) -> UUID | None:
         statement = (
             select(self._model.user_id)
             .where(self._model.session_id == session_id and self._model.valid_until > datetime.now(timezone.utc))
             .limit(1)
         )
 
-        user_id = await self._session.scalar(statement)
+        user_id = await session.scalar(statement)
 
         if user_id is None:
             return None
@@ -56,14 +54,14 @@ class UsersTokensRepository:
 
         return user_id
 
-    async def add_session(self, user_id: UUID, session_id: str, valid_until: datetime) -> None:
+    async def add_session(self, session: AsyncSession, user_id: UUID, session_id: str, valid_until: datetime) -> None:
         statement = insert(self._model).values(
             user_id=user_id,
             session_id=session_id,
             valid_until=valid_until,
         )
-        await self._session.execute(statement)
+        await session.execute(statement)
 
-    async def invalidate_session(self, session_id: str):
+    async def invalidate_session(self, session: AsyncSession, session_id: str):
         statement = select(self._model).where(self._model.session_id == session_id)
-        await self._session.execute(statement)
+        await session.execute(statement)

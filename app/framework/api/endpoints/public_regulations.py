@@ -1,49 +1,52 @@
 from typing import Annotated
 
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+
 from app.application.dtos.regulations import RegulationRepresentation
-from app.application.use_cases.regulations import ListRegulations
-from fastapi import APIRouter, Depends, HTTPException, status
-
-from app.application.dtos.search import SearchResult
-from app.application.use_cases.regulations import SearchRegulation
+from app.application.dtos.search import SearchParams, SearchResult
+from app.application.use_cases.regulations import ListRegulations, SearchRegulation
 from app.domain.exceptions import RegulationsNotPreparedToSearch
-from app.framework.dependencies.files import get_list_public_files
-from app.framework.dependencies.search import get_search_public_file
+from app.domain.value_objects.regulations import RegulationType
+from app.framework.dependencies.regulations import get_list_regulations, get_search_regulation
 
-public_files_router = APIRouter(tags=["regulations"], prefix="/api")
+public_regulations_router = APIRouter(tags=["regulations"], prefix="/api")
 
 
-@public_files_router.get(
+@public_regulations_router.get(
     "/regulations",
     responses={status.HTTP_204_NO_CONTENT: {"descriptions": "Not found public files with that criteria."}},
 )
-async def get_public_files(
-    list_public_files: Annotated[ListRegulations, Depends(get_list_public_files)],
+async def get_public_regulations(
+    list_regulations: Annotated[ListRegulations, Depends(get_list_regulations)],
+    regulation_type: RegulationType | None = Query(default=None, alias="documentType"),
 ) -> list[RegulationRepresentation]:
-    public_files = await list_public_files.execute()
-    if not public_files:
+    user_id = None
+    public_regulations = await list_regulations.execute(user_id, regulation_type)
+    if not public_regulations:
         raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="No public files for given search criteria.")
 
-    return public_files
+    return public_regulations
 
 
-@public_files_router.get(
-    "/search/public-file/{fileHashStr}",
+@public_regulations_router.get(
+    "/regulations/{regulationId}/articles",
     responses={
         status.HTTP_204_NO_CONTENT: {"description": "No search results."},
-        status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Regulation not prepared, normally should not occur"},
+        status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Regulation not prepared, normally should not occur."},
     },
 )
-async def post_search_public_file(
-    search_file: Annotated[SearchRegulation, Depends(get_search_public_file)]
+async def search_regulation_articles(
+    search_regulation: Annotated[SearchRegulation, Depends(get_search_regulation)],
+    search_params: SearchParams,
+    query: str = Query(),
 ) -> list[SearchResult]:
     try:
-        results = await search_file.execute()
+        results = await search_regulation.execute(query, search_params)
     except RegulationsNotPreparedToSearch as e:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Nie przygotowano do wyszukiwania pliku {e.regulations_name},"
-            f" zgłoś problem administratorowi aplikacji.",
+            detail=f"Regulation {e.regulations_name}, not prepared to search,"
+            f" report problem to application administrator.",
         )
 
     return results

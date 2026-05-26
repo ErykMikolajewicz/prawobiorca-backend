@@ -14,7 +14,7 @@ class RegulationData(BaseModel):
 
 class RegulationRepresentation(BaseModel):
     id: UUID
-    presentation_name: str = Field(min_length=MIN_FILENAME_LENGTH,
-                                   max_length=MAX_FILENAME_LENGTH,
-                                   alias='presentationName')
-    is_prepared: bool = Field(alias='isPrepared')
+    presentation_name: str = Field(
+        min_length=MIN_FILENAME_LENGTH, max_length=MAX_FILENAME_LENGTH, alias="presentationName"
+    )
+    is_prepared: bool = Field(alias="isPrepared")

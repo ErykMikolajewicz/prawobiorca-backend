@@ -2,10 +2,8 @@ import logging
 from typing import Literal
 
 from fastapi import APIRouter, HTTPException, Request, status
-from grpc import RpcError
 from sqlalchemy.exc import InterfaceError
 
-from app.framework.dependencies.vector_db import check_vector_db_connection
 from app.infrastructure.relational_db.connection import check_relational_db_connection
 
 logger = logging.getLogger(__name__)
@@ -28,12 +26,6 @@ async def get_health_status() -> Literal["OK"]:
     except InterfaceError:
         logger.error("Can not connect to relational database!", exc_info=True)
         unavailable_services.append("relational database")
-
-    try:
-        await check_vector_db_connection()
-    except RpcError:
-        logger.error("Can not connect to vector database!", exc_info=True)
-        unavailable_services.append("vector database")
 
     if unavailable_services:
         unavailable_services = ", ".join(unavailable_services)

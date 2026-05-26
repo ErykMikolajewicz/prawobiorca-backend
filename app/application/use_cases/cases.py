@@ -2,9 +2,9 @@ import logging
 from dataclasses import dataclass
 from uuid import UUID
 
-from app.application.dtos.cases import CaseArticleData, CaseData, NewCase, NewCaseArticle
-from app.application.interfaces.cases import CaseArticlesRepository, CasesRepository
-from app.application.interfaces.relational import AsyncSession
+from app.application.dtos.cases import CaseData, CaseDocument, NewCaseDocument
+from app.application.interfaces.cases import CaseDocumentsRepository, CasesRepository
+from app.application.interfaces.relational import SessionMaker
 from app.domain.exceptions import CaseNotFound
 
 logger = logging.getLogger(__name__)
@@ -12,81 +12,70 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ListCases:
-    session: AsyncSession
+    session_maker: SessionMaker
     cases_repo: CasesRepository
-    user_id: UUID
 
-    async def execute(self) -> list[CaseData]:
-        async with self.session:
-            cases = await self.cases_repo.list_by_user_id(self.user_id)
+    async def execute(self, user_id: UUID) -> list[CaseData]:
+        async with self.session_maker() as session:
+            cases = await self.cases_repo.list_by_user_id(session, user_id)
             return cases
 
 
 @dataclass
 class DeleteCase:
-    session: AsyncSession
+    session_maker: SessionMaker
     cases_repo: CasesRepository
-    case_id: UUID
 
-    async def execute(self) -> None:
-        async with self.session as session:
+    async def execute(self, user_id: UUID, case_id: UUID) -> None:
+        async with self.session_maker.begin() as session:
             try:
-                await self.cases_repo.delete(self.case_id)
+                await self.cases_repo.delete(session, user_id, case_id)
             except CaseNotFound:
                 logger.warning("Case not found!")
                 raise
-            await session.commit()
 
 
 @dataclass
 class AddCase:
-    session: AsyncSession
+    session_maker: SessionMaker
     cases_repo: CasesRepository
-    new_case: NewCase
 
-    async def execute(self) -> UUID:
-        async with self.session as session:
-            case_id = await self.cases_repo.add(self.new_case)
-            await session.commit()
+    async def execute(self, user_id: UUID, case_name: str) -> UUID:
+        async with self.session_maker.begin() as session:
+            case_id = await self.cases_repo.add(session, user_id, case_name)
         return case_id
 
 
 @dataclass
-class AddCaseArticle:
-    session: AsyncSession
-    case_articles_repo: CaseArticlesRepository
-    case_id: UUID
-    new_article: NewCaseArticle
+class AddCaseDocument:
+    session_maker: SessionMaker
+    case_documents_repo: CaseDocumentsRepository
 
-    async def execute(self) -> None:
-        async with self.session as session:
+    async def execute(self, user_id: UUID, case_id: UUID, new_document: NewCaseDocument) -> None:
+        async with self.session_maker.begin() as session:
             try:
-                await self.case_articles_repo.add(self.case_id, self.new_article)
+                await self.case_documents_repo.add(session, user_id, case_id, new_document)
             except CaseNotFound:
                 logger.warning("No case with that id!")
                 raise
-            await session.commit()
 
 
 @dataclass
-class DeleteCaseArticle:
-    session: AsyncSession
-    case_articles_repo: CaseArticlesRepository
-    article_id: UUID
+class DeleteCaseDocument:
+    session_maker: SessionMaker
+    case_documents_repo: CaseDocumentsRepository
 
-    async def execute(self) -> None:
-        async with self.session as session:
-            await self.case_articles_repo.delete(self.article_id)
-            await session.commit()
+    async def execute(self, user_id: UUID, document_id: UUID) -> None:
+        async with self.session_maker.begin() as session:
+            await self.case_documents_repo.delete(session, user_id, document_id)
 
 
 @dataclass
-class ListCaseArticles:
-    session: AsyncSession
-    case_articles_repo: CaseArticlesRepository
-    case_id: UUID
+class ListCaseDocuments:
+    session_maker: SessionMaker
+    case_documents_repo: CaseDocumentsRepository
 
-    async def execute(self) -> list[CaseArticleData]:
-        async with self.session:
-            case_articles = await self.case_articles_repo.list_by_case_id(self.case_id)
+    async def execute(self, user_id: UUID, case_id: UUID) -> list[CaseDocument]:
+        async with self.session_maker() as session:
+            case_articles = await self.case_documents_repo.list_by_case_id(session, user_id, case_id)
             return case_articles

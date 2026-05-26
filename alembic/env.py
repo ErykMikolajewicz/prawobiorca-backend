@@ -8,7 +8,8 @@ from alembic import context
 from app.infrastructure.relational_db.connection import Base
 from app.infrastructure.relational_db.schemas.cases import Cases, CaseArticles
 from app.infrastructure.relational_db.schemas.users import Users, UsersTokens
-from app.infrastructure.relational_db.schemas.files import UsersFiles, PublicFiles
+from app.infrastructure.relational_db.schemas.documents import RegulationsDocuments
+from app.infrastructure.relational_db.schemas.regulations import Regulations
 
 
 # this is the Alembic Config object, which provides

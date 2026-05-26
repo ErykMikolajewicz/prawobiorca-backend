@@ -6,70 +6,70 @@ from app.application.dtos.regulations import RegulationData, RegulationRepresent
 from app.application.dtos.search import SearchParams, SearchResult
 from app.application.interfaces.documents import DocumentsRepository
 from app.application.interfaces.regulations import RegulationsManager, RegulationsRepository
-from app.application.interfaces.relational import AsyncSession
+from app.application.interfaces.relational import SessionMaker
 from app.application.ports.texts import TextsEmbedder
 from app.application.services.regulations import RegulationPreparator
 from app.domain.exceptions import RegulationAlreadyInitialized
-from app.domain.value_objects.regulations import RegulationType, RegulationRegistrationData
+from app.domain.value_objects.regulations import RegulationRegistrationData, RegulationType
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class PrepareRegulation:
-    session: AsyncSession
+    session_maker: SessionMaker
     regulations_repository: RegulationsRepository
     documents_repository: DocumentsRepository
-    regulation_id: UUID
     regulations_manager: RegulationsManager
     regulation_preparator: RegulationPreparator
 
-    async def execute(self):
-        async with self.session:
+    async def execute(self, user_id: UUID | None, regulation_id: UUID):
+        async with self.session_maker() as session:
             try:
-                file_representation = await self.regulations_manager.get_regulation_representation(self.regulation_id)
+                file_representation = await self.regulations_manager.get_regulation_representation(
+                    session, user_id, regulation_id
+                )
             except FileNotFoundError:
-                logger.warning("File to prepare not found!")
+                logger.warning("regulation to prepare not found!")
                 raise
 
         if file_representation.is_prepared:
-            logger.warning("Tried prepare already prepared file!")
+            logger.warning("Tried prepare already prepared regulation!")
             raise RegulationAlreadyInitialized
 
-        regulation_content = await self.regulations_repository.get_regulation(self.regulation_id)
+        regulation_content = await self.regulations_repository.get_regulation(regulation_id)
 
         documents_collection = await self.regulation_preparator.prepare_regulation(regulation_content)
 
-        async with self.session as session:
-            await self.documents_repository.add_documents(self.regulation_id, documents_collection)
-            await self.regulations_manager.mark_as_prepared(self.regulation_id)
-            await session.commit()
+        async with self.session_maker.begin() as session:
+            await self.documents_repository.add_documents(session, regulation_id, documents_collection)
+            await self.regulations_manager.mark_as_prepared(session, user_id, regulation_id)
 
 
 @dataclass
 class AddRegulation:
-    session: AsyncSession
+    session_maker: SessionMaker
     regulation_manager: RegulationsManager
-    regulation_data: RegulationData
     regulation_repository: RegulationsRepository
-    regulation_type: RegulationType | None
 
-    async def execute(self) -> RegulationRepresentation:
-        regulation_registration_data = RegulationRegistrationData(presentation_name=self.regulation_data.name,
-                                                                  document_type=self.regulation_type
-                                                                  )
-        async with self.session as session:
-            regulation_id = await self.regulation_manager.register_regulation(regulation_registration_data)
-
+    async def execute(
+        self, user_id: UUID, regulation_type: RegulationType | None, regulation_data: RegulationData
+    ) -> RegulationRepresentation:
+        regulation_registration_data = RegulationRegistrationData(
+            presentation_name=regulation_data.name, document_type=regulation_type
+        )
+        async with self.session_maker.begin() as session:
+            regulation_id = await self.regulation_manager.register_regulation(
+                session, user_id, regulation_registration_data
+            )
             try:
-                await self.regulation_repository.upload_regulation(regulation_id, self.regulation_data.file)
+                await self.regulation_repository.upload_regulation(regulation_id, regulation_data.file)
             except FileExistsError:
                 logger.error("File, with that hash already exists in storage!")
                 raise
-            await session.commit()
 
         file_representation = RegulationRepresentation(
-            id=regulation_id, presentationName=self.regulation_data.name, isPrepared=False
+            id=regulation_id, presentationName=regulation_data.name, isPrepared=False
         )
 
         return file_representation
@@ -77,51 +77,52 @@ class AddRegulation:
 
 @dataclass
 class ListRegulations:
-    session: AsyncSession
+    session_maker: SessionMaker
     regulations_manager: RegulationsManager
-    regulation_type: RegulationType | None
 
-    async def execute(self) -> list[RegulationRepresentation]:
-        async with self.session:
-            files = await self.regulations_manager.list_regulations(self.regulation_type)
+    async def execute(
+        self, user_id: UUID | None, regulation_type: RegulationType | None
+    ) -> list[RegulationRepresentation]:
+        async with self.session_maker() as session:
+            files = await self.regulations_manager.list_regulations(session, user_id, regulation_type)
         return files
 
 
 @dataclass
 class DeleteRegulation:
-    session: AsyncSession
+    session_maker: SessionMaker
     regulations_manager: RegulationsManager
     documents_repository: DocumentsRepository
-    regulation_id: UUID
     regulations_repository: RegulationsRepository
 
-    async def execute(self):
-        async with self.session:
+    async def execute(self, user_id: UUID | None, regulation_id: UUID):
+        async with self.session_maker() as session:
             try:
                 regulation_representation = await self.regulations_manager.get_regulation_representation(
-                    self.regulation_id)
+                    session, user_id, regulation_id
+                )
             except FileNotFoundError:
-                logger.warning(f"User file to delete not found! File hash: {self.regulation_id}")
+                logger.warning(f"User regulation not found! regulation id: {regulation_id}")
                 raise
 
-        if regulation_representation.is_prepared:
-            await self.documents_repository.remove_documents(self.regulation_id)
+            if regulation_representation.is_prepared:
+                await self.documents_repository.remove_documents(session, regulation_id)
 
-        async with self.session as session:
-            await self.regulations_manager.unregister_regulation(self.regulation_id)
-            await self.regulations_repository.delete_regulation(self.regulation_id)
-            await session.commit()
+        async with self.session_maker.begin() as session:
+            await self.regulations_manager.unregister_regulation(session, user_id, regulation_id)
+            await self.regulations_repository.delete_regulation(regulation_id)
 
 
 @dataclass
 class SearchRegulation:
+    session_maker: SessionMaker
     embedding_port: TextsEmbedder
     documents_repository: DocumentsRepository
-    query: str
-    search_params: SearchParams
 
-    async def execute(self) -> list[SearchResult]:
-        embeddings = await self.embedding_port.embed_queries([self.query])
+    async def execute(self, user_id: UUID | None, query: str, search_params: SearchParams) -> list[SearchResult]:
+        embeddings = await self.embedding_port.embed_queries([query])
         query_vector = embeddings[0]
-        results = await self.documents_repository.search(query_vector, self.search_params)
+
+        async with self.session_maker() as session:
+            results = await self.documents_repository.search(session, query_vector, search_params)
         return results

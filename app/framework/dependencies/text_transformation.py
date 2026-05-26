@@ -5,7 +5,7 @@ from httpx import AsyncClient
 
 import app.infrastructure.text_transformator.regulation_splitter as rs
 import app.infrastructure.text_transformator.text_embedder as te
-from app.application.ports.reguations import RegulationSpliter
+from app.application.ports.regulations import RegulationSpliter
 from app.application.ports.texts import TextsEmbedder
 from app.application.services.embedding import DocumentEmbedder
 from app.shared.settings.text_transformator import text_transformator_settings
