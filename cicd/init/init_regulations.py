@@ -6,6 +6,7 @@ from pathlib import Path
 sys.path.append("")
 
 import httpx
+from sqlalchemy import insert
 
 from app.application.services.embedding import DocumentEmbedder
 from app.application.services.regulations import RegulationPreparator
@@ -46,27 +47,38 @@ async def init_regulations():
             documents_to_embed = await regulation_preparator.prepare_regulation(file_content)
             print(f"Embedded regulation: {file_name}")
 
-            regulation_documents: list[RegulationsDocuments] = []
+            regulation_documents = []
 
             for documents_batch in documents_to_embed.get_batch_iterator():
                 for document in documents_batch:
-                    regulation_document = RegulationsDocuments(
-                        id=document.id,
-                        header=document.title,
-                        text=document.text,
-                        vector=document.vector,
-                        regulation_id=regulation_id,
+                    regulation_documents.append(
+                        {
+                            "id": document.id,
+                            "user_id": None,
+                            "header": document.title,
+                            "text": document.text,
+                            "vector": document.vector,
+                            "regulation_id": regulation_id,
+                        }
                     )
-                    regulation_documents.append(regulation_document)
 
             async with async_session_maker.begin() as session:
-                regulation = Regulations(
-                    id=regulation_id,
-                    presentation_name=file_name,
-                    is_prepared=True,
-                    user_id=None,
+                await session.execute(
+                    insert(Regulations),
+                    [
+                        {
+                            "id": regulation_id,
+                            "presentation_name": file_name,
+                            "is_prepared": True,
+                            "user_id": None,
+                        }
+                    ],
                 )
-                session.add(regulation)
+
+                await session.execute(
+                    insert(RegulationsDocuments),
+                    regulation_documents,
+                )
 
                 public_files_dir = Path("regulations")
                 public_files_dir.mkdir(exist_ok=True)
@@ -74,8 +86,6 @@ async def init_regulations():
                 file_destination = public_files_dir / str(regulation_id)
                 with open(file_destination, "wb") as file:
                     file.write(file_content)
-
-                session.add_all(regulation_documents)
 
             print(f"Saved regulation: {file_name}, ")
 

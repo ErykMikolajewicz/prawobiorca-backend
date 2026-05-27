@@ -42,7 +42,7 @@ class RegulationsManagerRepository:
             .values(
                 user_id=user_id,
                 presentation_name=regulation_registration_data.presentation_name,
-                document_type=regulation_registration_data.document_type,
+                regulation_type=regulation_registration_data.document_type,
             )
             .returning(self._model.id)
         )
@@ -52,7 +52,7 @@ class RegulationsManagerRepository:
         except IntegrityError:
             raise FileExistsError
 
-        return id_
+        return UUID(str(id_))
 
     async def unregister_regulation(self, session: AsyncSession, user_id: UUID | None, id_: UUID) -> None:
         statement = delete(self._model).where(self._model.user_id == user_id, self._model.id == id_)

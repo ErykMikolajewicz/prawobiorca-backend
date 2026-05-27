@@ -15,8 +15,8 @@ class Cases(Base, UuidIdMixin, CreateDateMixin):
     name: Mapped[str] = mapped_column(sqla.String(MAX_FILENAME_LENGTH), nullable=False)
 
 
-class CaseArticles(Base, UuidIdMixin, CreateDateMixin):
-    __tablename__ = "case_articles"
+class CaseDocuments(Base, UuidIdMixin, CreateDateMixin):
+    __tablename__ = "case_documents"
 
     case_id: Mapped[UUID] = mapped_column(sqla.ForeignKey("cases.id", ondelete="CASCADE"), nullable=False)
     user_id: Mapped[UUID] = mapped_column(sqla.ForeignKey("users.id"), nullable=False)

@@ -13,6 +13,7 @@ from app.shared.consts import AUTHORIZATION_COOKIE_NAME
 
 
 async def set_user_by_session_id(
+    session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
     users_tokens_repo: Annotated[UsersTokensRepository, Depends(get_users_tokens_repository)],
     request: Request,
 ):
@@ -20,7 +21,8 @@ async def set_user_by_session_id(
     if session_data:
         session_data = json.loads(session_data)
         session_id = session_data["session_id"]
-        user_id = await users_tokens_repo.get_user_id_by_session_id(session_id)
+        async with session_maker() as session:
+            user_id = await users_tokens_repo.get_user_id_by_session_id(session, session_id)
     else:
         user_id = None
         session_id = None

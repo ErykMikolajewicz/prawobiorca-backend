@@ -1,6 +1,7 @@
 from typing import Annotated
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 
 from app.application.dtos.regulations import RegulationRepresentation
 from app.application.dtos.search import SearchParams, SearchResult
@@ -29,19 +30,20 @@ async def get_public_regulations(
 
 
 @public_regulations_router.get(
-    "/regulations/{regulationId}/articles",
+    "/regulations/{regulationId}/documents",
     responses={
         status.HTTP_204_NO_CONTENT: {"description": "No search results."},
         status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Regulation not prepared, normally should not occur."},
     },
 )
-async def search_regulation_articles(
+async def search_regulation_documents(
     search_regulation: Annotated[SearchRegulation, Depends(get_search_regulation)],
-    search_params: SearchParams,
-    query: str = Query(),
+    regulation_id: Annotated[UUID, Path(alias="regulationId")],
+    search_params: Annotated[SearchParams, Query()],
 ) -> list[SearchResult]:
+    user_id = None
     try:
-        results = await search_regulation.execute(query, search_params)
+        results = await search_regulation.execute(user_id, regulation_id, search_params)
     except RegulationsNotPreparedToSearch as e:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

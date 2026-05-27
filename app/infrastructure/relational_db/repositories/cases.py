@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.dtos.cases import CaseData, CaseDocument, NewCaseDocument
 from app.domain.exceptions import CaseNotFound
-from app.infrastructure.relational_db.schemas.cases import CaseArticles, Cases
+from app.infrastructure.relational_db.schemas.cases import CaseDocuments, Cases
 
 
 class CasesRepository:
@@ -36,10 +36,10 @@ class CasesRepository:
 
 class CaseDocumentsRepository:
     def __init__(self):
-        self._model = CaseArticles
+        self._model = CaseDocuments
 
-    async def list_by_case_id(self, session: AsyncSession, case_id: UUID) -> list[CaseDocument]:
-        statement = select(self._model).where(self._model.case_id == case_id)
+    async def list_by_case_id(self, session: AsyncSession, user_id: UUID, case_id: UUID) -> list[CaseDocument]:
+        statement = select(self._model).where(self._model.case_id == case_id, self._model.user_id == user_id)
         result = await session.scalars(statement)
 
         articles = []
@@ -53,13 +53,14 @@ class CaseDocumentsRepository:
             articles.append(article_data)
         return articles
 
-    async def add(self, session: AsyncSession, case_id: UUID, new_article: NewCaseDocument) -> UUID:
+    async def add(self, session: AsyncSession, user_id: UUID, case_id: UUID, new_document: NewCaseDocument) -> UUID:
         statement = (
             insert(self._model)
             .values(
                 case_id=case_id,
-                presentation_name=new_article.presentation_name,
-                content=new_article.content,
+                presentation_name=new_document.presentation_name,
+                content=new_document.content,
+                user_id=user_id,
             )
             .returning(self._model.id)
         )
@@ -70,8 +71,8 @@ class CaseDocumentsRepository:
         case_article_id = UUID(str(case_article_id))
         return case_article_id
 
-    async def delete(self, session: AsyncSession, article_id: UUID) -> None:
-        statement = delete(self._model).where(self._model.id == article_id)
+    async def delete(self, session: AsyncSession, user_id: UUID, article_id: UUID) -> None:
+        statement = delete(self._model).where(self._model.id == article_id, self._model.user_id == user_id)
         result = await session.execute(statement)
 
         if result.rowcount == 0:

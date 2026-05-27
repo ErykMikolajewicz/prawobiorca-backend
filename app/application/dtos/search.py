@@ -1,5 +1,6 @@
 from uuid import UUID
 
+from fastapi import Query
 from pydantic import BaseModel, Field
 
 
@@ -10,7 +11,6 @@ class SearchResult(BaseModel):
 
 
 class SearchParams(BaseModel):
-    threshold: float = Field(ge=-1, le=1)
-    limit: int | None = Field(default=None, gt=0)
-    regulation_id: UUID = Field(alias="fileId")
-    user_id: UUID | None = Field(alias="userId")
+    threshold: float = Query(ge=-1, le=1)
+    limit: int | None = Query(default=None, gt=0)
+    query: str = Query()

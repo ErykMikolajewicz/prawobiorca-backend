@@ -54,7 +54,7 @@ class AddRegulation:
 
     async def execute(
         self, user_id: UUID, regulation_type: RegulationType | None, regulation_data: RegulationData
-    ) -> RegulationRepresentation:
+    ) -> UUID:
         regulation_registration_data = RegulationRegistrationData(
             presentation_name=regulation_data.name, document_type=regulation_type
         )
@@ -68,11 +68,7 @@ class AddRegulation:
                 logger.error("File, with that hash already exists in storage!")
                 raise
 
-        file_representation = RegulationRepresentation(
-            id=regulation_id, presentationName=regulation_data.name, isPrepared=False
-        )
-
-        return file_representation
+        return regulation_id
 
 
 @dataclass
@@ -119,10 +115,12 @@ class SearchRegulation:
     embedding_port: TextsEmbedder
     documents_repository: DocumentsRepository
 
-    async def execute(self, user_id: UUID | None, query: str, search_params: SearchParams) -> list[SearchResult]:
-        embeddings = await self.embedding_port.embed_queries([query])
+    async def execute(self, user_id: UUID | None, regulation_id, search_params: SearchParams) -> list[SearchResult]:
+        embeddings = await self.embedding_port.embed_queries([search_params.query])
         query_vector = embeddings[0]
 
         async with self.session_maker() as session:
-            results = await self.documents_repository.search(session, query_vector, search_params)
+            results = await self.documents_repository.search(
+                session, user_id, regulation_id, query_vector, search_params
+            )
         return results

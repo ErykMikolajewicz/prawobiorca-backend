@@ -11,10 +11,10 @@ __pycache__/
 /site/
 
 .cache
-/files/
 
 /cicd/kubectl
 /cicd/secrets
 
 postman/
 .postman
+/regulations/

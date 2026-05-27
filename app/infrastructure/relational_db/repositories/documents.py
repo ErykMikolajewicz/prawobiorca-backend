@@ -15,6 +15,7 @@ class RegulationsDocumentsRepository:
     async def add_documents(
         self,
         session: AsyncSession,
+        user_id: UUID | None,
         regulation_id: UUID,
         documents: DocumentsCollection,
     ) -> None:
@@ -25,6 +26,7 @@ class RegulationsDocumentsRepository:
                 text=document.text,
                 vector=document.vector,
                 regulation_id=regulation_id,
+                user_id=user_id,
             )
             for document in documents
         ]
@@ -35,6 +37,8 @@ class RegulationsDocumentsRepository:
     async def search(
         self,
         session: AsyncSession,
+        user_id: UUID | None,
+        regulation_id: UUID,
         vector: list[float],
         search_params: SearchParams,
     ) -> list[SearchResult]:
@@ -50,7 +54,7 @@ class RegulationsDocumentsRepository:
                 self._model.text,
                 distance.label("distance"),
             )
-            .where(self._model.regulation_id == search_params.regulation_id)
+            .where(self._model.regulation_id == regulation_id, self._model.user_id == user_id)
             .order_by(distance.asc())
             .limit(limit)
         )
@@ -70,8 +74,8 @@ class RegulationsDocumentsRepository:
             for row in rows
         ]
 
-    async def remove_documents(self, session: AsyncSession, regulation_id: UUID) -> None:
-        query = delete(self._model).where(self._model.regulation_id == regulation_id)
+    async def remove_documents(self, session: AsyncSession, user_id, regulation_id: UUID) -> None:
+        query = delete(self._model).where(self._model.regulation_id == regulation_id, self._model.user_id == user_id)
 
         await session.execute(query)
         await session.flush()
