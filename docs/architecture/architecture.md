@@ -36,14 +36,13 @@ This layer contains the **Application Business Rules**. It orchestrates the flow
 
 ### `app/infrastructure`
 This layer acts as an adapter, implementing the interfaces (Ports) defined in the Domain and Application layers. It handles technical details and communication with external systems.
-- **Repositories**: Implementations of repository interfaces (e.g., `relational_db`, `key_value_db`, `vector_db`).
+- **Repositories**: Implementations of repository interfaces (e.g., `relational_db`).
 - **File Storage**: Implementations for file handling.
 - **External Services**: Adapters for third-party APIs (e.g., `embeddings_generator`).
 
 ### `app/framework`
 This layer corresponds to the **Frameworks** (and partly Interface Adapters) layer. It contains tools and delivery mechanisms, specifically related to the web framework (FastAPI).
-- **API**: REST API endpoints (Routers), request/response models, also HTMl responses.
-- **Web**: HTML views - use Jinja2 framework.
+- **API**: REST API endpoints (Routers), request/response models.
 - **Dependencies**: Dependency injection setup and wiring.
 
 ### `app/shared`

@@ -73,13 +73,7 @@ python -m alembic upgrade head
 Then, seed the database with data:
 ```sh
 python cicd/init/seed_relational_db.py
-```
-
-## Initialize vector db
-This step can last some time
-
-```sh
-python cicd/init/seed_vector_db.py
+python cicd/init/init_regulations.py
 ```
 
 Then visit the main application page:

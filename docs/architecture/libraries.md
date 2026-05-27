@@ -71,6 +71,12 @@ Used to communicate with embedding service.
 
 ---
 
+### pgvector
+
+Plugin for vector capabilities in Postgres.
+
+---
+
 ### pydantic-settings
 
 A library for managing application configuration.  
@@ -86,12 +92,6 @@ Alternatives were not extensively researched.
 ### python-multipart
 
 A library for handling file uploads in applications based on [FastAPI](#fastapi).
-
----
-
-### qdrant-client
-
-The official client for the qdrant database — essentially the only option.
 
 ---
 
