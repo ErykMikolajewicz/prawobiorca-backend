@@ -11,6 +11,9 @@ from app.infrastructure.relational_db.schemas.users import Users, UsersTokens
 from app.infrastructure.relational_db.schemas.documents import RegulationsDocuments
 from app.infrastructure.relational_db.schemas.regulations import Regulations
 
+# Import Vector type for proper rendering in migrations
+from pgvector.sqlalchemy import Vector
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -58,10 +61,22 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection, 
+        target_metadata=target_metadata,
+        render_as_batch=True,
+        render_item=render_item,
+    )
 
     with context.begin_transaction():
         context.run_migrations()
+
+
+def render_item(type_, obj, autogen_context):
+    """Render custom types like Vector for Alembic"""
+    if isinstance(obj, Vector):
+        return f"Vector(dim={obj.dim})"
+    return False
 
 
 async def run_async_migrations() -> None:
