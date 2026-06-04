@@ -2,27 +2,6 @@ import pytest
 
 from app.domain.value_objects.regulations import RegulationType
 
-# @pytest.mark.parametrize(
-#     "file_name, file_content",
-#     [
-#         ("test.txt", b""),
-#         ("a" * 256, b"content"),
-#     ],
-# )
-# def test_logged_user_add_file_validation_errors(
-#     client,
-#     override_set_user_by_session_id,
-#     override_get_public_file_storage,
-#     file_name,
-#     file_content,
-# ):
-#     files = {"regulation": (file_name, file_content, "text/plain")}
-
-#     response = client.post("/api/user/regulations", files=files, follow_redirects=False)
-
-
-#     assert response.status_code == 400
-
 
 @pytest.mark.parametrize(
     "file_name, file_content, file_type, error_status_code",
@@ -51,13 +30,15 @@ def test_logged_used_add_file_validation(
     assert response.status_code == error_status_code
 
 
-# def test_unauthorized_user_cannot_add_file(client):
-#     files = {"file": ("test.txt", b"content", "text/plain")}
-#
-#     response = client.post("/api/user/files", files=files, follow_redirects=False)
-#
-#     assert response.status_code == 401
-#
+def test_unauthorized_user_add_file(client):
+    files = {"regulation": {"test.txt", b"valid_content", "plain/text"}}
+    params = {"regulation_type": RegulationType.DECREE}
+
+    response = client.post("api/user/regulations", files=files, params=params)
+
+    assert response.status_code == 400
+
+
 #
 # def test_file_data_validation_direct():
 #     with pytest.raises(ValueError):
