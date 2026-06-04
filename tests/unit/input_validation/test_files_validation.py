@@ -1,5 +1,6 @@
 import pytest
 
+from app.application.dtos.regulations import RegulationData
 from app.domain.value_objects.regulations import RegulationType
 
 
@@ -39,11 +40,8 @@ def test_unauthorized_user_add_file(client):
     assert response.status_code == 400
 
 
-#
-# def test_file_data_validation_direct():
-#     with pytest.raises(ValueError):
-#         RegulationData(name="test.txt", file=b"")
-#
-#     fd = RegulationData(name="valid.txt", file=b"content")
-#     assert fd.name == "valid.txt"
-#     assert fd.file == b"content"
+def test_file_data_validation_direct():
+    fd = RegulationData(name="valid.txt", file=b"content", document_type=RegulationType.ACT)
+    assert fd.name == "valid.txt"
+    assert fd.file == b"content"
+    assert fd.document_type == RegulationType.ACT
