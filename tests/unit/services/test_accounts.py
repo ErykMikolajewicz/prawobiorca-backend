@@ -1,16 +1,26 @@
-# @pytest.mark.asyncio
-# async def test_check_user_can_log_user_not_found(mock_users_repo):
-#     users_repo = mock_users_repo
-#     users_repo.get_by_username = AsyncMock(return_value=None)
-#
-#     login_data = LoginData(username="unknown_user", password=SecretStr(STRONG_PASSWORD))
-#
-#     result = await check_user_can_log(users_repo, login_data)
-#
-#     assert result is None
-#     users_repo.get_by_username.assert_awaited_once_with("unknown_user")
-#
-#
+from unittest.mock import AsyncMock
+
+import pytest
+from pydantic import SecretStr
+
+from app.application.dtos.account import LoginData
+from app.application.services.accounts import check_user_can_log
+from tests.consts import STRONG_PASSWORD
+
+
+@pytest.mark.asyncio
+async def test_check_user_can_log_user_not_found(mock_users_repo, mock_session):
+
+    mock_users_repo.get_by_username = AsyncMock(return_value=None)
+
+    login_data = LoginData(username="unknown_user", password=SecretStr(STRONG_PASSWORD))
+
+    result = await check_user_can_log(mock_session, mock_users_repo, login_data)
+
+    assert result is None
+    mock_users_repo.get_by_username.assert_awaited_once_with(mock_session, "unknown_user")
+
+
 # @pytest.mark.asyncio
 # async def test_check_user_can_log_invalid_password(uuid_generator, mock_users_repo):
 #     user_id = next(uuid_generator)

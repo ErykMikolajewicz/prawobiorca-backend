@@ -1,31 +1,30 @@
 # @pytest.mark.asyncio
-# async def test_search_file_success(mock_embedding_port, mock_documents_repo):
+# async def test_search_file_success(mock_embedding_port, mock_documents_repo, mock_session_maker):
 #     query = "test query"
 #     embedding_vector = [0.1, 0.2, 0.3]
 #     search_results = [
 #         {"id": "doc1", "text": "relevant document"},
 #         {"id": "doc2", "text": "another document"},
 #     ]
-#
+
 #     mock_embedding_port.embed_queries.return_value = [embedding_vector]
 #     mock_documents_repo.search.return_value = search_results
-#
+
 #     file_hash_str = "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
-#
+
 #     search_params = SearchParams(threshold=0, limit=None, fileHashStr=file_hash_str)
-#
+
 #     use_case = SearchRegulation(
-#         embedding_port=mock_embedding_port,
-#         regulations_repository=mock_documents_repo,
-#         query=query,
-#         search_params=search_params,
+#         session_maker=mock_session_maker, embedding_port=mock_embedding_port, documents_repository=mock_documents_repo
 #     )
-#
+
 #     result = await use_case.execute()
-#
+
 #     assert result == search_results
 #     mock_embedding_port.embed_queries.assert_awaited_once_with([query])
 #     mock_documents_repo.search.assert_awaited_once_with(embedding_vector, search_params)
+
+
 #
 #
 # @pytest.mark.asyncio
