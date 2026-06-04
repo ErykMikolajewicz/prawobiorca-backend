@@ -13,6 +13,13 @@ def mock_session():
 
 
 @pytest.fixture
+def mock_session_maker(mock_session):
+    session_maker = MagicMock()
+    session_maker.begin.return_value = mock_session
+    return session_maker
+
+
+@pytest.fixture
 def mock_users_repo():
     repo = MagicMock()
     repo.add = AsyncMock()
