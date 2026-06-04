@@ -22,7 +22,6 @@ from app.framework.dependencies.text_transformation import (
     get_regulations_splitter,
     get_texts_embedder,
 )
-from app.infrastructure.local_storage.repository import LocalRegulationsStorage
 from app.infrastructure.relational_db.repositories.documents import RegulationsDocumentsRepository
 from app.infrastructure.relational_db.repositories.regulations import RegulationsManagerRepository
 
@@ -32,6 +31,8 @@ def get_documents_repository() -> DocumentsRepository:
 
 
 def get_regulations_repository() -> RegulationsRepository:
+    from app.infrastructure.local_storage.repository import LocalRegulationsStorage
+
     return LocalRegulationsStorage()
 
 
