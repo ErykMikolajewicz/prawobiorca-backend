@@ -1,58 +1,52 @@
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import create_autospec
 
 import pytest
+
+from app.application.interfaces.documents import DocumentsRepository
+from app.application.interfaces.regulations import RegulationsRepository
+from app.application.interfaces.relational import AsyncSession, SessionMaker
+from app.application.interfaces.users import UsersRepository, UsersTokensRepository
+from app.application.ports.texts import TextsEmbedder
 
 
 @pytest.fixture
 def mock_session():
-    session = MagicMock()
-    session.__aenter__ = AsyncMock(return_value=session)
-    session.__aexit__ = AsyncMock(return_value=None)
-    session.commit = AsyncMock()
+    session = create_autospec(AsyncSession)
     return session
 
 
 @pytest.fixture
 def mock_session_maker(mock_session):
-    session_maker = MagicMock()
+    session_maker = create_autospec(SessionMaker)
     session_maker.begin.return_value = mock_session
     return session_maker
 
 
 @pytest.fixture
 def mock_users_repo():
-    repo = MagicMock()
-    repo.add = AsyncMock()
+    repo = create_autospec(UsersRepository)
     return repo
 
 
 @pytest.fixture
 def mock_tokens_repo():
-    repo = MagicMock()
-    repo.add_session = AsyncMock()
-    repo.invalidate_session = AsyncMock()
+    repo = create_autospec(UsersTokensRepository)
     return repo
 
 
 @pytest.fixture
-def mock_files_repo():
-    repo = MagicMock()
-    repo.upload_file = AsyncMock()
-    repo.list_files = AsyncMock()
+def mock_regulations_repo():
+    repo = create_autospec(RegulationsRepository)
     return repo
 
 
 @pytest.fixture
 def mock_embedding_port():
-    port = MagicMock()
-    port.embed_queries = AsyncMock()
-    port.embed_documents = AsyncMock()
+    port = create_autospec(TextsEmbedder)
     return port
 
 
 @pytest.fixture
 def mock_documents_repo():
-    repo = MagicMock()
-    repo.search = AsyncMock()
-    repo.add_point = AsyncMock()
+    repo = create_autospec(DocumentsRepository)
     return repo

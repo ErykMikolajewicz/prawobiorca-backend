@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock
-
 import pytest
 from pydantic import SecretStr
 
@@ -10,8 +8,7 @@ from tests.consts import STRONG_PASSWORD
 
 @pytest.mark.asyncio
 async def test_check_user_can_log_user_not_found(mock_users_repo, mock_session):
-
-    mock_users_repo.get_by_username = AsyncMock(return_value=None)
+    mock_users_repo.get_by_username.return_value = None
 
     login_data = LoginData(username="unknown_user", password=SecretStr(STRONG_PASSWORD))
 
