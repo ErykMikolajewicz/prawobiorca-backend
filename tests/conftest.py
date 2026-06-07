@@ -41,12 +41,12 @@ def uuid_generator() -> Iterator[UUID]:
     """
     Generates a sequence of predefined UUIDs.
 
-    Can be used max 1 time per test, currently sufficient for all test scenarios.
+    Can be used max 2 time per test, currently sufficient for all test scenarios.
 
     Yields:
         str: The next UUID from the predefined list.
     """
-    uuids = (UUID("1b4a1b7a-dbd6-4be4-a52e-80fdd9ddbfb0"),)
+    uuids = (UUID("1b4a1b7a-dbd6-4be4-a52e-80fdd9ddbfb0"), UUID("a3f54f36-9653-4ccf-b9f4-81bf885d02ee"))
 
     return iter(uuids)
 

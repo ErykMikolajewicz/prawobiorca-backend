@@ -10,15 +10,23 @@ from app.application.ports.texts import TextsEmbedder
 
 
 @pytest.fixture
-def mock_session():
+async def mock_session():
     session = create_autospec(AsyncSession)
-    return session
+    opened_session = await session.__aenter__()
+    return opened_session
+
+
+@pytest.fixture
+async def mock_opened_session(mock_session):
+    opened_session = await mock_session.__aenter__()
+    return opened_session
 
 
 @pytest.fixture
 def mock_session_maker(mock_session):
     session_maker = create_autospec(SessionMaker)
     session_maker.begin.return_value = mock_session
+    session_maker.return_value = mock_session
     return session_maker
 
 
