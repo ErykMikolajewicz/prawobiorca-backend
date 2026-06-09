@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.append("")
 
-import httpx
+import httpx2
 from sqlalchemy import insert
 
 from app.application.services.embedding import DocumentEmbedder
@@ -21,7 +21,7 @@ from app.shared.settings.text_transformator import text_transformator_settings
 async def init_regulations():
     init_files_dir = Path("cicd/init/files")
 
-    async with httpx.AsyncClient(timeout=900) as client:
+    async with httpx2.AsyncClient(timeout=900) as client:
         texts_embedder = TextsEmbedder(
             client=client,
             texts_transformator_url=text_transformator_settings.URL,

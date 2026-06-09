@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import Depends, Request
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 
 import app.infrastructure.text_transformator.regulation_splitter as rs
 import app.infrastructure.text_transformator.text_embedder as te

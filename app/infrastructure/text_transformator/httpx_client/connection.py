@@ -1,4 +1,4 @@
-from httpx import AsyncClient, Limits, Timeout
+from httpx2 import AsyncClient, Limits, Timeout
 
 from app.shared.settings.httpx_client import httpx_client_settings
 

@@ -1,6 +1,6 @@
 from collections.abc import Iterable
 
-from httpx import AsyncClient
+from httpx2 import AsyncClient
 
 from app.domain.value_objects.regulations import RegulationElement
 
