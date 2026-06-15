@@ -1,6 +1,6 @@
 [project]
 name = "prawobiorca-backend"
-version = "0.47.4"
+version = "0.47.5"
 description = "Law acts search engine with AI features."
 readme = "README.md"
 requires-python = "==3.14.*"
@@ -36,8 +36,7 @@ local-storage = [
 
 test = [
     "alembic==1.18.*",
-    "psycopg[binary]==3.3.*",
-    "pytest==9.0.*",
+    "pytest==9.1.*",
     "pytest-asyncio==1.4.*",
     "pytest-cov==7.1.*",
     "testcontainers[postgres]==4.14.*",
@@ -45,9 +44,6 @@ test = [
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
-filterwarnings = [
-    "ignore:^The @wait_container_is_ready decorator:DeprecationWarning"
-]
 asyncio_default_fixture_loop_scope = "function"
 asyncio_mode = "auto"
 

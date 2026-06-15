@@ -12,7 +12,11 @@ account_router = APIRouter(tags=["account"], prefix="/api")
 
 
 @account_router.post(
-    "/accounts/register", responses={status.HTTP_409_CONFLICT: {"description": "User with that login already exists."}}
+    "/accounts/register",
+    responses={
+        status.HTTP_201_CREATED: {"description": "Account created."},
+        status.HTTP_409_CONFLICT: {"description": "User with that login already exists."},
+    },
 )
 async def create_account(login_data: LoginData, create_account_: Annotated[CreateAccount, Depends(get_create_account)]):
 
@@ -21,4 +25,4 @@ async def create_account(login_data: LoginData, create_account_: Annotated[Creat
     except UserExists:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User with that login already exists.")
 
-    return JSONResponse({"ok": True})
+    return JSONResponse({"ok": True}, status_code=status.HTTP_201_CREATED)

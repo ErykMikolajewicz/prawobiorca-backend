@@ -13,10 +13,10 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.postgres import PostgresContainer
 
-from app.framework.dependencies.relational import get_relational_session
-from main import app
+from app.framework.dependencies.relational import get_session_maker
+from main import prawobiorca
 
-POSTGRES_IMAGE_VERSION = "postgres:18"
+POSTGRES_IMAGE_VERSION = "pgvector/pgvector:0.8.2-pg18-trixie"
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -44,15 +44,15 @@ def postgres_container() -> Generator[PostgresContainer, None]:
     Yields:
         PostgresContainer: Running PostgresSQL container.
     """
-    with PostgresContainer(POSTGRES_IMAGE_VERSION, driver="psycopg") as postgres:
+    with PostgresContainer(POSTGRES_IMAGE_VERSION, driver="asyncpg") as postgres:
         yield postgres
 
 
 @pytest.fixture
-async def override_get_relational_session(postgres_container: PostgresContainer) -> AsyncGenerator[None, None]:
+async def override_session_maker(postgres_container: PostgresContainer) -> AsyncGenerator[None, None]:
     """Override the FastAPI relational DB dependency with a test session.
 
-    Replaces the default `get_relational_session` dependency with a session
+    Replaces the default `get_session_maker` dependency with a session maker
     connected to the PostgresSQL test container.
 
     Args:
@@ -64,38 +64,27 @@ async def override_get_relational_session(postgres_container: PostgresContainer)
     Note:
         This fixture is intended for FastAPI integration tests only.
     """
-    url = postgres_container.get_connection_url().replace("psycopg", "asyncpg")
+    url = postgres_container.get_connection_url()
     db_engine = create_async_engine(url, future=True, echo=False)
     async_session_maker = async_sessionmaker(db_engine, expire_on_commit=False, class_=AsyncSession)
-    session = async_session_maker()
 
     async def _override():
-        yield session
+        yield async_session_maker
 
-    app.dependency_overrides[get_relational_session] = _override
+    prawobiorca.dependency_overrides[get_session_maker] = _override
     yield
     await db_engine.dispose()
-    app.dependency_overrides = {}
+    prawobiorca.dependency_overrides = {}
 
 
 @pytest.fixture
-async def relational_session(postgres_container: PostgresContainer) -> AsyncGenerator[AsyncSession, None]:
-    """Provide a direct session to the test PostgresSQL database.
-
-    Useful for inserting or cleaning up data before/after tests.
-
-    Args:
-        postgres_container (PostgresContainer): Running PostgresSQL test container.
-
-    Yields:
-        AsyncSession: SQLAlchemy async session with AUTOCOMMIT isolation.
-    """
-    url = postgres_container.get_connection_url().replace("psycopg", "asyncpg")
-    db_engine = create_async_engine(url, future=True, echo=False, isolation_level="AUTOCOMMIT")
+async def session_maker(postgres_container: PostgresContainer) -> AsyncGenerator[async_sessionmaker, None]:
+    """Get separated session maker, to can make session in pytest - they are running in separated thread than FASTapi.
+    This is due to internal pytest implementation, avery async test in separated thread."""
+    url = postgres_container.get_connection_url()
+    db_engine = create_async_engine(url, future=True, echo=False)
     async_session_maker = async_sessionmaker(db_engine, expire_on_commit=False, class_=AsyncSession)
-    session = async_session_maker()
-    try:
-        yield session
-    finally:
-        await session.close()
-        await db_engine.dispose()
+
+    yield async_session_maker
+    await db_engine.dispose()
+    prawobiorca.dependency_overrides = {}

@@ -17,7 +17,7 @@ spec:
       serviceAccountName: prawobiorca-runner
       containers:
         - name: postgres
-          image: postgres:18
+          image: pgvector/pgvector:0.8.2-pg18-trixie
           ports:
             - containerPort: 5432
           volumeMounts:
