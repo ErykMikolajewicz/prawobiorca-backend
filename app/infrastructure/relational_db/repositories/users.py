@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import insert, select
+from sqlalchemy import delete, insert, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -63,5 +63,5 @@ class UsersTokensRepository:
         await session.execute(statement)
 
     async def invalidate_session(self, session: AsyncSession, session_id: str):
-        statement = select(self._model).where(self._model.session_id == session_id)
+        statement = delete(self._model).where(self._model.session_id == session_id)
         await session.execute(statement)
