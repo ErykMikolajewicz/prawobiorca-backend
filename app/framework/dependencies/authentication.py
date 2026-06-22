@@ -5,10 +5,11 @@ from uuid import UUID
 from fastapi import Depends, HTTPException, Request, status
 
 from app.application.interfaces.relational import SessionMaker
-from app.application.interfaces.users import UsersTokensRepository
+from app.application.interfaces.users import UsersRepository, UsersTokensRepository
 from app.application.use_cases.auth import LogoutUser
+from app.domain.entities.user import User
 from app.framework.dependencies.relational import get_session_maker
-from app.framework.dependencies.users import get_users_tokens_repository
+from app.framework.dependencies.users import get_users_repository, get_users_tokens_repository
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME
 
 
@@ -45,3 +46,25 @@ async def require_logged_user(request: Request, _: Annotated[None, Depends(set_u
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Login required!")
 
     return user_id
+
+
+async def get_current_user(
+    users_repo: Annotated[UsersRepository, Depends(get_users_repository)],
+    session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
+    user_id: Annotated[UUID, Depends(require_logged_user)],
+) -> User:
+
+    async with session_maker() as session:
+        user = await users_repo.get_by_id(session, user_id)
+
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="login required")
+
+    return user
+
+
+async def require_admin(user: Annotated[User, Depends(get_current_user)]) -> User:
+    if not user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="admin permission required")
+
+    return user
