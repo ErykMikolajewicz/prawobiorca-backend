@@ -17,7 +17,7 @@ class UsersRepository:
 
     async def add(self, session: AsyncSession, create_data: CreateUserData):
         statement = insert(self._model).values(
-            username=create_data.username, hashed_password=create_data.hashed_password
+            username=create_data.username, hashed_password=create_data.hashed_password, is_admin=create_data.is_admin
         )
         try:
             await session.execute(statement)

@@ -14,6 +14,7 @@ class Users(Base, UuidIdMixin, CreateDateMixin):
 
     hashed_password: Mapped[bytes] = mapped_column(sqla.LargeBinary(60))
     username: Mapped[str] = mapped_column(sqla.String(40), nullable=False)
+    is_admin: Mapped[bool] = mapped_column(sqla.Boolean, default=False, nullable=False)
 
 
 class UsersTokens(Base, CreateDateMixin):
