@@ -30,7 +30,17 @@ class UsersRepository:
         if result is None:
             return result
 
-        user = User(result.id, result.username, result.hashed_password)
+        user = User(result.id, result.username, result.hashed_password, result.is_admin)
+        return user
+
+    async def get_by_id(self, session: AsyncSession, id: UUID) -> User | None:
+        statement = select(self._model).where(self._model.id == id)
+        result: Users = await session.scalar(statement)
+
+        if result is None:
+            return result
+
+        user = User(result.id, result.username, result.hashed_password, result.is_admin)
         return user
 
 
