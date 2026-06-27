@@ -97,11 +97,13 @@ async def delete_user_regulation(
     },
 )
 async def search_regulation_articles(
-    search_regulation: Annotated[SearchRegulation, Depends(get_search_regulation)], search_params: SearchParams
+    search_regulation: Annotated[SearchRegulation, Depends(get_search_regulation)],
+    regulation_id: Annotated[UUID, Path(alias="regulationId")],
+    search_params: SearchParams,
 ) -> list[SearchResult]:
     user_id = None
     try:
-        results = await search_regulation.execute(user_id, search_params)
+        results = await search_regulation.execute(user_id, regulation_id, search_params)
     except RegulationsNotPreparedToSearch as e:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

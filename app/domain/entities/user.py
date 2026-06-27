@@ -7,4 +7,3 @@ class User:
     id: UUID
     username: str
     hashed_password: bytes
-    is_admin: bool

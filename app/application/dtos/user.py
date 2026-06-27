@@ -5,4 +5,3 @@ from dataclasses import dataclass
 class CreateUserData:
     username: str
     hashed_password: bytes
-    is_admin: bool = False

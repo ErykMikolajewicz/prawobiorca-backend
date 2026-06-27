@@ -1,7 +1,7 @@
 from pydantic import SecretStr
 
+from app.application.dtos.user import CreateUserData
 from app.domain.services.security import hash_password
-from app.domain.value_objects.user import CreateUserData
 from app.infrastructure.relational_db.repositories.users import UsersRepository
 from tests.consts import STRONG_PASSWORD, VALID_USERNAME
 
