@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 from app.domain.value_objects.regulations import RegulationType
-from app.framework.api.endpoints.admin import add_public_regulation
+from app.framework.api.endpoints.public_regulations import add_public_regulation
 
 
 @pytest.mark.asyncio
