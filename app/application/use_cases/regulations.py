@@ -53,7 +53,7 @@ class AddRegulation:
     regulation_repository: RegulationsRepository
 
     async def execute(
-        self, user_id: UUID, regulation_type: RegulationType | None, regulation_data: RegulationData
+        self, user_id: UUID | None, regulation_type: RegulationType | None, regulation_data: RegulationData
     ) -> UUID:
         regulation_registration_data = RegulationRegistrationData(
             presentation_name=regulation_data.name, document_type=regulation_type

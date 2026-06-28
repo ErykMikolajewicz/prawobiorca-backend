@@ -1,14 +1,23 @@
-from typing import Annotated
+from typing import Annotated, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, UploadFile, status
 
-from app.application.dtos.regulations import RegulationRepresentation
+from app.application.dtos.regulations import RegulationData, RegulationRepresentation
 from app.application.dtos.search import SearchParams, SearchResult
-from app.application.use_cases.regulations import ListRegulations, SearchRegulation
+from app.application.use_cases.regulations import (
+    AddRegulation,
+    ListRegulations,
+    SearchRegulation,
+)
 from app.domain.exceptions import RegulationsNotPreparedToSearch
 from app.domain.value_objects.regulations import RegulationType
-from app.framework.dependencies.regulations import get_list_regulations, get_search_regulation
+from app.framework.dependencies.authentication import require_admin
+from app.framework.dependencies.regulations import (
+    get_add_regulation,
+    get_list_regulations,
+    get_search_regulation,
+)
 
 public_regulations_router = APIRouter(tags=["regulations"], prefix="/api")
 
@@ -24,7 +33,10 @@ async def get_public_regulations(
     user_id = None
     public_regulations = await list_regulations.execute(user_id, regulation_type)
     if not public_regulations:
-        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="No public files for given search criteria.")
+        raise HTTPException(
+            status_code=status.HTTP_204_NO_CONTENT,
+            detail="No public files for given search criteria.",
+        )
 
     return public_regulations
 
@@ -52,3 +64,33 @@ async def search_regulation_documents(
         )
 
     return results
+
+
+@public_regulations_router.post(
+    "/regulations",
+    responses={
+        status.HTTP_201_CREATED: {"description": "Public file added successfully!"},
+    },
+)
+async def add_public_regulation(
+    add_regulation_: Annotated[AddRegulation, Depends(get_add_regulation)],
+    regulation: UploadFile,
+    _: Annotated[UUID, Depends(require_admin)],
+    regulation_type: RegulationType | None = Query(default=None),
+) -> UUID:
+
+    regulation_content = await regulation.read()
+    regulation_name = cast(str, regulation.filename)
+
+    try:
+        regulation_data = RegulationData(name=regulation_name, file=regulation_content)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Regulation {regulation_name} is empty, can't add empty file!",
+        )
+
+    regulation_id = await add_regulation_.execute(
+        user_id=None, regulation_data=regulation_data, regulation_type=regulation_type
+    )
+    return regulation_id
