@@ -25,7 +25,7 @@ async def test_check_user_can_log_invalid_password(mock_session, mock_users_repo
     user_id = next(uuid_generator)
     correct_password = SecretStr(STRONG_PASSWORD)
     hashed_password = hash_password(correct_password)
-    user = User(id=user_id, username=VALID_USERNAME, hashed_password=hashed_password, is_admin=False)
+    user = User(id=user_id, username=VALID_USERNAME, hashed_password=hashed_password)
 
     users_repo = mock_users_repo
     users_repo.get_by_username.return_value = user
@@ -43,7 +43,7 @@ async def test_check_user_can_log_success(mock_session, mock_users_repo, uuid_ge
     user_id = next(uuid_generator)
     password = SecretStr(STRONG_PASSWORD)
     hashed_password = hash_password(password)
-    user = User(id=user_id, username=VALID_USERNAME, hashed_password=hashed_password, is_admin=False)
+    user = User(id=user_id, username=VALID_USERNAME, hashed_password=hashed_password)
 
     users_repo = mock_users_repo
     users_repo.get_by_username.return_value = user

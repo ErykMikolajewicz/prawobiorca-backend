@@ -2,9 +2,10 @@ from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
+from app.application.dtos.user import CreateUserData
 from app.application.interfaces.relational import AsyncSession
 from app.domain.entities.user import User
-from app.domain.value_objects.user import CreateUserData
+from app.domain.value_objects.users import UserPrivileges
 
 
 class UsersRepository(Protocol):
@@ -12,7 +13,7 @@ class UsersRepository(Protocol):
 
     async def get_by_username(self, session: AsyncSession, username: str) -> User | None: ...
 
-    async def get_by_id(self, session: AsyncSession, id: UUID) -> User | None: ...
+    async def get_user_privileges(self, session: AsyncSession, user_id: UUID) -> UserPrivileges | None: ...
 
 
 class UsersTokensRepository(Protocol):

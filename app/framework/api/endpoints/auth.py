@@ -8,9 +8,9 @@ from app.application.dtos.account import LoginData
 from app.application.interfaces.relational import SessionMaker
 from app.application.interfaces.users import UsersRepository, UsersTokensRepository
 from app.application.use_cases.auth import LogoutUser, LogUser
-from app.domain.entities.user import User
 from app.domain.exceptions import UserCantLog
-from app.framework.dependencies.authentication import get_current_user, get_logout_user, set_user_by_session_id
+from app.domain.value_objects.users import UserPrivileges
+from app.framework.dependencies.authentication import get_logout_user, set_user_by_session_id
 from app.framework.dependencies.relational import get_session_maker
 from app.framework.dependencies.users import get_users_repository, get_users_tokens_repository
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME
@@ -52,9 +52,16 @@ async def log_user(
 
 @auth_router.get(
     "/auth/me",
+    dependencies=[Depends(set_user_by_session_id)],
 )
-async def check_is_user_logged(user: Annotated[User, Depends(get_current_user)]):
-    return {"isLogged": True, "isAdmin": user.is_admin}
+async def check_is_user_logged(request: Request):
+    user_id = request.state.user_id
+    user_privileges: UserPrivileges | None = request.state.user_privileges
+
+    if user_id is None or user_privileges is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    else:
+        return {"isAdmin": user_privileges.is_admin}
 
 
 @auth_router.post(

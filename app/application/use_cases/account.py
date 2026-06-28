@@ -2,11 +2,11 @@ import logging
 from dataclasses import dataclass
 
 from app.application.dtos.account import LoginData
+from app.application.dtos.user import CreateUserData
 from app.application.interfaces.relational import SessionMaker
 from app.application.interfaces.users import UsersRepository
 from app.domain.exceptions import UserExists
 from app.domain.services.security import hash_password
-from app.domain.value_objects.user import CreateUserData
 from app.shared.exceptions import ObjectExists
 
 logger = logging.getLogger(__name__)

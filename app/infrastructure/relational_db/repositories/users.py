@@ -5,8 +5,9 @@ from sqlalchemy import delete, insert, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.application.dtos.user import CreateUserData
 from app.domain.entities.user import User
-from app.domain.value_objects.user import CreateUserData
+from app.domain.value_objects.users import UserPrivileges
 from app.infrastructure.relational_db.schemas.users import Users, UsersTokens
 from app.shared.exceptions import ObjectExists
 
@@ -17,7 +18,7 @@ class UsersRepository:
 
     async def add(self, session: AsyncSession, create_data: CreateUserData):
         statement = insert(self._model).values(
-            username=create_data.username, hashed_password=create_data.hashed_password, is_admin=create_data.is_admin
+            username=create_data.username, hashed_password=create_data.hashed_password
         )
         try:
             await session.execute(statement)
@@ -30,18 +31,20 @@ class UsersRepository:
         if result is None:
             return result
 
-        user = User(result.id, result.username, result.hashed_password, result.is_admin)
+        user = User(result.id, result.username, result.hashed_password)
         return user
 
-    async def get_by_id(self, session: AsyncSession, id: UUID) -> User | None:
-        statement = select(self._model).where(self._model.id == id)
-        result: Users = await session.scalar(statement)
+    async def get_user_privileges(self, session: AsyncSession, user_id: UUID) -> UserPrivileges | None:
+        statement = select(self._model.is_admin).where(self._model.id == user_id)
 
-        if result is None:
-            return result
+        is_admin = await session.scalar(statement)
+        if is_admin is None:
+            return None
 
-        user = User(result.id, result.username, result.hashed_password, result.is_admin)
-        return user
+        is_admin = bool(is_admin)
+        user_privileges = UserPrivileges(is_admin=is_admin)
+
+        return user_privileges
 
 
 class UsersTokensRepository:
