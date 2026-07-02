@@ -7,6 +7,7 @@ from app.application.interfaces.regulations import RegulationsRepository
 from app.application.interfaces.relational import AsyncSession, SessionMaker
 from app.application.interfaces.users import UsersRepository, UsersTokensRepository
 from app.application.ports.texts import TextsEmbedder
+from app.application.use_cases.regulations import AddRegulation
 
 
 @pytest.fixture
@@ -58,3 +59,9 @@ def mock_embedding_port():
 def mock_documents_repo():
     repo = create_autospec(DocumentsRepository)
     return repo
+
+
+@pytest.fixture
+def mock_add_regulation():
+    add_regulation = create_autospec(AddRegulation, instance=True)
+    return add_regulation

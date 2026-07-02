@@ -46,7 +46,7 @@ async def get_user_regulations(
     "/user/regulations",
     status_code=status.HTTP_201_CREATED,
     responses={
-        status.HTTP_201_CREATED: {"descriptions": "Successfully add regulation."},
+        status.HTTP_201_CREATED: {"descriptions": "Added  regulation successfully."},
     },
     dependencies=(Depends(require_logged_user),),
 )
