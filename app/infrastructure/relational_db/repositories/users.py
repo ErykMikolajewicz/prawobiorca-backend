@@ -51,10 +51,10 @@ class UsersTokensRepository:
     def __init__(self) -> None:
         self._model = UsersTokens
 
-    async def get_user_id_by_session_id(self, session: AsyncSession, session_id: str) -> UUID | None:
+    async def get_user_id_by_authorization_token(self, session: AsyncSession, token: str) -> UUID | None:
         statement = (
             select(self._model.user_id)
-            .where(self._model.session_id == session_id and self._model.valid_until > datetime.now(timezone.utc))
+            .where(self._model.session_id == token and self._model.valid_until > datetime.now(timezone.utc))
             .limit(1)
         )
 
@@ -67,14 +67,14 @@ class UsersTokensRepository:
 
         return user_id
 
-    async def add_session(self, session: AsyncSession, user_id: UUID, session_id: str, valid_until: datetime) -> None:
+    async def add_token(self, session: AsyncSession, user_id: UUID, token: str, valid_until: datetime) -> None:
         statement = insert(self._model).values(
             user_id=user_id,
-            session_id=session_id,
+            session_id=token,
             valid_until=valid_until,
         )
         await session.execute(statement)
 
-    async def invalidate_session(self, session: AsyncSession, session_id: str):
-        statement = delete(self._model).where(self._model.session_id == session_id)
+    async def invalidate_token(self, session: AsyncSession, token: str):
+        statement = delete(self._model).where(self._model.session_id == token)
         await session.execute(statement)

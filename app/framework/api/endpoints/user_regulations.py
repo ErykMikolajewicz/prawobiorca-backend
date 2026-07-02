@@ -8,7 +8,7 @@ from app.application.dtos.search import SearchParams, SearchResult
 from app.application.use_cases.regulations import AddRegulation, DeleteRegulation, ListRegulations, SearchRegulation
 from app.domain.exceptions import RegulationsNotPreparedToSearch
 from app.domain.value_objects.regulations import RegulationType
-from app.framework.dependencies.authentication import require_logged_user, set_user_by_session_id
+from app.framework.dependencies.authentication import require_logged_user
 from app.framework.dependencies.regulations import (
     get_add_regulation,
     get_delete_regulation,
@@ -17,7 +17,7 @@ from app.framework.dependencies.regulations import (
 )
 
 user_regulations_router = APIRouter(
-    tags=["user_regulations"], dependencies=(Depends(set_user_by_session_id),), prefix="/api"
+    tags=["user_regulations"], dependencies=(Depends(require_logged_user),), prefix="/api"
 )
 
 
@@ -48,7 +48,6 @@ async def get_user_regulations(
     responses={
         status.HTTP_201_CREATED: {"descriptions": "Added  regulation successfully."},
     },
-    dependencies=(Depends(require_logged_user),),
 )
 async def add_user_regulation(
     user_id: Annotated[UUID, Depends(require_logged_user)],

@@ -1,3 +1,11 @@
+from uuid import UUID
+
 STRONG_PASSWORD = "StrongPassword12;"
 
 VALID_USERNAME = "username123"
+
+USER_ID = UUID("edcd61d8-5026-4f71-850d-b5e072601fb3")
+
+AUTHORIZATION_TOKEN = "O8KwTwMvXTSn3VdWl6iZlNqmw39UvFRvIbeHfo-mykY"
+
+UNKNOWN_AUTHORIZATION_TOKEN = "kGG09w8Igs09xBw7ki-oZ-F_kPQC0Hs9tbCyWaKm8fs"

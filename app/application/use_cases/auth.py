@@ -9,7 +9,7 @@ from app.application.interfaces.relational import SessionMaker
 from app.application.interfaces.users import UsersRepository, UsersTokensRepository
 from app.application.services.accounts import check_user_can_log
 from app.domain.exceptions import UserCantLog
-from app.domain.services.security import generate_session_id, prevent_timing_attack
+from app.domain.services.security import generate_authorization_token, prevent_timing_attack
 from app.framework.dependencies.file_storage import app_settings
 
 logger = logging.getLogger(__name__)
@@ -32,13 +32,13 @@ class LogUser:
             await prevent_timing_attack(execution_start_time)
             raise UserCantLog
 
-        session_id = generate_session_id()
+        token = generate_authorization_token()
         valid_until = datetime.now(timezone.utc) + timedelta(seconds=session_id_expiration_seconds)
 
         async with self.session_maker.begin() as session:
-            await self.tokens_repo.add_session(session, user_id, session_id, valid_until)
+            await self.tokens_repo.add_token(session, user_id, token, valid_until)
 
-        return LoginOutput(session_id=session_id, expires_in=session_id_expiration_seconds)
+        return LoginOutput(session_id=token, expires_in=session_id_expiration_seconds)
 
 
 @dataclass
@@ -46,7 +46,7 @@ class LogoutUser:
     session_maker: SessionMaker
     tokens_repo: UsersTokensRepository
 
-    async def execute(self, session_id: str):
+    async def execute(self, authorization_token: str):
 
         async with self.session_maker.begin() as session:
-            await self.tokens_repo.invalidate_session(session, session_id)
+            await self.tokens_repo.invalidate_token(session, authorization_token)

@@ -13,7 +13,7 @@ from app.application.use_cases.cases import (
     ListCases,
 )
 from app.domain.exceptions import CaseNotFound
-from app.framework.dependencies.authentication import require_logged_user, set_user_by_session_id
+from app.framework.dependencies.authentication import authorize_user, require_logged_user
 from app.framework.dependencies.cases import (
     get_add_case_document,
     get_add_user_case,
@@ -23,7 +23,7 @@ from app.framework.dependencies.cases import (
     get_list_user_cases,
 )
 
-cases_router = APIRouter(tags=["cases"], dependencies=(Depends(set_user_by_session_id),), prefix="/api")
+cases_router = APIRouter(tags=["cases"], dependencies=(Depends(authorize_user),), prefix="/api")
 
 
 @cases_router.get("/user/cases", responses={status.HTTP_204_NO_CONTENT: {"description": "No user cases."}})

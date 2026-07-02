@@ -10,7 +10,7 @@ from app.application.interfaces.users import UsersRepository, UsersTokensReposit
 from app.application.use_cases.auth import LogoutUser, LogUser
 from app.domain.exceptions import UserCantLog
 from app.domain.value_objects.users import UserPrivileges
-from app.framework.dependencies.authentication import get_logout_user, set_user_by_session_id
+from app.framework.dependencies.authentication import authorize_user, get_logout_user
 from app.framework.dependencies.relational import get_session_maker
 from app.framework.dependencies.users import get_users_repository, get_users_tokens_repository
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME
@@ -52,7 +52,7 @@ async def log_user(
 
 @auth_router.get(
     "/auth/me",
-    dependencies=[Depends(set_user_by_session_id)],
+    dependencies=[Depends(authorize_user)],
 )
 async def check_is_user_logged(request: Request):
     user_id = request.state.user_id
@@ -66,11 +66,11 @@ async def check_is_user_logged(request: Request):
 
 @auth_router.post(
     "/auth/logout",
-    dependencies=[Depends(set_user_by_session_id)],
+    dependencies=[Depends(authorize_user)],
 )
 async def logout_user(logout_user_: Annotated[LogoutUser, Depends(get_logout_user)], request: Request):
-    session_id = request.state.session_id
-    await logout_user_.execute(session_id)
+    authorization_token = request.state.authorization_token
+    await logout_user_.execute(authorization_token)
 
     response = JSONResponse({"ok": True})
 
