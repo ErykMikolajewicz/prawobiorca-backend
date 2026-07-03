@@ -42,3 +42,6 @@ def client() -> TestClient:
         fastapi.testclient.TestClient: The FastAPI test client.
     """
     return TestClient(prawobiorca)
+
+
+pytest_plugins = ["tests.fixtures.dependencies"]

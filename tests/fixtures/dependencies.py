@@ -2,7 +2,7 @@ from enum import StrEnum
 from typing import Callable
 
 import pytest
-from fastapi import Request
+from fastapi.requests import Request
 
 from app.domain.services.security import extract_authorization_token
 from app.domain.value_objects.users import UserPrivileges
