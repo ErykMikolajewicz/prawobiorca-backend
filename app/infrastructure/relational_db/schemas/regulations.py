@@ -12,7 +12,7 @@ from app.shared.consts import MAX_FILENAME_LENGTH
 class Regulations(Base, UuidIdMixin, CreateDateMixin):
     __tablename__ = "regulations"
 
-    user_id: Mapped[UUID | None] = mapped_column(sqla.ForeignKey("users.id"), nullable=True)
+    user_id: Mapped[UUID | None] = mapped_column(sqla.ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
     presentation_name: Mapped[str] = mapped_column(sqla.String(MAX_FILENAME_LENGTH), nullable=False)
     is_prepared: Mapped[bool] = mapped_column(sqla.Boolean, nullable=False, default=False)
     regulation_type: Mapped[RegulationType | None] = mapped_column(
