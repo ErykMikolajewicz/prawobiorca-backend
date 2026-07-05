@@ -1,5 +1,6 @@
 from enum import StrEnum
 from typing import Callable
+from uuid import UUID
 
 import pytest
 from fastapi.requests import Request
@@ -14,12 +15,12 @@ from tests.consts import AUTHORIZATION_TOKEN, USER_ID
 
 
 class MockStorageRepository:
-    async def upload_file(self, file_data):
+    async def upload_regulation(self, id_: UUID, file_data: bytes):
         pass
 
 
 @pytest.fixture
-def override_get_public_file_storage():
+def override_get_regulations_repository():
     prawobiorca.dependency_overrides[get_regulations_repository] = lambda: MockStorageRepository()
     yield
     prawobiorca.dependency_overrides = {}
@@ -31,7 +32,7 @@ class UserType(StrEnum):
 
 
 @pytest.fixture
-def get_set_mock_auth_dependency(uuid_generator) -> Callable:
+def get_set_mock_auth_dependency() -> Callable:
 
     def set_mock_auth_dependency(user_type: UserType):
         async def mock_authorize_user(request: Request):

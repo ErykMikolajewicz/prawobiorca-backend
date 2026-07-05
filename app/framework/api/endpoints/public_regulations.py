@@ -16,7 +16,7 @@ public_regulations_router = APIRouter(tags=["regulations"], prefix="/api")
 
 @public_regulations_router.get(
     "/regulations",
-    responses={status.HTTP_204_NO_CONTENT: {"descriptions": "Not found public files with that criteria."}},
+    responses={status.HTTP_204_NO_CONTENT: {"descriptions": "No public files for given search criteria."}},
 )
 async def get_public_regulations(
     list_regulations: Annotated[ListRegulations, Depends(get_list_regulations)],
@@ -52,6 +52,9 @@ async def search_regulation_documents(
             f" report problem to application administrator.",
         )
 
+    if not results:
+        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="No search results.")
+
     return results
 
 
@@ -59,6 +62,7 @@ async def search_regulation_documents(
     "/regulations",
     responses={status.HTTP_201_CREATED: {"descriptions": "Added a public regulation successfully."}},
     dependencies=(Depends(require_admin),),
+    status_code=status.HTTP_201_CREATED,
 )
 async def add_public_regulation(
     add_regulation_: Annotated[AddRegulation, Depends(get_add_regulation)],

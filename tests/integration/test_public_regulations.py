@@ -1,14 +1,17 @@
+import json
+from uuid import UUID
+
 import pytest
 from fastapi import status
-from sqlalchemy import delete, insert
+from sqlalchemy import delete, insert, select
 
 from app.domain.value_objects.regulations import RegulationType
 from app.framework.dependencies.text_transformation import get_texts_embedder
 from app.infrastructure.relational_db.schemas.documents import RegulationsDocuments
 from app.infrastructure.relational_db.schemas.regulations import Regulations
-from app.shared.consts import VECTOR_LENGTH
+from app.shared.consts import AUTHORIZATION_COOKIE_NAME, VECTOR_LENGTH
 from main import prawobiorca
-from tests.consts import USER_ID
+from tests.consts import AUTHORIZATION_TOKEN, USER_ID
 
 
 async def test_get_public_regulations(client, override_session_maker, session_maker, set_user, clean_user):
@@ -154,4 +157,41 @@ async def test_search_regulations_documents(client, override_session_maker, sess
                     RegulationsDocuments.id.in_([public_document_id, other_public_document_id])
                 )
             )
+            await session.execute(delete(Regulations).where(Regulations.id == regulation_id))
+
+
+async def test_add_public_regulation_as_admin(
+    client,
+    override_session_maker,
+    session_maker,
+    override_authorize_admin_user,
+    override_get_regulations_repository,
+):
+    file_content = b"public regulation content"
+    files = {"regulation": ("public-regulation.pdf", file_content, "plain/text")}
+    params = {"regulation_type": RegulationType.DECREE}
+
+    client.cookies.set(
+        AUTHORIZATION_COOKIE_NAME,
+        json.dumps({"session_id": AUTHORIZATION_TOKEN}),
+    )
+
+    response = client.post("/api/regulations", files=files, params=params)
+
+    assert response.status_code == status.HTTP_201_CREATED
+
+    regulation_id = UUID(response.json())
+
+    try:
+        async with session_maker() as session:
+            stmt = select(Regulations).where(Regulations.id == regulation_id)
+            regulation = await session.scalar(stmt)
+
+        assert regulation is not None
+        assert regulation.user_id is None
+        assert regulation.presentation_name == "public-regulation.pdf"
+        assert regulation.is_prepared is False
+        assert regulation.regulation_type == RegulationType.DECREE
+    finally:
+        async with session_maker.begin() as session:
             await session.execute(delete(Regulations).where(Regulations.id == regulation_id))

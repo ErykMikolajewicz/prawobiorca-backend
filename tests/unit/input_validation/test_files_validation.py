@@ -20,7 +20,7 @@ from tests.consts import AUTHORIZATION_TOKEN, UNKNOWN_AUTHORIZATION_TOKEN
 )
 def test_logged_used_add_public_regulation_validation(
     client,
-    override_get_public_file_storage,
+    override_get_regulations_repository,
     override_authorize_admin_user,
     file_name,
     file_content,
