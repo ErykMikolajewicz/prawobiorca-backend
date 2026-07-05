@@ -9,7 +9,7 @@ from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile, status
 from src.consts import MAX_TOKENS
-from src.models import Embeddings, Texts
+from src.models import DocumentWithTokens, Embeddings, Texts
 from src.onnx_encoding import OnnxEncoder
 from src.services import add_tokens_info
 
@@ -52,7 +52,7 @@ def embed(texts: Texts, request: Request):
 
 
 @app.post("/parse-regulation")
-def parse_pdf(file: Annotated[UploadFile, File(...)], request: Request):
+def parse_pdf(file: Annotated[UploadFile, File(...)], request: Request) -> list[DocumentWithTokens]:
     converter = request.app.state.converter
     with tempfile.NamedTemporaryFile("wb", suffix=".pdf", delete=False) as temp_file:
         file_content = file.file.read()
