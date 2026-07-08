@@ -18,6 +18,9 @@ class MockStorageRepository:
     async def upload_regulation(self, id_: UUID, file_data: bytes):
         pass
 
+    async def delete_regulation(self, id_: UUID):
+        pass
+
 
 @pytest.fixture
 def override_get_regulations_repository():

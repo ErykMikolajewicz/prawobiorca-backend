@@ -167,8 +167,9 @@ async def test_add_public_regulation_as_admin(
     override_authorize_admin_user,
     override_get_regulations_repository,
 ):
-    file_content = b"public regulation content"
-    files = {"regulation": ("public-regulation.pdf", file_content, "plain/text")}
+    with open("tests/data/pwr-regulamin_2025_slice_7-9.pdf", "rb") as f:
+        regulation_content = f.read()
+    files = {"regulation": ("public-regulation.pdf", regulation_content, "plain/text")}
     params = {"regulation_type": RegulationType.DECREE}
 
     client.cookies.set(

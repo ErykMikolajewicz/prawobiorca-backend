@@ -19,7 +19,7 @@ from app.framework.dependencies.relational import get_session_maker
 from main import prawobiorca
 from tests.consts import TEXT_TRANSFORMATOR_PORT
 
-POSTGRES_IMAGE_VERSION = "pgvector/pgvector:0.8.2-pg18-trixie"
+POSTGRES_IMAGE_VERSION = "pgvector/pgvector:0.8.4-pg18-trixie"
 TEXT_TRANSFORMATOR_IMAGE_TAG = "text-transformator"
 TEXT_TRANSFORMATOR_STARTUP_TIMEOUT = 180
 
