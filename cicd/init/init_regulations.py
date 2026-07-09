@@ -13,6 +13,9 @@ from app.application.services.regulations import RegulationPreparator
 from app.infrastructure.relational_db.connection import async_session_maker
 from app.infrastructure.relational_db.schemas.documents import RegulationsDocuments
 from app.infrastructure.relational_db.schemas.regulations import Regulations
+
+# Unused import necessary for sqlalchemy
+from app.infrastructure.relational_db.schemas.users import Users  # noqa: F401
 from app.infrastructure.text_transformator.regulation_splitter import RegulationSplitter
 from app.infrastructure.text_transformator.text_embedder import TextsEmbedder
 from app.shared.settings.text_transformator import text_transformator_settings

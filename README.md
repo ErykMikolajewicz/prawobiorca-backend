@@ -38,7 +38,7 @@ Plans include:
 
 ## Running the Application
 To check how the application works, launch it using the script below. Note that you must have **Podman** installed for it to work!
-Firstly activate virtual environment
+Firstly, activate a virtual environment
 - on Linux:
 ```bash
 source .venv/bin/activate
@@ -48,33 +48,21 @@ source .venv/bin/activate
 .venv/Scripts/activate
 ```
 
-Start with building main service image with:
+Start with building images with:
 ```sh
-podman image build --tag=prawobiorca-backend .
-```
-
-next step build supporting service:
-
-```sh
-python cicd/scripts/build_text_transformator.py
+poe build_images
 ```
 
 Then run:
 ```sh
-python cicd/scripts/run_locally.py
+poe run_locally
 ```
 
-## Initialize relational database
-To initialize tables in a database, use command:
+## Initialize databases
 ```sh
-python -m alembic upgrade head
+poe init_databases
 ```
-
-Then, seed the database with data:
-```sh
-python cicd/init/seed_relational_db.py
-python cicd/init/init_regulations.py
-```
+This command may take a while, it is making some hard extraction from PDFs.
 
 Then visit the main application page:
 [http://127.0.0.1:8000/](https://127.0.0.1:8000/)

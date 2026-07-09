@@ -5,6 +5,8 @@ and dependency overrides for FastAPI, ensuring test isolation.
 """
 
 # The justification for the applied solutions is in the mkdocs documentation.
+import os
+import subprocess
 from typing import AsyncGenerator, Generator
 
 import alembic.command
@@ -22,6 +24,16 @@ from tests.consts import TEXT_TRANSFORMATOR_PORT
 POSTGRES_IMAGE_VERSION = "pgvector/pgvector:0.8.4-pg18-trixie"
 TEXT_TRANSFORMATOR_IMAGE_TAG = "text-transformator"
 TEXT_TRANSFORMATOR_STARTUP_TIMEOUT = 180
+
+
+@pytest.fixture(scope="session", autouse=True)
+def configure_podman():
+    subprocess.run(["systemctl", "--user", "enable", "--now", "podman.socket"])
+
+    uid = os.getuid()
+    podman_sock = f"unix:///run/user/{uid}/podman/podman.sock"
+
+    os.environ["DOCKER_HOST"] = podman_sock
 
 
 @pytest.fixture(scope="session", autouse=True)

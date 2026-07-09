@@ -28,11 +28,11 @@ def run_container_if_not_running(name, args):
         subprocess.run(cmd, shell=True, check=True)
 
 
-if __name__ == "__main__":
+def main():
     run_container_if_not_running(
         "postgres_db_prawobiorca",
         "-e POSTGRES_PASSWORD=postgres -p 127.0.0.1:5432:5432"
-        " -v pg_data:/var/lib/postgresql pgvector:0.8.2-pg18-trixie",
+        " -v pg_data:/var/lib/postgresql pgvector:0.8.4-pg18-trixie",
     )
 
     run_container_if_not_running("text-transformator", "-p 127.0.0.1:8080:8080 text-transformator")
@@ -52,3 +52,7 @@ if __name__ == "__main__":
         ],
         check=True,
     )
+
+
+if __name__ == "__main__":
+    main()
