@@ -5,14 +5,25 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query, UploadFile, 
 
 from app.application.dtos.regulations import RegulationData, RegulationRepresentation
 from app.application.dtos.search import SearchParams, SearchResult
-from app.application.use_cases.regulations import AddRegulation, DeleteRegulation, ListRegulations, SearchRegulation
-from app.domain.exceptions import RegulationsNotPreparedToSearch
+from app.application.use_cases.regulations import (
+    AddRegulation,
+    DeleteRegulation,
+    ListRegulations,
+    PrepareRegulation,
+    SearchRegulation,
+)
+from app.domain.exceptions import (
+    RegulationAlreadyInitialized,
+    RegulationServiceUnavailable,
+    RegulationsNotPreparedToSearch,
+)
 from app.domain.value_objects.regulations import RegulationType
 from app.framework.dependencies.authentication import require_logged_user
 from app.framework.dependencies.regulations import (
     get_add_regulation,
     get_delete_regulation,
     get_list_regulations,
+    get_prepare_regulation,
     get_search_regulation,
 )
 
@@ -95,12 +106,12 @@ async def delete_user_regulation(
         status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Regulation not prepared, by user, can't search."},
     },
 )
-async def search_regulation_articles(
+async def search_regulation_documents(
     search_regulation: Annotated[SearchRegulation, Depends(get_search_regulation)],
     regulation_id: Annotated[UUID, Path(alias="regulationId")],
-    search_params: SearchParams,
+    user_id: Annotated[UUID, Depends(require_logged_user)],
+    search_params: Annotated[SearchParams, Query()],
 ) -> list[SearchResult]:
-    user_id = None
     try:
         results = await search_regulation.execute(user_id, regulation_id, search_params)
     except RegulationsNotPreparedToSearch as e:
@@ -111,3 +122,36 @@ async def search_regulation_articles(
         )
 
     return results
+
+
+@user_regulations_router.post(
+    "/user/regulations/{regulationId}/preparation",
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_404_NOT_FOUND: {"description": "Regulation to prepare not found!"},
+        status.HTTP_409_CONFLICT: {"description": "Regulation already prepared to search!"},
+        status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Preparation service not working!"},
+    },
+)
+async def prepare_regulation(
+    prepare_regulation_: Annotated[PrepareRegulation, Depends(get_prepare_regulation)],
+    regulation_id: Annotated[UUID, Path(alias="regulationId")],
+    user_id: Annotated[UUID, Depends(require_logged_user)],
+):
+    try:
+        await prepare_regulation_.execute(user_id, regulation_id)
+    except FileNotFoundError:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Regulation to prepare not found!",
+        )
+    except RegulationAlreadyInitialized:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Regulation already prepared to search!",
+        )
+    except RegulationServiceUnavailable:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Preparation service not working!",
+        )

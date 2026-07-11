@@ -25,3 +25,7 @@ class ToLongDocument(Exception):
 
 class CaseNotFound(Exception):
     pass
+
+
+class RegulationServiceUnavailable(Exception):
+    pass

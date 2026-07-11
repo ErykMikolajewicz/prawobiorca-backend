@@ -59,7 +59,7 @@ def get_prepare_regulation(
     session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
     regulations_repository: Annotated[RegulationsRepository, Depends(get_regulations_repository)],
     documents_repository: Annotated[DocumentsRepository, Depends(get_documents_repository)],
-    regulations_manager: Annotated[RegulationsManager, Depends()],
+    regulations_manager: Annotated[RegulationsManager, Depends(get_regulation_manager)],
     regulation_preparator: Annotated[RegulationPreparator, Depends(get_regulation_preparator)],
 ) -> PrepareRegulation:
 

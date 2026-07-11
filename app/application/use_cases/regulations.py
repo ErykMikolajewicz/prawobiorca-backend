@@ -9,7 +9,7 @@ from app.application.interfaces.regulations import RegulationsManager, Regulatio
 from app.application.interfaces.relational import SessionMaker
 from app.application.ports.texts import TextsEmbedder
 from app.application.services.regulations import RegulationPreparator
-from app.domain.exceptions import RegulationAlreadyInitialized
+from app.domain.exceptions import RegulationAlreadyInitialized, RegulationServiceUnavailable
 from app.domain.value_objects.regulations import RegulationRegistrationData, RegulationType
 
 logger = logging.getLogger(__name__)
@@ -25,13 +25,12 @@ class PrepareRegulation:
 
     async def execute(self, user_id: UUID | None, regulation_id: UUID):
         async with self.session_maker() as session:
-            try:
-                file_representation = await self.regulations_manager.get_regulation_representation(
-                    session, user_id, regulation_id
-                )
-            except FileNotFoundError:
-                logger.warning("regulation to prepare not found!")
-                raise
+            file_representation = await self.regulations_manager.get_regulation_representation(
+                session, user_id, regulation_id
+            )
+            if file_representation is None:
+                logger.warning("Regulation to prepare not found!")
+                raise FileNotFoundError
 
         if file_representation.is_prepared:
             logger.warning("Tried prepare already prepared regulation!")
@@ -39,10 +38,14 @@ class PrepareRegulation:
 
         regulation_content = await self.regulations_repository.get_regulation(regulation_id)
 
-        documents_collection = await self.regulation_preparator.prepare_regulation(regulation_content)
+        try:
+            documents_collection = await self.regulation_preparator.prepare_regulation(regulation_content)
+        except Exception as e:
+            logger.error(f"Service to prepare regulation not working! {str(e)}")
+            raise RegulationServiceUnavailable()
 
         async with self.session_maker.begin() as session:
-            await self.documents_repository.add_documents(session, regulation_id, documents_collection)
+            await self.documents_repository.add_documents(session, user_id, regulation_id, documents_collection)
             await self.regulations_manager.mark_as_prepared(session, user_id, regulation_id)
 
 
