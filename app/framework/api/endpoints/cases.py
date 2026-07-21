@@ -3,7 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Path, status
 
-from app.application.dtos.cases import CaseData, NewCaseDocument
+from app.application.dtos.cases import CaseData, CaseDocument, NewCaseDocument
 from app.application.use_cases.cases import (
     AddCase,
     AddCaseDocument,
@@ -91,12 +91,12 @@ async def get_case_documents(
     user_id: Annotated[UUID, Depends(require_logged_user)],
     list_case_documents: Annotated[ListCaseDocuments, Depends(get_list_case_documents)],
     case_id: Annotated[UUID, Path(alias="caseId")],
-):
+) -> list[CaseDocument]:
     documents = await list_case_documents.execute(user_id, case_id)
     return documents
 
 
-@cases_router.delete("/user/cases/documents/{documentId}")
+@cases_router.delete("/user/cases/documents/{documentId}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_case_document(
     user_id: Annotated[UUID, Depends(require_logged_user)],
     delete_case_document_: Annotated[DeleteCaseDocument, Depends(get_delete_case_document)],

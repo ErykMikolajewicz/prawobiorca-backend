@@ -55,11 +55,9 @@ class AddRegulation:
     regulation_manager: RegulationsManager
     regulation_repository: RegulationsRepository
 
-    async def execute(
-        self, user_id: UUID | None, regulation_type: RegulationType | None, regulation_data: RegulationData
-    ) -> UUID:
+    async def execute(self, user_id: UUID | None, regulation_data: RegulationData) -> UUID:
         regulation_registration_data = RegulationRegistrationData(
-            presentation_name=regulation_data.name, document_type=regulation_type
+            presentation_name=regulation_data.name, regulation_type=regulation_data.regulation_type
         )
         async with self.session_maker.begin() as session:
             regulation_id = await self.regulation_manager.register_regulation(

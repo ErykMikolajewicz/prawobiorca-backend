@@ -5,11 +5,11 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy import pool, Connection
 from alembic import context
 
-from app.infrastructure.relational_db.connection import Base
-from app.infrastructure.relational_db.schemas.cases import Cases, CaseDocuments
-from app.infrastructure.relational_db.schemas.users import Users, UsersTokens
-from app.infrastructure.relational_db.schemas.documents import RegulationsDocuments
-from app.infrastructure.relational_db.schemas.regulations import Regulations
+from app.infrastructure.relational_db.schemas.cases import cases_table, case_documents_table
+from app.infrastructure.relational_db.schemas.users import users_table, users_tokens_table
+from app.infrastructure.relational_db.schemas.documents import regulations_documents_table
+from app.infrastructure.relational_db.schemas.regulations import regulations_table
+from app.infrastructure.relational_db.connection import metadata
 
 # Import Vector type for proper rendering in migrations
 from pgvector.sqlalchemy import Vector
@@ -28,7 +28,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = Base.metadata
+target_metadata = metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

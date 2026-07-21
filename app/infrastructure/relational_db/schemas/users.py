@@ -1,28 +1,37 @@
-from datetime import datetime
-from uuid import UUID
-
 import sqlalchemy as sqla
-from sqlalchemy.orm import Mapped, mapped_column
 
-from app.infrastructure.relational_db.connection import Base
-from app.infrastructure.relational_db.schemas.mixins import CreateDateMixin, UuidIdMixin
+from app.domain.entities.user import User
+from app.infrastructure.relational_db.connection import mapper_registry, metadata
+
+users_table = sqla.Table(
+    "users",
+    metadata,
+    sqla.Column("id", sqla.UUID, primary_key=True, server_default=sqla.text("gen_random_uuid()")),
+    sqla.Column("create_date", sqla.DateTime, server_default=sqla.text("now()"), nullable=False),
+    sqla.Column("hashed_password", sqla.LargeBinary(60), nullable=False),
+    sqla.Column("username", sqla.String(40), nullable=False),
+    sqla.Column("is_admin", sqla.Boolean, default=False, server_default="false", nullable=False),
+    sqla.UniqueConstraint("username"),
+)
+
+users_tokens_table = sqla.Table(
+    "users_tokens",
+    metadata,
+    sqla.Column("create_date", sqla.DateTime, server_default=sqla.text("now()"), nullable=False),
+    sqla.Column("user_id", sqla.UUID, sqla.ForeignKey("users.id"), nullable=False),
+    sqla.Column("session_id", sqla.String(64), primary_key=True),
+    sqla.Column("valid_until", sqla.DateTime(timezone=True), nullable=False),
+)
 
 
-class Users(Base, UuidIdMixin, CreateDateMixin):
-    __tablename__ = "users"
-    __table_args__ = (sqla.UniqueConstraint("username"),)
-
-    hashed_password: Mapped[bytes] = mapped_column(sqla.LargeBinary(60))
-    username: Mapped[str] = mapped_column(sqla.String(40), nullable=False)
-    is_admin: Mapped[bool] = mapped_column(sqla.Boolean, default=False, nullable=False)
+class UserToken:
+    pass
 
 
-class UsersTokens(Base, CreateDateMixin):
-    __tablename__ = "users_tokens"
+mapper_registry.map_imperatively(User, users_table, exclude_properties=["create_date", "is_admin"])
 
-    user_id: Mapped[UUID] = mapped_column(sqla.ForeignKey("users.id"), nullable=False)
-    session_id: Mapped[str] = mapped_column(
-        sqla.String(64),
-        primary_key=True,
-    )
-    valid_until: Mapped[datetime] = mapped_column(sqla.DateTime(timezone=True), nullable=False)
+
+mapper_registry.map_imperatively(
+    UserToken,
+    users_tokens_table,
+)

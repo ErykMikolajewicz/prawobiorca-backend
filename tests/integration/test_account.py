@@ -3,10 +3,11 @@ from datetime import datetime, timedelta, timezone
 from http.cookies import SimpleCookie
 
 from fastapi import status
+from sqlalchemy import delete, select
 
 from app.framework.dependencies.file_storage import app_settings
 from app.infrastructure.relational_db.repositories.users import UsersRepository, UsersTokensRepository
-from app.infrastructure.relational_db.schemas.users import UsersTokens
+from app.infrastructure.relational_db.schemas.users import users_tokens_table
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME
 from tests.consts import AUTHORIZATION_TOKEN, STRONG_PASSWORD, USER_ID, VALID_USERNAME
 
@@ -54,9 +55,11 @@ async def test_login_success(client, override_session_maker, session_maker, set_
     assert session_data["expires_in"] == SESSION_ID_EXPIRATION_SECONDS
 
     async with session_maker.begin() as session:
-        user_token = await session.get(UsersTokens, session_id)
+        statement = select(users_tokens_table).where(users_tokens_table.c.session_id == session_id)
+        user_token = await session.scalar(statement)
         assert user_token is not None
-        await session.delete(user_token)
+        statement = delete(users_tokens_table).where(users_tokens_table.c.session_id == session_id)
+        await session.execute(statement)
 
 
 async def test_login_failure_wrong_password(client, override_session_maker, session_maker, set_user, clean_user):
@@ -93,5 +96,6 @@ async def test_logout_success(client, override_session_maker, session_maker, set
     assert "Max-Age=0" in set_cookie_header_logout or "expires=" in set_cookie_header_logout.lower()
 
     async with session_maker.begin() as session:
-        user_token = await session.get(UsersTokens, AUTHORIZATION_TOKEN)
-        assert user_token is None
+        statement = select(users_tokens_table).where(users_tokens_table.c.session_id == AUTHORIZATION_TOKEN)
+        user_token = await session.scalar(statement)
+    assert user_token is None

@@ -121,4 +121,4 @@ class UsefulLabels(StrEnum):
 @dataclass
 class RegulationRegistrationData:
     presentation_name: str
-    document_type: RegulationType | None = None
+    regulation_type: RegulationType | None = None

@@ -1,24 +1,31 @@
-from uuid import UUID
-
 import sqlalchemy as sqla
-from sqlalchemy.orm import Mapped, mapped_column
 
-from app.infrastructure.relational_db.connection import Base
-from app.infrastructure.relational_db.schemas.mixins import CreateDateMixin, UuidIdMixin
+from app.application.dtos.cases import CaseData, CaseDocument
+from app.infrastructure.relational_db.connection import mapper_registry, metadata
 from app.shared.consts import MAX_FILENAME_LENGTH
 
+cases_table = sqla.Table(
+    "cases",
+    metadata,
+    sqla.Column("id", sqla.UUID, primary_key=True, server_default=sqla.text("gen_random_uuid()")),
+    sqla.Column("create_date", sqla.DateTime, server_default=sqla.text("now()"), nullable=False),
+    sqla.Column("user_id", sqla.UUID, sqla.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+    sqla.Column("name", sqla.String(MAX_FILENAME_LENGTH), nullable=False),
+)
 
-class Cases(Base, UuidIdMixin, CreateDateMixin):
-    __tablename__ = "cases"
+case_documents_table = sqla.Table(
+    "case_documents",
+    metadata,
+    sqla.Column("id", sqla.UUID, primary_key=True, server_default=sqla.text("gen_random_uuid()")),
+    sqla.Column("create_date", sqla.DateTime, server_default=sqla.text("now()"), nullable=False),
+    sqla.Column("case_id", sqla.UUID, sqla.ForeignKey("cases.id", ondelete="CASCADE"), nullable=False),
+    sqla.Column("user_id", sqla.UUID, sqla.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
+    sqla.Column("presentation_name", sqla.String(MAX_FILENAME_LENGTH), nullable=False),
+    sqla.Column("content", sqla.Text, nullable=False),
+)
 
-    user_id: Mapped[UUID] = mapped_column(sqla.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    name: Mapped[str] = mapped_column(sqla.String(MAX_FILENAME_LENGTH), nullable=False)
+
+mapper_registry.map_imperatively(CaseData, cases_table)
 
 
-class CaseDocuments(Base, UuidIdMixin, CreateDateMixin):
-    __tablename__ = "case_documents"
-
-    case_id: Mapped[UUID] = mapped_column(sqla.ForeignKey("cases.id", ondelete="CASCADE"), nullable=False)
-    user_id: Mapped[UUID] = mapped_column(sqla.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    presentation_name: Mapped[str] = mapped_column(sqla.String(MAX_FILENAME_LENGTH), nullable=False)
-    content: Mapped[str] = mapped_column(sqla.Text, nullable=False)
+mapper_registry.map_imperatively(CaseDocument, case_documents_table)

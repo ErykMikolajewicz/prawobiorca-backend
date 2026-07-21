@@ -7,8 +7,8 @@ from sqlalchemy import delete, insert, select
 
 from app.domain.value_objects.regulations import RegulationType
 from app.framework.dependencies.text_transformation import get_texts_embedder
-from app.infrastructure.relational_db.schemas.documents import RegulationsDocuments
-from app.infrastructure.relational_db.schemas.regulations import Regulations
+from app.infrastructure.relational_db.schemas.documents import regulations_documents_table
+from app.infrastructure.relational_db.schemas.regulations import regulations_table
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME, VECTOR_LENGTH
 from main import prawobiorca
 from tests.consts import AUTHORIZATION_TOKEN, USER_ID
@@ -16,8 +16,8 @@ from tests.consts import AUTHORIZATION_TOKEN, USER_ID
 
 async def test_get_public_regulations(client, override_session_maker, session_maker, set_user, clean_user):
     async with session_maker.begin() as session:
-        stmt = (
-            insert(Regulations)
+        statement = (
+            insert(regulations_table)
             .values(
                 [
                     {
@@ -40,12 +40,13 @@ async def test_get_public_regulations(client, override_session_maker, session_ma
                     },
                 ]
             )
-            .returning(Regulations.id)
+            .returning(regulations_table.c.id)
         )
 
-        result = await session.scalars(stmt)
+        result = await session.scalars(statement)
 
-    public_act_id, public_decree_id, private_act_id = result.all()
+    regulations_ids = result.all()
+    public_act_id, public_decree_id, private_act_id = regulations_ids
 
     try:
         response = client.get("/api/regulations", params={"documentType": RegulationType.ACT})
@@ -60,13 +61,12 @@ async def test_get_public_regulations(client, override_session_maker, session_ma
         ]
     finally:
         async with session_maker.begin() as session:
-            await session.execute(
-                delete(Regulations).where(Regulations.id.in_([public_act_id, public_decree_id, private_act_id]))
-            )
+            await session.execute(delete(regulations_table).where(regulations_table.c.id.in_(regulations_ids)))
 
 
 class StubTextsEmbedder:
-    async def embed_queries(self, queries):
+    @staticmethod
+    async def embed_queries(queries):
         assert queries == ["public document query"]
         return [[1.0] * VECTOR_LENGTH]
 
@@ -79,7 +79,7 @@ async def test_search_regulations_documents(client, override_session_maker, sess
 
     async with session_maker.begin() as session:
         regulation_ids = await session.scalars(
-            insert(Regulations)
+            insert(regulations_table)
             .values(
                 [
                     {
@@ -96,14 +96,14 @@ async def test_search_regulations_documents(client, override_session_maker, sess
                     },
                 ]
             )
-            .returning(Regulations.id)
+            .returning(regulations_table.c.id)
         )
 
         regulation_id, other_regulation_id = regulation_ids
 
         document_ids = (
             await session.scalars(
-                insert(RegulationsDocuments)
+                insert(regulations_documents_table)
                 .values(
                     [
                         {
@@ -129,7 +129,7 @@ async def test_search_regulations_documents(client, override_session_maker, sess
                         },
                     ]
                 )
-                .returning(RegulationsDocuments.id)
+                .returning(regulations_documents_table.c.id)
             )
         ).all()
 
@@ -153,11 +153,11 @@ async def test_search_regulations_documents(client, override_session_maker, sess
         prawobiorca.dependency_overrides.pop(get_texts_embedder, None)
         async with session_maker.begin() as session:
             await session.execute(
-                delete(RegulationsDocuments).where(
-                    RegulationsDocuments.id.in_([public_document_id, other_public_document_id])
+                delete(regulations_documents_table).where(
+                    regulations_documents_table.c.id.in_([public_document_id, other_public_document_id])
                 )
             )
-            await session.execute(delete(Regulations).where(Regulations.id == regulation_id))
+            await session.execute(delete(regulations_table).where(regulations_table.c.id == regulation_id))
 
 
 async def test_add_public_regulation_as_admin(
@@ -170,7 +170,7 @@ async def test_add_public_regulation_as_admin(
     with open("tests/data/pwr-regulamin_2025_slice_7-9.pdf", "rb") as f:
         regulation_content = f.read()
     files = {"regulation": ("public-regulation.pdf", regulation_content, "plain/text")}
-    params = {"regulation_type": RegulationType.DECREE}
+    params = {"regulationType": RegulationType.DECREE}
 
     client.cookies.set(
         AUTHORIZATION_COOKIE_NAME,
@@ -185,8 +185,9 @@ async def test_add_public_regulation_as_admin(
 
     try:
         async with session_maker() as session:
-            stmt = select(Regulations).where(Regulations.id == regulation_id)
-            regulation = await session.scalar(stmt)
+            statement = select(regulations_table).where(regulations_table.c.id == regulation_id)
+            result = await session.execute(statement)
+        regulation = result.one_or_none()
 
         assert regulation is not None
         assert regulation.user_id is None
@@ -195,4 +196,4 @@ async def test_add_public_regulation_as_admin(
         assert regulation.regulation_type == RegulationType.DECREE
     finally:
         async with session_maker.begin() as session:
-            await session.execute(delete(Regulations).where(Regulations.id == regulation_id))
+            await session.execute(delete(regulations_table).where(regulations_table.c.id == regulation_id))

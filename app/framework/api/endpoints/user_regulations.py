@@ -64,19 +64,19 @@ async def add_user_regulation(
     user_id: Annotated[UUID, Depends(require_logged_user)],
     add_regulation_: Annotated[AddRegulation, Depends(get_add_regulation)],
     regulation: UploadFile,
-    regulation_type: RegulationType | None = Query(default=None),
+    regulation_type: RegulationType | None = Query(default=None, alias="regulationType"),
 ) -> UUID:
     regulation_content = await regulation.read()
     regulation_name = cast(str, regulation.filename)
     try:
-        regulation_data = RegulationData(name=regulation_name, file=regulation_content)
+        regulation_data = RegulationData(name=regulation_name, file=regulation_content, regulation_type=regulation_type)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Regulation {regulation_name} is empty, can't add empty file!",
         )
 
-    regulation_id = await add_regulation_.execute(user_id, regulation_type, regulation_data)
+    regulation_id = await add_regulation_.execute(user_id, regulation_data)
     return regulation_id
 
 

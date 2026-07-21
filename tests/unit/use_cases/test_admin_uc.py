@@ -24,8 +24,8 @@ async def test_add_public_regulation_success(mock_add_regulation, uuid_generator
     call_args = mock_add_regulation.execute.await_args.kwargs
 
     assert call_args["user_id"] is None
-    assert call_args["regulation_type"] == RegulationType.ACT
     assert call_args["regulation_data"].name == "regulation.pdf"
     assert call_args["regulation_data"].file == b"content"
+    assert call_args["regulation_data"].regulation_type == RegulationType.ACT
 
     assert result == regulation_id

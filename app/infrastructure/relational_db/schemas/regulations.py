@@ -1,20 +1,21 @@
-from uuid import UUID
-
 import sqlalchemy as sqla
-from sqlalchemy.orm import Mapped, mapped_column
 
+from app.application.dtos.regulations import RegulationRepresentation
 from app.domain.value_objects.regulations import RegulationType
-from app.infrastructure.relational_db.connection import Base
-from app.infrastructure.relational_db.schemas.mixins import CreateDateMixin, UuidIdMixin
+from app.infrastructure.relational_db.connection import mapper_registry, metadata
 from app.shared.consts import MAX_FILENAME_LENGTH
 
+regulations_table = sqla.Table(
+    "regulations",
+    metadata,
+    sqla.Column("id", sqla.UUID, primary_key=True, server_default=sqla.text("gen_random_uuid()")),
+    sqla.Column("create_date", sqla.DateTime, server_default=sqla.text("now()"), nullable=False),
+    sqla.Column("user_id", sqla.UUID, sqla.ForeignKey("users.id", ondelete="CASCADE"), nullable=True),
+    sqla.Column("presentation_name", sqla.String(MAX_FILENAME_LENGTH), nullable=False),
+    sqla.Column("is_prepared", sqla.Boolean, nullable=False, default=False),
+    sqla.Column("regulation_type", sqla.Enum(RegulationType, name="regulationtype"), nullable=True, default=None),
+    sqla.UniqueConstraint("id", "user_id", name="uq_regulations_id_user_id"),
+)
 
-class Regulations(Base, UuidIdMixin, CreateDateMixin):
-    __tablename__ = "regulations"
 
-    user_id: Mapped[UUID | None] = mapped_column(sqla.ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
-    presentation_name: Mapped[str] = mapped_column(sqla.String(MAX_FILENAME_LENGTH), nullable=False)
-    is_prepared: Mapped[bool] = mapped_column(sqla.Boolean, nullable=False, default=False)
-    regulation_type: Mapped[RegulationType | None] = mapped_column(
-        sqla.Enum(RegulationType), nullable=True, default=None
-    )
+mapper_registry.map_imperatively(RegulationRepresentation, regulations_table)

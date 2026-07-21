@@ -2,9 +2,12 @@ from typing import Awaitable, Callable
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, registry
 
 from app.shared.settings.relational_database import relational_db_settings
+
+mapper_registry = registry()
+metadata = mapper_registry.metadata
 
 db_settings = relational_db_settings
 DATABASE_URL = (

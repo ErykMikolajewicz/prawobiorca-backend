@@ -1,41 +1,38 @@
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.dtos.search import SearchParams, SearchResult
 from app.domain.value_objects.documents import DocumentsCollection
-from app.infrastructure.relational_db.schemas.documents import RegulationsDocuments
+from app.infrastructure.relational_db.schemas.documents import regulations_documents_table
 
 
 class RegulationsDocumentsRepository:
-    def __init__(self):
-        self._model = RegulationsDocuments
-
+    @staticmethod
     async def add_documents(
-        self,
         session: AsyncSession,
         user_id: UUID | None,
         regulation_id: UUID,
         documents: DocumentsCollection,
     ) -> None:
-        articles = [
-            self._model(
-                id=document.id,
-                header=getattr(document, "header", None),
-                text=document.text,
-                vector=document.vector,
-                regulation_id=regulation_id,
-                user_id=user_id,
-            )
+        articles_data = [
+            {
+                "id": document.id,
+                "header": document.title,
+                "text": document.text,
+                "vector": document.vector,
+                "regulation_id": regulation_id,
+                "user_id": user_id,
+            }
             for document in documents
         ]
 
-        session.add_all(articles)
-        await session.flush()
+        stmt = insert(regulations_documents_table).values(articles_data)
+        await session.execute(stmt)
 
+    @staticmethod
     async def search(
-        self,
         session: AsyncSession,
         user_id: UUID | None,
         regulation_id: UUID,
@@ -46,15 +43,18 @@ class RegulationsDocumentsRepository:
         if limit is None:
             limit = 2**32
 
-        distance = self._model.vector.cosine_distance(vector)
+        distance = regulations_documents_table.c.vector.cosine_distance(vector)
 
         query = (
             select(
-                self._model.id,
-                self._model.text,
+                regulations_documents_table.c.id,
+                regulations_documents_table.c.text,
                 distance.label("distance"),
             )
-            .where(self._model.regulation_id == regulation_id, self._model.user_id == user_id)
+            .where(
+                regulations_documents_table.c.regulation_id == regulation_id,
+                regulations_documents_table.c.user_id == user_id,
+            )
             .order_by(distance.asc())
             .limit(limit)
         )
@@ -74,8 +74,11 @@ class RegulationsDocumentsRepository:
             for row in rows
         ]
 
-    async def remove_documents(self, session: AsyncSession, user_id, regulation_id: UUID) -> None:
-        query = delete(self._model).where(self._model.regulation_id == regulation_id, self._model.user_id == user_id)
+    @staticmethod
+    async def remove_documents(session: AsyncSession, user_id, regulation_id: UUID) -> None:
+        query = delete(regulations_documents_table).where(
+            regulations_documents_table.c.regulation_id == regulation_id,
+            regulations_documents_table.c.user_id == user_id,
+        )
 
         await session.execute(query)
-        await session.flush()

@@ -67,7 +67,7 @@ async def search_regulation_documents(
 async def add_public_regulation(
     add_regulation_: Annotated[AddRegulation, Depends(get_add_regulation)],
     regulation: UploadFile,
-    regulation_type: RegulationType | None = Query(default=None),
+    regulation_type: RegulationType | None = Query(default=None, alias="regulationType"),
 ) -> UUID:
     regulation_name = regulation.filename
 
@@ -78,9 +78,7 @@ async def add_public_regulation(
         )
 
     regulation_content = await regulation.read()
-    regulation_data = RegulationData(name=regulation_name, file=regulation_content)
+    regulation_data = RegulationData(name=regulation_name, file=regulation_content, regulation_type=regulation_type)
 
-    regulation_id = await add_regulation_.execute(
-        user_id=None, regulation_type=regulation_type, regulation_data=regulation_data
-    )
+    regulation_id = await add_regulation_.execute(user_id=None, regulation_data=regulation_data)
     return regulation_id

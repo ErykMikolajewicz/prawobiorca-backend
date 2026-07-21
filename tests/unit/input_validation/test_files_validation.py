@@ -28,7 +28,7 @@ def test_logged_used_add_public_regulation_validation(
     error_status,
 ):
     files = {"regulation": (file_name, file_content, "plain/text")}
-    params = {"regulation_type": file_type}
+    params = {"regulationType": file_type}
 
     session_data = {"session_id": AUTHORIZATION_TOKEN}
     cookie_value = json.dumps(session_data)
@@ -43,7 +43,7 @@ def test_logged_used_add_public_regulation_validation(
 
 def test_unauthorized_user_add_public_regulation(client, override_authorize_admin_user):
     files = {"regulation": ("test.txt", b"valid_content", "plain/text")}
-    params = {"regulation_type": RegulationType.DECREE}
+    params = {"regulationType": RegulationType.DECREE}
 
     session_data = {"session_id": UNKNOWN_AUTHORIZATION_TOKEN}
     cookie_value = json.dumps(session_data)
@@ -58,7 +58,7 @@ def test_unauthorized_user_add_public_regulation(client, override_authorize_admi
 
 def test_non_admin_user_add_public_regulation(client, override_authorize_normal_user):
     files = {"regulation": ("test.txt", b"valid_content", "plain/text")}
-    params = {"regulation_type": RegulationType.DECREE}
+    params = {"regulationType": RegulationType.DECREE}
 
     session_data = {"session_id": AUTHORIZATION_TOKEN}
     cookie_value = json.dumps(session_data)

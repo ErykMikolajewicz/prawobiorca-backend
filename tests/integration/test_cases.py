@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import status
 from sqlalchemy import insert, select
 
-from app.infrastructure.relational_db.schemas.cases import Cases
+from app.infrastructure.relational_db.schemas.cases import cases_table
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME
 from tests.consts import ADMIN_ID, AUTHORIZATION_TOKEN, USER_ID
 
@@ -21,8 +21,8 @@ async def test_get_cases_list(
     clean_admin_user,
 ):
     async with session_maker.begin() as session:
-        stmt = (
-            insert(Cases)
+        statement = (
+            insert(cases_table)
             .values(
                 [
                     {"user_id": USER_ID, "name": "First case", "create_date": datetime(2026, 1, 1, 10, 0, 0)},
@@ -30,10 +30,10 @@ async def test_get_cases_list(
                     {"user_id": ADMIN_ID, "name": "Other user case", "create_date": datetime(2026, 1, 3, 10, 0, 0)},
                 ]
             )
-            .returning(Cases.id)
+            .returning(cases_table.c.id)
         )
 
-        result = await session.scalars(stmt)
+        result = await session.scalars(statement)
 
     ids = result.all()
 
@@ -68,8 +68,9 @@ async def test_add_case(
     case_id = UUID(response.json())
 
     async with session_maker() as session:
-        stmt = select(Cases).where(Cases.id == case_id)
-        case = await session.scalar(stmt)
+        statement = select(cases_table).where(cases_table.c.id == case_id)
+        result = await session.execute(statement)
+    case = result.one_or_none()
 
     assert case is not None
     assert case.id == case_id
@@ -81,14 +82,14 @@ async def test_delete_case(
     client, override_session_maker, session_maker, override_authorize_normal_user, set_user, clean_user
 ):
     async with session_maker.begin() as session:
-        stmt = (
-            insert(Cases)
+        statement = (
+            insert(cases_table)
             .values(
                 {"user_id": USER_ID, "name": "Case to delete"},
             )
-            .returning(Cases.id)
+            .returning(cases_table.c.id)
         )
-        case_id = await session.scalar(stmt)
+        case_id = await session.scalar(statement)
 
     client.cookies.set(
         AUTHORIZATION_COOKIE_NAME,
@@ -100,6 +101,8 @@ async def test_delete_case(
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
     async with session_maker() as session:
-        deleted_case = await session.get(Cases, case_id)
+        statement = select(cases_table).where(cases_table.c.id == case_id)
+        result = await session.execute(statement)
+    case = result.one_or_none()
 
-    assert deleted_case is None
+    assert case is None

@@ -1,24 +1,27 @@
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import ConfigDict, Field
+from pydantic.alias_generators import to_camel
+from pydantic.dataclasses import dataclass
 
 from app.shared.consts import MAX_FILENAME_LENGTH, MIN_FILENAME_LENGTH
 
 
-class NewCaseDocument(BaseModel):
-    presentation_name: str = Field(min_length=1, alias="presentationName")
+@dataclass(config=ConfigDict(alias_generator=to_camel))
+class NewCaseDocument:
+    presentation_name: str = Field(min_length=1)
     content: str = Field(min_length=1)
 
 
-class CaseData(BaseModel):
+@dataclass
+class CaseData:
     id: UUID
     name: str
 
 
-class CaseDocument(BaseModel):
+@dataclass(config=ConfigDict(alias_generator=to_camel))
+class CaseDocument:
     id: UUID
-    case_id: UUID = Field(alias="caseId")
-    presentation_name: str = Field(
-        min_length=MIN_FILENAME_LENGTH, max_length=MAX_FILENAME_LENGTH, alias="presentationName"
-    )
+    case_id: UUID
+    presentation_name: str = Field(min_length=MIN_FILENAME_LENGTH, max_length=MAX_FILENAME_LENGTH)
     content: str = Field(min_length=1)

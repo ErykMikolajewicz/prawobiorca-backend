@@ -5,7 +5,7 @@ from fastapi import status
 from sqlalchemy import insert, select
 
 from app.domain.value_objects.regulations import RegulationType
-from app.infrastructure.relational_db.schemas.regulations import Regulations
+from app.infrastructure.relational_db.schemas.regulations import regulations_table
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME
 from tests.consts import AUTHORIZATION_TOKEN, USER_ID
 
@@ -23,7 +23,7 @@ async def test_add_user_regulation(
     with open("tests/data/pwr-regulamin_2025_slice_7-9.pdf", "rb") as f:
         regulation_content = f.read()
     files = {"regulation": ("user-regulation.pdf", regulation_content, "application/pdf")}
-    params = {"regulation_type": RegulationType.ACT}
+    params = {"regulationType": RegulationType.ACT}
 
     client.cookies.set(
         AUTHORIZATION_COOKIE_NAME,
@@ -37,8 +37,9 @@ async def test_add_user_regulation(
     regulation_id = UUID(response.json())
 
     async with session_maker() as session:
-        stmt = select(Regulations).where(Regulations.id == regulation_id)
-        regulation = await session.scalar(stmt)
+        statement = select(regulations_table).where(regulations_table.c.id == regulation_id)
+        result = await session.execute(statement)
+    regulation = result.one_or_none()
 
     assert regulation is not None
     assert regulation.user_id == USER_ID
@@ -58,14 +59,14 @@ async def test_delete_user_regulation(
 ):
     async with session_maker.begin() as session:
         regulation_id = await session.scalar(
-            insert(Regulations)
+            insert(regulations_table)
             .values(
                 user_id=USER_ID,
                 presentation_name="do_usuniecia.pdf",
                 is_prepared=False,
                 regulation_type=RegulationType.ACT,
             )
-            .returning(Regulations.id)
+            .returning(regulations_table.c.id)
         )
 
     client.cookies.set(
@@ -78,7 +79,8 @@ async def test_delete_user_regulation(
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
     async with session_maker() as session:
-        stmt = select(Regulations).where(Regulations.id == regulation_id)
-        deleted_regulation = await session.scalar(stmt)
+        statement = select(regulations_table).where(regulations_table.c.id == regulation_id)
+        result = await session.execute(statement)
+    deleted_regulation = result.one_or_none()
 
     assert deleted_regulation is None
