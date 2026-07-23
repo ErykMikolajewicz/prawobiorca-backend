@@ -18,7 +18,7 @@ users_tokens_table = sqla.Table(
     "users_tokens",
     metadata,
     sqla.Column("create_date", sqla.DateTime, server_default=sqla.text("now()"), nullable=False),
-    sqla.Column("user_id", sqla.UUID, sqla.ForeignKey("users.id"), nullable=False),
+    sqla.Column("user_id", sqla.UUID, sqla.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
     sqla.Column("session_id", sqla.String(64), primary_key=True),
     sqla.Column("valid_until", sqla.DateTime(timezone=True), nullable=False),
 )

@@ -1,4 +1,3 @@
-import json
 from uuid import UUID
 
 from fastapi import status
@@ -25,10 +24,7 @@ async def test_add_user_regulation(
     files = {"regulation": ("user-regulation.pdf", regulation_content, "application/pdf")}
     params = {"regulationType": RegulationType.ACT}
 
-    client.cookies.set(
-        AUTHORIZATION_COOKIE_NAME,
-        json.dumps({"session_id": AUTHORIZATION_TOKEN}),
-    )
+    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
 
     response = client.post("/api/user/regulations", files=files, params=params)
 
@@ -69,10 +65,7 @@ async def test_delete_user_regulation(
             .returning(regulations_table.c.id)
         )
 
-    client.cookies.set(
-        AUTHORIZATION_COOKIE_NAME,
-        json.dumps({"session_id": AUTHORIZATION_TOKEN}),
-    )
+    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
 
     response = client.delete(f"/api/user/regulations/{regulation_id}")
 

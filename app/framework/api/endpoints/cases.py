@@ -32,6 +32,7 @@ async def get_cases_list(
     user_id: Annotated[UUID, Depends(require_logged_user)],
 ) -> list[CaseData]:
     cases = await list_cases.execute(user_id)
+    print(cases)
     if cases:
         return cases
     else:

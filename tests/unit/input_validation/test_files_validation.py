@@ -30,10 +30,7 @@ def test_logged_used_add_public_regulation_validation(
     files = {"regulation": (file_name, file_content, "plain/text")}
     params = {"regulationType": file_type}
 
-    session_data = {"session_id": AUTHORIZATION_TOKEN}
-    cookie_value = json.dumps(session_data)
-
-    cookies = {AUTHORIZATION_COOKIE_NAME: cookie_value}
+    cookies = {AUTHORIZATION_COOKIE_NAME: AUTHORIZATION_TOKEN}
     client.cookies = cookies
 
     response = client.post("api/user/regulations", files=files, params=params)
@@ -60,10 +57,7 @@ def test_non_admin_user_add_public_regulation(client, override_authorize_normal_
     files = {"regulation": ("test.txt", b"valid_content", "plain/text")}
     params = {"regulationType": RegulationType.DECREE}
 
-    session_data = {"session_id": AUTHORIZATION_TOKEN}
-    cookie_value = json.dumps(session_data)
-
-    cookies = {AUTHORIZATION_COOKIE_NAME: cookie_value}
+    cookies = {AUTHORIZATION_COOKIE_NAME: AUTHORIZATION_TOKEN}
     client.cookies = cookies
 
     response = client.post("api/regulations", files=files, params=params)

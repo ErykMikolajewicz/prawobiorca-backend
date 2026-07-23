@@ -1,4 +1,3 @@
-import json
 from uuid import UUID
 
 import pytest
@@ -172,10 +171,7 @@ async def test_add_public_regulation_as_admin(
     files = {"regulation": ("public-regulation.pdf", regulation_content, "plain/text")}
     params = {"regulationType": RegulationType.DECREE}
 
-    client.cookies.set(
-        AUTHORIZATION_COOKIE_NAME,
-        json.dumps({"session_id": AUTHORIZATION_TOKEN}),
-    )
+    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
 
     response = client.post("/api/regulations", files=files, params=params)
 

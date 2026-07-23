@@ -20,7 +20,8 @@ class RegulationsManagerRepository:
         if regulation_type is not None:
             statement = statement.where(regulations_table.c.regulation_type == regulation_type)
 
-        regulations_representation = await session.scalars(statement)
+        result = await session.scalars(statement)
+        regulations_representation = result.all()
 
         return regulations_representation
 

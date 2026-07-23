@@ -3,11 +3,11 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import OAuth2PasswordBearer
 
 from app.application.interfaces.relational import SessionMaker
 from app.application.interfaces.users import UsersRepository, UsersTokensRepository
 from app.application.use_cases.auth import LogoutUser
-from app.domain.services.security import extract_authorization_token
 from app.domain.value_objects.users import UserPrivileges
 from app.framework.dependencies.relational import get_session_maker
 from app.framework.dependencies.users import get_users_repository, get_users_tokens_repository
@@ -15,15 +15,20 @@ from app.shared.consts import AUTHORIZATION_COOKIE_NAME
 
 logger = logging.getLogger(__name__)
 
+_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login?delivery=json", auto_error=False)
+
 
 async def authorize_user(
     session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
     users_tokens_repo: Annotated[UsersTokensRepository, Depends(get_users_tokens_repository)],
     users_repo: Annotated[UsersRepository, Depends(get_users_repository)],
+    header_token: Annotated[str | None, Depends(_oauth2_scheme)],
     request: Request,
 ):
-    authorization_data = request.cookies.get(AUTHORIZATION_COOKIE_NAME)
-    authorization_token = extract_authorization_token(authorization_data)
+    if header_token is not None:
+        authorization_token = header_token
+    else:
+        authorization_token = request.cookies.get(AUTHORIZATION_COOKIE_NAME)
 
     user_id = None
     user_privileges = None
@@ -33,7 +38,7 @@ async def authorize_user(
             if user_id:
                 user_privileges = await users_repo.get_user_privileges(session, user_id)
             else:
-                logger.error(f"User {user_id} for token {authorization_token} not found!")
+                logger.warning(f"User for token {authorization_token} not found!")
 
     request.state.authorization_token = authorization_token
     request.state.user_id = user_id

@@ -1,8 +1,6 @@
 import asyncio
-import json
 import secrets
 from math import ceil
-from typing import Any
 
 import bcrypt
 from pydantic import SecretStr
@@ -34,15 +32,3 @@ async def prevent_timing_attack(execution_start_time: float):
     elapsed_execution_time = asyncio.get_event_loop().time() - execution_start_time
     delay = max(0.0, SECURITY_MIN_RESPONSE_TIME - elapsed_execution_time)
     await asyncio.sleep(delay)
-
-
-def extract_authorization_token(authorization_data: Any) -> str | None:
-    if authorization_data:
-        try:
-            authorization_data = json.loads(authorization_data)
-        except json.JSONDecodeError:
-            return None
-        if isinstance(authorization_data, dict):
-            session_id = authorization_data.get("session_id")
-            return session_id
-    return None

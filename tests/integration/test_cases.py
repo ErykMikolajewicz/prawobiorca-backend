@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 from uuid import UUID
 
@@ -39,10 +38,7 @@ async def test_get_cases_list(
 
     first_case_id, second_case_id, _ = ids
 
-    client.cookies.set(
-        AUTHORIZATION_COOKIE_NAME,
-        json.dumps({"session_id": AUTHORIZATION_TOKEN}),
-    )
+    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
 
     response = client.get("/api/user/cases")
 
@@ -56,10 +52,7 @@ async def test_get_cases_list(
 async def test_add_case(
     client, override_session_maker, session_maker, override_authorize_normal_user, set_user, clean_user
 ):
-    client.cookies.set(
-        AUTHORIZATION_COOKIE_NAME,
-        json.dumps({"session_id": AUTHORIZATION_TOKEN}),
-    )
+    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
 
     response = client.post("/api/user/cases", data={"caseName": "New case"})
 
@@ -91,10 +84,7 @@ async def test_delete_case(
         )
         case_id = await session.scalar(statement)
 
-    client.cookies.set(
-        AUTHORIZATION_COOKIE_NAME,
-        json.dumps({"session_id": AUTHORIZATION_TOKEN}),
-    )
+    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
 
     response = client.delete(f"/api/user/cases/{case_id}")
 

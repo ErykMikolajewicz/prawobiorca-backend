@@ -1,4 +1,3 @@
-import json
 from datetime import datetime, timedelta, timezone
 from http.cookies import SimpleCookie
 
@@ -31,13 +30,12 @@ async def test_create_account(client, override_session_maker, session_maker, cle
 
 
 async def test_login_success(client, override_session_maker, session_maker, set_user, clean_user):
-
     payload = {
         "username": VALID_USERNAME,
         "password": STRONG_PASSWORD,
     }
 
-    response = client.post("/api/auth/login", json=payload)
+    response = client.post("/api/auth/login", data=payload)
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {"ok": True}
@@ -47,18 +45,15 @@ async def test_login_success(client, override_session_maker, session_maker, set_
     cookies = SimpleCookie()
     cookies.load(set_cookie_header)
 
-    cookie_value = cookies[AUTHORIZATION_COOKIE_NAME].value
-    session_data = json.loads(cookie_value)
+    authorization_token = cookies[AUTHORIZATION_COOKIE_NAME].value
 
-    session_id = session_data["session_id"]
-
-    assert session_data["expires_in"] == SESSION_ID_EXPIRATION_SECONDS
+    assert int(cookies[AUTHORIZATION_COOKIE_NAME]["max-age"]) == SESSION_ID_EXPIRATION_SECONDS
 
     async with session_maker.begin() as session:
-        statement = select(users_tokens_table).where(users_tokens_table.c.session_id == session_id)
+        statement = select(users_tokens_table).where(users_tokens_table.c.session_id == authorization_token)
         user_token = await session.scalar(statement)
         assert user_token is not None
-        statement = delete(users_tokens_table).where(users_tokens_table.c.session_id == session_id)
+        statement = delete(users_tokens_table).where(users_tokens_table.c.session_id == authorization_token)
         await session.execute(statement)
 
 
@@ -68,7 +63,7 @@ async def test_login_failure_wrong_password(client, override_session_maker, sess
         "password": "WrongPassword123!",
     }
 
-    response = client.post("/api/auth/login", json=payload)
+    response = client.post("/api/auth/login", data=payload)
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {"detail": "incorrect logging data!"}
@@ -81,10 +76,7 @@ async def test_logout_success(client, override_session_maker, session_maker, set
         users_tokens_repository = UsersTokensRepository()
         await users_tokens_repository.add_token(session, USER_ID, AUTHORIZATION_TOKEN, valid_until)
 
-    client.cookies.set(
-        "session_data",
-        json.dumps({"session_id": AUTHORIZATION_TOKEN}),
-    )
+    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
 
     logout_response = client.post("/api/auth/logout")
 

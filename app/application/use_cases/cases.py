@@ -18,7 +18,7 @@ class ListCases:
     async def execute(self, user_id: UUID) -> list[CaseData]:
         async with self.session_maker() as session:
             cases = await self.cases_repo.list_by_user_id(session, user_id)
-            return cases
+        return cases
 
 
 @dataclass

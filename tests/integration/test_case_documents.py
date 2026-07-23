@@ -1,5 +1,3 @@
-import json
-
 from fastapi import status
 from sqlalchemy import insert, select
 
@@ -21,10 +19,7 @@ async def test_add_case_document(
         )
         case_id = await session.scalar(statement)
 
-    client.cookies.set(
-        AUTHORIZATION_COOKIE_NAME,
-        json.dumps({"session_id": AUTHORIZATION_TOKEN}),
-    )
+    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
 
     response = client.post(
         f"/api/user/cases/{case_id}/documents",
@@ -72,10 +67,7 @@ async def test_delete_case_document(
         )
         document_id = await session.scalar(create_document_stmt)
 
-    client.cookies.set(
-        AUTHORIZATION_COOKIE_NAME,
-        json.dumps({"session_id": AUTHORIZATION_TOKEN}),
-    )
+    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
 
     response = client.delete(f"/api/user/cases/documents/{document_id}")
 
@@ -146,10 +138,7 @@ async def test_get_case_documents(
         )
         first_document_id, second_document_id, _, _ = (await session.scalars(create_documents_stmt)).all()
 
-    client.cookies.set(
-        AUTHORIZATION_COOKIE_NAME,
-        json.dumps({"session_id": AUTHORIZATION_TOKEN}),
-    )
+    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
 
     response = client.get(f"/api/user/cases/{target_case_id}/documents")
 

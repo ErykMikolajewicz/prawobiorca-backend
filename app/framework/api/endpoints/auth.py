@@ -1,8 +1,8 @@
-import json
-from typing import Annotated
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse
+from fastapi.security import OAuth2PasswordRequestForm
 
 from app.application.dtos.account import LoginData
 from app.application.interfaces.relational import SessionMaker
@@ -23,8 +23,10 @@ async def log_user(
     session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
     users_repo: Annotated[UsersRepository, Depends(get_users_repository)],
     tokens_repo: Annotated[UsersTokensRepository, Depends(get_users_tokens_repository)],
-    login_data: LoginData,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    delivery: Annotated[Literal["cookie", "json"], Query()] = "cookie",
 ):
+    login_data = LoginData(username=form_data.username, password=form_data.password)
 
     log_user_ = LogUser(session_maker, users_repo, tokens_repo)
     try:
@@ -33,18 +35,21 @@ async def log_user(
         error_message = "incorrect logging data!"
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=error_message)
 
-    login_output = login_output.model_dump()
-    session_data = json.dumps(login_output)
+    token_string = login_output.session_id
+    expiration_time = login_output.expires_in
+
+    if delivery == "json":
+        return {"access_token": token_string, "token_type": "bearer", "expires_in": expiration_time}
 
     response = JSONResponse({"ok": True})
     response.set_cookie(
         key=AUTHORIZATION_COOKIE_NAME,
-        value=session_data,
+        value=token_string,
         httponly=True,
         secure=True,
         samesite="none",
-        max_age=60 * 60 * 24 * 7,
-        path="/",
+        max_age=expiration_time,
+        path="/api",
     )
 
     return response
@@ -76,7 +81,7 @@ async def logout_user(logout_user_: Annotated[LogoutUser, Depends(get_logout_use
 
     response.delete_cookie(
         key=AUTHORIZATION_COOKIE_NAME,
-        path="/",
+        path="/api",
     )
 
     return response

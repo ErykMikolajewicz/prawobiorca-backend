@@ -5,7 +5,6 @@ from uuid import UUID
 import pytest
 from fastapi.requests import Request
 
-from app.domain.services.security import extract_authorization_token
 from app.domain.value_objects.users import UserPrivileges
 from app.framework.dependencies.authentication import authorize_user
 from app.framework.dependencies.regulations import get_regulations_repository
@@ -39,8 +38,7 @@ def get_set_mock_auth_dependency() -> Callable:
 
     def set_mock_auth_dependency(user_type: UserType):
         async def mock_authorize_user(request: Request):
-            authorization_data = request.cookies.get(AUTHORIZATION_COOKIE_NAME)
-            authorization_token = extract_authorization_token(authorization_data)
+            authorization_token = request.cookies.get(AUTHORIZATION_COOKIE_NAME)
 
             user_id = None
             user_privileges = None
