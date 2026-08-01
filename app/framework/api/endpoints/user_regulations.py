@@ -10,9 +10,10 @@ from app.application.use_cases.regulations import (
     DeleteRegulation,
     ListRegulations,
     PrepareRegulation,
+    RegulationNotFound,
     SearchRegulation,
 )
-from app.domain.exceptions import (
+from app.domain.exceptions.regulations import (
     RegulationAlreadyInitialized,
     RegulationServiceUnavailable,
     RegulationsNotPreparedToSearch,
@@ -57,7 +58,7 @@ async def get_user_regulations(
     "/user/regulations",
     status_code=status.HTTP_201_CREATED,
     responses={
-        status.HTTP_201_CREATED: {"descriptions": "Added  regulation successfully."},
+        status.HTTP_400_BAD_REQUEST: {"description": "Can't add empty regulation."},
     },
 )
 async def add_user_regulation(
@@ -84,7 +85,6 @@ async def add_user_regulation(
     "/user/regulations/{regulationId}",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
-        status.HTTP_204_NO_CONTENT: {"description": "Regulation deleted."},
         status.HTTP_404_NOT_FOUND: {"description": "Regulation not found!"},
     },
 )
@@ -95,7 +95,7 @@ async def delete_user_regulation(
 ):
     try:
         await delete_user_regulation_.execute(user_id, regulation_id)
-    except FileNotFoundError:
+    except RegulationNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Regulation not found!")
 
 
@@ -103,7 +103,8 @@ async def delete_user_regulation(
     "/user/regulations/{regulationId}/documents",
     responses={
         status.HTTP_204_NO_CONTENT: {"description": "No search results."},
-        status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Regulation not prepared, by user, can't search."},
+        status.HTTP_400_BAD_REQUEST: {"description": "Regulation not prepared, by user, can't search."},
+        status.HTTP_404_NOT_FOUND: {"description": "Regulation not found."},
     },
 )
 async def search_regulation_documents(
@@ -114,9 +115,13 @@ async def search_regulation_documents(
 ) -> list[SearchResult]:
     try:
         results = await search_regulation.execute(user_id, regulation_id, search_params)
+    except RegulationNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Regulation with id {regulation_id} not found."
+        )
     except RegulationsNotPreparedToSearch as e:
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Regulation {e.regulations_name}, not prepared to search,"
             f" report problem to application administrator.",
         )
@@ -140,7 +145,7 @@ async def prepare_regulation(
 ):
     try:
         await prepare_regulation_.execute(user_id, regulation_id)
-    except FileNotFoundError:
+    except RegulationNotFound:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Regulation to prepare not found!",

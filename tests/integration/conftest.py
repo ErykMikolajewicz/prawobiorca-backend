@@ -120,6 +120,3 @@ async def session_maker(postgres_container: PostgresContainer) -> AsyncGenerator
     yield async_session_maker
     await db_engine.dispose()
     prawobiorca.dependency_overrides = {}
-
-
-pytest_plugins = ["tests.integration.fixtures.users"]

@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from itertools import pairwise
 
-from app.domain.exceptions import ToLongDocument, ToLongHeaderSection
+from app.domain.exceptions.documents import ToLongDocument, ToLongHeaderSection
 from app.domain.value_objects.documents import Document, DocumentsCollection
 from app.shared.settings.application import app_settings
 from app.shared.settings.text_transformator import text_transformator_settings

@@ -6,7 +6,12 @@ from app.application.use_cases.regulations import SearchRegulation
 
 @pytest.mark.asyncio
 async def test_search_file_success(
-    mock_embedding_port, mock_documents_repo, mock_session_maker, uuid_generator, mock_opened_session
+    mock_embedding_port,
+    mock_documents_repo,
+    mock_session_maker,
+    uuid_generator,
+    mock_opened_session,
+    mock_regulations_repository,
 ):
     query = "test query"
     embedding_vector = [0.1, 0.2, 0.3]
@@ -24,7 +29,10 @@ async def test_search_file_success(
     search_params = SearchParams(threshold=0, limit=None, query=query)
 
     use_case = SearchRegulation(
-        session_maker=mock_session_maker, embedding_port=mock_embedding_port, documents_repository=mock_documents_repo
+        session_maker=mock_session_maker,
+        embedding_port=mock_embedding_port,
+        documents_repository=mock_documents_repo,
+        regulations_repository=mock_regulations_repository,
     )
 
     result = await use_case.execute(user_id, regulation_id, search_params)
@@ -38,7 +46,12 @@ async def test_search_file_success(
 
 @pytest.mark.asyncio
 async def test_search_file_no_results(
-    mock_embedding_port, mock_documents_repo, mock_session_maker, uuid_generator, mock_opened_session
+    mock_embedding_port,
+    mock_documents_repo,
+    mock_session_maker,
+    uuid_generator,
+    mock_opened_session,
+    mock_regulations_repository,
 ):
     query = "unknown query"
     embedding_vector = [0.0, 0.0, 0.0]
@@ -56,6 +69,7 @@ async def test_search_file_no_results(
         session_maker=mock_session_maker,
         embedding_port=mock_embedding_port,
         documents_repository=mock_documents_repo,
+        regulations_repository=mock_regulations_repository,
     )
 
     result = await use_case.execute(user_id, regulation_id, search_params)
@@ -69,7 +83,7 @@ async def test_search_file_no_results(
 
 @pytest.mark.asyncio
 async def test_search_file_embedding_error(
-    mock_embedding_port, mock_session_maker, mock_documents_repo, uuid_generator
+    mock_embedding_port, mock_session_maker, mock_documents_repo, uuid_generator, mock_regulations_repository
 ):
     query = "error query"
     mock_embedding_port.embed_queries.side_effect = Exception("Embedding service down")
@@ -80,7 +94,10 @@ async def test_search_file_embedding_error(
     search_params = SearchParams(threshold=0, limit=None, query=query)
 
     use_case = SearchRegulation(
-        session_maker=mock_session_maker, embedding_port=mock_embedding_port, documents_repository=mock_documents_repo
+        session_maker=mock_session_maker,
+        embedding_port=mock_embedding_port,
+        documents_repository=mock_documents_repo,
+        regulations_repository=mock_regulations_repository,
     )
 
     with pytest.raises(Exception, match="Embedding service down"):
@@ -92,7 +109,12 @@ async def test_search_file_embedding_error(
 
 @pytest.mark.asyncio
 async def test_search_file_repository_error(
-    mock_embedding_port, mock_documents_repo, mock_session_maker, uuid_generator, mock_opened_session
+    mock_embedding_port,
+    mock_documents_repo,
+    mock_session_maker,
+    uuid_generator,
+    mock_opened_session,
+    mock_regulations_repository,
 ):
     query = "repo error query"
     embedding_vector = [0.1, 0.1, 0.1]
@@ -106,7 +128,10 @@ async def test_search_file_repository_error(
     mock_documents_repo.search.side_effect = Exception("Database error")
 
     use_case = SearchRegulation(
-        session_maker=mock_session_maker, embedding_port=mock_embedding_port, documents_repository=mock_documents_repo
+        session_maker=mock_session_maker,
+        embedding_port=mock_embedding_port,
+        documents_repository=mock_documents_repo,
+        regulations_repository=mock_regulations_repository,
     )
 
     with pytest.raises(Exception, match="Database error"):

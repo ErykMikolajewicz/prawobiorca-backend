@@ -3,11 +3,10 @@ from unittest.mock import create_autospec
 import pytest
 
 from app.application.interfaces.documents import DocumentsRepository
-from app.application.interfaces.regulations import RegulationsRepository
+from app.application.interfaces.regulations import RegulationsRepository, RegulationsStorage
 from app.application.interfaces.relational import AsyncSession, SessionMaker
 from app.application.interfaces.users import UsersRepository, UsersTokensRepository
 from app.application.ports.texts import TextsEmbedder
-from app.application.use_cases.regulations import AddRegulation
 
 
 @pytest.fixture
@@ -44,7 +43,13 @@ def mock_tokens_repo():
 
 
 @pytest.fixture
-def mock_regulations_repo():
+def mock_regulations_storage():
+    repo = create_autospec(RegulationsStorage)
+    return repo
+
+
+@pytest.fixture
+def mock_regulations_repository():
     repo = create_autospec(RegulationsRepository)
     return repo
 
@@ -59,9 +64,3 @@ def mock_embedding_port():
 def mock_documents_repo():
     repo = create_autospec(DocumentsRepository)
     return repo
-
-
-@pytest.fixture
-def mock_add_regulation():
-    add_regulation = create_autospec(AddRegulation, instance=True)
-    return add_regulation

@@ -1,6 +1,6 @@
 [project]
 name = "prawobiorca-backend"
-version = "0.49.8"
+version = "0.49.9"
 description = "Law acts search engine with AI features."
 readme = "README.md"
 requires-python = "==3.14.*"
@@ -8,9 +8,9 @@ dependencies = [
     "asyncpg==0.31.*",
     "bcrypt==5.0.*",
     "email-validator==2.3.*",
-    "fastapi==0.139.*",
+    "fastapi==0.141.*",
     "granian==2.7.*",
-    "httpx2==2.7.*",
+    "httpx2==2.9.*",
     "pgvector==0.5.*",
     "pydantic==2.13.*",
     "pydantic-settings==2.14.*",
@@ -52,14 +52,15 @@ build_app = "podman image build --tag=prawobiorca-backend ."
 build_text-transformator = "podman image build --tag=text-transformator text-transformator"
 
 upgrade_db_schemas = "uv run --group test alembic upgrade head"
-seed_relational_db = "uv run cicd/init/seed_relational_db.py"
+seed = "uv run cicd/init/seed_relational_db.py"
 init_regulations = "uv run cicd/init/init_regulations.py"
+cov = "coverage report -m --skip-covered --fail-under=95 --sort=Cover"
 
 [tool.poe.tasks.build_images]
 sequence = ["build_app", "build_text-transformator"]
 
-[tool.poe.tasks.init_databases]
-sequence = ["upgrade_db_schemas", "seed_relational_db", "init_regulations"]
+[tool.poe.tasks.init_db]
+sequence = ["upgrade_db_schemas", "seed", "init_regulations"]
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
@@ -68,6 +69,12 @@ asyncio_mode = "auto"
 addopts = '-m "not slow"'
 markers = [
     "slow: marks tests as slow",
+]
+
+[tool.coverage.report]
+omit = [
+    "app/framework/**",
+    "app/infrastructure/relational_db/**"
 ]
 
 [tool.ruff]

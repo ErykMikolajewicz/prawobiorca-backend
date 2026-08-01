@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import Depends
 
 from app.application.interfaces.documents import DocumentsRepository
-from app.application.interfaces.regulations import RegulationsManager, RegulationsRepository
+from app.application.interfaces.regulations import RegulationsRepository, RegulationsStorage
 from app.application.interfaces.relational import SessionMaker
 from app.application.ports.regulations import RegulationSpliter
 from app.application.ports.texts import TextsEmbedder
@@ -30,13 +30,13 @@ def get_documents_repository() -> DocumentsRepository:
     return RegulationsDocumentsRepository()
 
 
-def get_regulations_repository() -> RegulationsRepository:
+def get_regulations_storage() -> RegulationsStorage:
     from app.infrastructure.local_storage.repository import LocalRegulationsStorage
 
     return LocalRegulationsStorage()
 
 
-def get_regulation_manager() -> RegulationsManager:
+def get_regulation_repository() -> RegulationsRepository:
     return RegulationsManagerRepository()
 
 
@@ -49,7 +49,7 @@ def get_regulation_preparator(
 
 def get_list_regulations(
     session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
-    regulation_manager: Annotated[RegulationsManager, Depends(get_regulation_manager)],
+    regulation_manager: Annotated[RegulationsRepository, Depends(get_regulation_repository)],
 ) -> ListRegulations:
 
     return ListRegulations(session_maker, regulation_manager)
@@ -57,41 +57,42 @@ def get_list_regulations(
 
 def get_prepare_regulation(
     session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
-    regulations_repository: Annotated[RegulationsRepository, Depends(get_regulations_repository)],
+    regulations_storage: Annotated[RegulationsStorage, Depends(get_regulations_storage)],
     documents_repository: Annotated[DocumentsRepository, Depends(get_documents_repository)],
-    regulations_manager: Annotated[RegulationsManager, Depends(get_regulation_manager)],
+    regulations_repository: Annotated[RegulationsRepository, Depends(get_regulation_repository)],
     regulation_preparator: Annotated[RegulationPreparator, Depends(get_regulation_preparator)],
 ) -> PrepareRegulation:
 
     return PrepareRegulation(
         session_maker,
-        regulations_repository,
+        regulations_storage,
         documents_repository,
-        regulations_manager,
+        regulations_repository,
         regulation_preparator,
     )
 
 
 def get_delete_regulation(
     session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
-    regulations_manager: Annotated[RegulationsManager, Depends(get_regulation_manager)],
+    regulations_repository: Annotated[RegulationsRepository, Depends(get_regulation_repository)],
     documents_repository: Annotated[DocumentsRepository, Depends(get_documents_repository)],
-    regulations_repository: Annotated[RegulationsRepository, Depends(get_regulations_repository)],
+    regulations_storage: Annotated[RegulationsStorage, Depends(get_regulations_storage)],
 ) -> DeleteRegulation:
-    return DeleteRegulation(session_maker, regulations_manager, documents_repository, regulations_repository)
+    return DeleteRegulation(session_maker, regulations_repository, documents_repository, regulations_storage)
 
 
 def get_search_regulation(
     session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
     texts_embedder: Annotated[TextsEmbedder, Depends(get_texts_embedder)],
     documents_repository: Annotated[DocumentsRepository, Depends(get_documents_repository)],
+    regulations_repository: Annotated[RegulationsRepository, Depends(get_regulation_repository)],
 ) -> SearchRegulation:
-    return SearchRegulation(session_maker, texts_embedder, documents_repository)
+    return SearchRegulation(session_maker, texts_embedder, documents_repository, regulations_repository)
 
 
 def get_add_regulation(
     session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
-    regulations_manager: Annotated[RegulationsManager, Depends(get_regulation_manager)],
-    regulations_repository: Annotated[RegulationsRepository, Depends(get_regulations_repository)],
+    regulations_repository: Annotated[RegulationsRepository, Depends(get_regulation_repository)],
+    regulations_storage: Annotated[RegulationsStorage, Depends(get_regulations_storage)],
 ) -> AddRegulation:
-    return AddRegulation(session_maker, regulations_manager, regulations_repository)
+    return AddRegulation(session_maker, regulations_repository, regulations_storage)

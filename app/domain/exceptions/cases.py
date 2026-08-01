@@ -1,0 +1,2 @@
+class CaseNotFound(Exception):
+    pass

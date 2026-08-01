@@ -7,7 +7,7 @@ from fastapi.requests import Request
 
 from app.domain.value_objects.users import UserPrivileges
 from app.framework.dependencies.authentication import authorize_user
-from app.framework.dependencies.regulations import get_regulations_repository
+from app.framework.dependencies.regulations import get_regulations_storage
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME
 from main import prawobiorca
 from tests.consts import AUTHORIZATION_TOKEN, USER_ID
@@ -23,7 +23,7 @@ class MockStorageRepository:
 
 @pytest.fixture
 def override_get_regulations_repository():
-    prawobiorca.dependency_overrides[get_regulations_repository] = lambda: MockStorageRepository()
+    prawobiorca.dependency_overrides[get_regulations_storage] = lambda: MockStorageRepository()
     yield
     prawobiorca.dependency_overrides = {}
 

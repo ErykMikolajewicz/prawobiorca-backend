@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.dtos.cases import CaseData, CaseDocument, NewCaseDocument
-from app.domain.exceptions import CaseNotFound
+from app.domain.exceptions.cases import CaseNotFound
 from app.infrastructure.relational_db.schemas.cases import case_documents_table, cases_table
 
 

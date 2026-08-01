@@ -3,6 +3,7 @@ from uuid import UUID
 
 import aiofiles
 import aiofiles.os
+from app.domain.exceptions.exceptions import RegulationContentNotFound
 
 
 class LocalRegulationsStorage:
@@ -11,8 +12,11 @@ class LocalRegulationsStorage:
 
     async def get_regulation(self, id_: UUID) -> bytes:
         file_path = self._regulations_dir / str(id_)
-        async with aiofiles.open(file_path, "rb") as file:
-            bytes_read = await file.read()
+        try:
+            async with aiofiles.open(file_path, "rb") as file:
+                bytes_read = await file.read()
+        except FileNotFoundError:
+            raise RegulationContentNotFound
 
         return bytes_read
 

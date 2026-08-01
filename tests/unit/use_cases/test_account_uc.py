@@ -5,7 +5,7 @@ from pydantic import SecretStr
 
 from app.application.dtos.user import CreateUserData
 from app.application.use_cases.account import CreateAccount, LoginData, ObjectExists
-from app.domain.exceptions import UserExists
+from app.domain.exceptions.users import UserExists
 from tests.consts import STRONG_PASSWORD, VALID_USERNAME
 
 

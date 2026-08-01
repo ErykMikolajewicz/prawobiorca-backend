@@ -4,6 +4,7 @@ from sqlalchemy import delete, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.dtos.search import SearchParams, SearchResult
+from app.domain.exceptions.documents import RegulationDocumentsNotFound
 from app.domain.value_objects.documents import DocumentsCollection
 from app.infrastructure.relational_db.schemas.documents import regulations_documents_table
 
@@ -39,6 +40,18 @@ class RegulationsDocumentsRepository:
         vector: list[float],
         search_params: SearchParams,
     ) -> list[SearchResult]:
+        exists_query = (
+            select(1)
+            .where(
+                regulations_documents_table.c.regulation_id == regulation_id,
+                regulations_documents_table.c.user_id == user_id,
+            )
+            .limit(1)
+        )
+        exists_result = await session.execute(exists_query)
+        if not exists_result.scalar():
+            raise RegulationDocumentsNotFound()
+
         limit = search_params.limit
         if limit is None:
             limit = 2**32

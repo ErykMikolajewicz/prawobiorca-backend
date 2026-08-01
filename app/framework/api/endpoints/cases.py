@@ -12,7 +12,7 @@ from app.application.use_cases.cases import (
     ListCaseDocuments,
     ListCases,
 )
-from app.domain.exceptions import CaseNotFound
+from app.domain.exceptions.cases import CaseNotFound
 from app.framework.dependencies.authentication import authorize_user, require_logged_user
 from app.framework.dependencies.cases import (
     get_add_case_document,
@@ -32,7 +32,6 @@ async def get_cases_list(
     user_id: Annotated[UUID, Depends(require_logged_user)],
 ) -> list[CaseData]:
     cases = await list_cases.execute(user_id)
-    print(cases)
     if cases:
         return cases
     else:
@@ -53,7 +52,6 @@ async def add_case(
     "/user/cases/{caseId}",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={
-        status.HTTP_204_NO_CONTENT: {"description": "Case deleted."},
         status.HTTP_404_NOT_FOUND: {"description": "No case with that id!"},
     },
 )
@@ -87,13 +85,18 @@ async def add_case_document(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No case with that id!")
 
 
-@cases_router.get("/user/cases/{caseId}/documents")
+@cases_router.get(
+    "/user/cases/{caseId}/documents", responses={status.HTTP_204_NO_CONTENT: {"description": "No documents for case."}}
+)
 async def get_case_documents(
     user_id: Annotated[UUID, Depends(require_logged_user)],
     list_case_documents: Annotated[ListCaseDocuments, Depends(get_list_case_documents)],
     case_id: Annotated[UUID, Path(alias="caseId")],
 ) -> list[CaseDocument]:
     documents = await list_case_documents.execute(user_id, case_id)
+
+    if not documents:
+        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="No documents for case.")
     return documents
 
 

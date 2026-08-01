@@ -44,4 +44,4 @@ def client() -> TestClient:
     return TestClient(prawobiorca)
 
 
-pytest_plugins = ["tests.fixtures.dependencies"]
+pytest_plugins = ["tests.fixtures.dependencies", "tests.integration.fixtures.users"]

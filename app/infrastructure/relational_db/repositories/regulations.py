@@ -71,14 +71,12 @@ class RegulationsManagerRepository:
     @staticmethod
     async def get_regulation_representation(
         session: AsyncSession, user_id: UUID | None, id_: UUID
-    ) -> RegulationRepresentation:
+    ) -> RegulationRepresentation | None:
         statement = select(RegulationRepresentation).where(
             regulations_table.c.user_id == user_id, regulations_table.c.id == id_
         )
         result = await session.scalars(statement)
 
         regulation_representation = result.one_or_none()
-        if regulation_representation is None:
-            raise FileNotFoundError
 
         return regulation_representation

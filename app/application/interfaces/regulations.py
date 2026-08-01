@@ -6,7 +6,7 @@ from app.application.interfaces.relational import AsyncSession
 from app.domain.value_objects.regulations import RegulationRegistrationData, RegulationType
 
 
-class RegulationsRepository(Protocol):
+class RegulationsStorage(Protocol):
     async def get_regulation(self, id_: UUID) -> bytes: ...
 
     async def upload_regulation(self, id_: UUID, file_data: bytes) -> None: ...
@@ -14,7 +14,7 @@ class RegulationsRepository(Protocol):
     async def delete_regulation(self, id_: UUID) -> None: ...
 
 
-class RegulationsManager(Protocol):
+class RegulationsRepository(Protocol):
     def __init__(self): ...
 
     async def list_regulations(
@@ -31,4 +31,4 @@ class RegulationsManager(Protocol):
 
     async def get_regulation_representation(
         self, session: AsyncSession, user_id: UUID | None, id_: UUID
-    ) -> RegulationRepresentation: ...
+    ) -> RegulationRepresentation | None: ...

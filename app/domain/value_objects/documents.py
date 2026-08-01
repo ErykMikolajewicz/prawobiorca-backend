@@ -8,7 +8,7 @@ from app.shared.settings.application import app_settings
 
 @dataclass
 class Document:
-    title: str
+    title: str | None
     text: str
     vector: list[float] | None = None
     id: UUID = field(default_factory=uuid4)

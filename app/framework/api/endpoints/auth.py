@@ -8,7 +8,7 @@ from app.application.dtos.account import LoginData
 from app.application.interfaces.relational import SessionMaker
 from app.application.interfaces.users import UsersRepository, UsersTokensRepository
 from app.application.use_cases.auth import LogoutUser, LogUser
-from app.domain.exceptions import UserCantLog
+from app.domain.exceptions.users import UserCantLog
 from app.domain.value_objects.users import UserPrivileges
 from app.framework.dependencies.authentication import authorize_user, get_logout_user
 from app.framework.dependencies.relational import get_session_maker
@@ -57,6 +57,7 @@ async def log_user(
 
 @auth_router.get(
     "/auth/me",
+    responses={status.HTTP_401_UNAUTHORIZED: {"description": "User not logged."}},
     dependencies=[Depends(authorize_user)],
 )
 async def check_is_user_logged(request: Request):

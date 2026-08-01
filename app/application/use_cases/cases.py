@@ -5,7 +5,7 @@ from uuid import UUID
 from app.application.dtos.cases import CaseData, CaseDocument, NewCaseDocument
 from app.application.interfaces.cases import CaseDocumentsRepository, CasesRepository
 from app.application.interfaces.relational import SessionMaker
-from app.domain.exceptions import CaseNotFound
+from app.domain.exceptions.cases import CaseNotFound
 
 logger = logging.getLogger(__name__)
 
@@ -77,5 +77,5 @@ class ListCaseDocuments:
 
     async def execute(self, user_id: UUID, case_id: UUID) -> list[CaseDocument]:
         async with self.session_maker() as session:
-            case_articles = await self.case_documents_repo.list_by_case_id(session, user_id, case_id)
-            return case_articles
+            case_documents = await self.case_documents_repo.list_by_case_id(session, user_id, case_id)
+            return case_documents
