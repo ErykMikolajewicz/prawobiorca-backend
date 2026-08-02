@@ -2,6 +2,7 @@ from unittest.mock import create_autospec
 
 import pytest
 
+from app.application.interfaces.cases import CaseDocumentsRepository, CasesRepository
 from app.application.interfaces.documents import DocumentsRepository
 from app.application.interfaces.regulations import RegulationsRepository, RegulationsStorage
 from app.application.interfaces.relational import AsyncSession, SessionMaker
@@ -63,4 +64,16 @@ def mock_embedding_port():
 @pytest.fixture
 def mock_documents_repo():
     repo = create_autospec(DocumentsRepository)
+    return repo
+
+
+@pytest.fixture
+def mock_cases_repo():
+    repo = create_autospec(CasesRepository)
+    return repo
+
+
+@pytest.fixture
+def mock_case_documents_repo():
+    repo = create_autospec(CaseDocumentsRepository)
     return repo

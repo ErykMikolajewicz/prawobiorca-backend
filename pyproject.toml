@@ -1,6 +1,6 @@
 [project]
 name = "prawobiorca-backend"
-version = "0.49.9"
+version = "0.49.10"
 description = "Law acts search engine with AI features."
 readme = "README.md"
 requires-python = "==3.14.*"
@@ -43,24 +43,8 @@ test = [
     "testcontainers[postgres]==4.14.*",
 ]
 
-[tool.poe.tasks]
-run_locally = "uv run cicd/scripts/run_locally.py"
-
-test_integration = "uv run --group test pytest tests/integration"
-
-build_app = "podman image build --tag=prawobiorca-backend ."
-build_text-transformator = "podman image build --tag=text-transformator text-transformator"
-
-upgrade_db_schemas = "uv run --group test alembic upgrade head"
-seed = "uv run cicd/init/seed_relational_db.py"
-init_regulations = "uv run cicd/init/init_regulations.py"
-cov = "coverage report -m --skip-covered --fail-under=95 --sort=Cover"
-
-[tool.poe.tasks.build_images]
-sequence = ["build_app", "build_text-transformator"]
-
-[tool.poe.tasks.init_db]
-sequence = ["upgrade_db_schemas", "seed", "init_regulations"]
+[tool.poe]
+include = "poe.toml"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
@@ -74,7 +58,7 @@ markers = [
 [tool.coverage.report]
 omit = [
     "app/framework/**",
-    "app/infrastructure/relational_db/**"
+    "app/infrastructure/**"
 ]
 
 [tool.ruff]
