@@ -118,7 +118,7 @@ class DeleteRegulation:
             await self.regulations_repository.unregister_regulation(session, user_id, regulation_id)
 
         try:
-            # Orphaned files are tolerable, too much hassle with eventually consistency
+            # Orphaned files are tolerable, too much hassle with eventual consistency
             await self.regulations_storage.delete_regulation(regulation_id)
         except Exception:
             logger.error(f"Failed to remove from storage regulation: {regulation_id}")

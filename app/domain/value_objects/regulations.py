@@ -1,7 +1,6 @@
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from enum import StrEnum
-from itertools import pairwise
 
 from app.domain.exceptions.documents import ToLongDocument, ToLongHeaderSection
 from app.domain.value_objects.documents import Document, DocumentsCollection
@@ -32,18 +31,21 @@ class HeaderSection:
         documents = []
         document_tokens = self._header_tokens
         document_text = ""
-        for element, next_element in pairwise(self._other_elements):
+        elements_count = len(self._other_elements)
+        for index, element in enumerate(self._other_elements):
             document_tokens += element.tokens_number
             if document_tokens > text_transformator_settings.MAX_TOKENS:
                 raise ToLongDocument
 
             document_text += element.text
 
-            if not next_element:
+            is_last_element = index == elements_count - 1
+            if is_last_element:
                 document = Document(self._header_text, document_text)
                 documents.append(document)
                 break
 
+            next_element = self._other_elements[index + 1]
             tokens_with_next = document_tokens + next_element.tokens_number
             if tokens_with_next > app_settings.DOCUMENT_DESIRED_TOKENS_LENGTH:
                 document = Document(self._header_text, document_text)
@@ -76,6 +78,9 @@ class RegulationAct:
             section_documents = header_section.create_section_documents()
             documents.extend(section_documents)
 
+        for index, document in enumerate(documents):
+            document.chunk_order = index
+
         return DocumentsCollection(documents)
 
     def _group_elements_by_headers(self) -> list[HeaderSection]:
@@ -95,6 +100,9 @@ class RegulationAct:
                     current_section.add_other_element(element)
 
             last_element_type = element.label
+
+        if current_section._header_elements or current_section._other_elements:
+            header_sections.append(current_section)
 
         return header_sections
 

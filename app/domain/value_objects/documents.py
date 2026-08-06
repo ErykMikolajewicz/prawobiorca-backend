@@ -10,6 +10,7 @@ from app.shared.settings.application import app_settings
 class Document:
     title: str | None
     text: str
+    chunk_order: int | None = None
     vector: list[float] | None = None
     id: UUID = field(default_factory=uuid4)
 

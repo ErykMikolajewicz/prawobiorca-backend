@@ -64,7 +64,7 @@ Cons: harder debugging compared to Python-based servers (e.g., hypercorn).
 
 ---
 
-### httpx
+### httpx2
 
 New popular http Python client. Used for its async support.
 Used to communicate with embedding service.
@@ -115,7 +115,7 @@ Actually work only local storage with aiofiles, due to developing app in scienti
 
 ### aiofiles
 
-Use to access local files, without blocking main thread.
+Use to access local files without blocking the main thread.
 
 ### google-cloud-storage
 
@@ -147,11 +147,6 @@ A documentation generator that outputs a website. You are most likely reading do
 
 ### mkdocstrings\[python\]
 A plugin that integrates Python docstrings into documentation generated with [zensical](#zensical).
-
----
-
-### psycopg\[binary\]
-PostgreSQL driver (version 3, despite the name not indicating it). Supports both synchronous and asynchronous connections. Required by [Alembic](#alembic), which needs a synchronous connection.
 
 ---
 

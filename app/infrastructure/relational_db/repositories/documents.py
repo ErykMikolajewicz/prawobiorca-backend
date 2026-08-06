@@ -22,6 +22,7 @@ class RegulationsDocumentsRepository:
                 "id": document.id,
                 "header": document.title,
                 "text": document.text,
+                "chunk_order": document.chunk_order,
                 "vector": document.vector,
                 "regulation_id": regulation_id,
                 "user_id": user_id,
@@ -58,10 +59,11 @@ class RegulationsDocumentsRepository:
 
         distance = regulations_documents_table.c.vector.cosine_distance(vector)
 
-        query = (
+        subquery = (
             select(
                 regulations_documents_table.c.id,
                 regulations_documents_table.c.text,
+                regulations_documents_table.c.chunk_order,
                 distance.label("distance"),
             )
             .where(
@@ -73,7 +75,11 @@ class RegulationsDocumentsRepository:
         )
 
         if search_params.threshold is not None:
-            query = query.where(distance <= 1 - search_params.threshold)
+            subquery = subquery.where(distance <= 1 - search_params.threshold)
+
+        subquery = subquery.subquery()
+
+        query = select(subquery).order_by(subquery.c.chunk_order.asc())
 
         result = await session.execute(query)
         rows = result.all()

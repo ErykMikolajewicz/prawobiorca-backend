@@ -11,6 +11,7 @@ regulations_documents_table = sqla.Table(
     sqla.Column("create_date", sqla.DateTime, server_default=sqla.text("now()"), nullable=False),
     sqla.Column("header", sqla.Text, nullable=True),
     sqla.Column("text", sqla.Text, nullable=False),
+    sqla.Column("chunk_order", sqla.Integer, nullable=False),
     sqla.Column("vector", Vector(VECTOR_LENGTH), nullable=False),
     sqla.Column("regulation_id", sqla.UUID, nullable=False),
     sqla.Column("user_id", sqla.UUID, nullable=True),

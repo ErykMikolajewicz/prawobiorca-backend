@@ -136,12 +136,10 @@ else:
 
 ---
 
-## Formatting Tools
-Before every commit, first run a script before_mmit.sh
-It will:
-- Check for security vulnerability with bandit;
-- Use ruff to format your code and check some writing rules;
-- Run unit tests.
+## Commit hook
+Before every commit:
+- Format the code with Ruff
+- Run unit tests
 
 ---
 

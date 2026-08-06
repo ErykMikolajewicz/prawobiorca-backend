@@ -108,6 +108,7 @@ async def test_search_regulations_documents(client, override_session_maker, sess
                         {
                             "header": "Public document",
                             "text": "Matching public regulation document",
+                            "chunk_order": 0,
                             "vector": query_vector,
                             "regulation_id": regulation_id,
                             "user_id": None,
@@ -115,6 +116,7 @@ async def test_search_regulations_documents(client, override_session_maker, sess
                         {
                             "header": "Private document",
                             "text": "Matching user regulation document",
+                            "chunk_order": 0,
                             "vector": query_vector,
                             "regulation_id": other_regulation_id,
                             "user_id": USER_ID,
@@ -122,6 +124,7 @@ async def test_search_regulations_documents(client, override_session_maker, sess
                         {
                             "header": "Other public document",
                             "text": "Unrelated public regulation document",
+                            "chunk_order": 1,
                             "vector": other_vector,
                             "regulation_id": regulation_id,
                             "user_id": None,

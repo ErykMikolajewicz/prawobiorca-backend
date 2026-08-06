@@ -12,10 +12,10 @@ from app.application.services.embedding import DocumentEmbedder
 from app.application.services.regulations import RegulationPreparator
 from app.infrastructure.relational_db.connection import async_session_maker
 from app.infrastructure.relational_db.schemas.documents import RegulationsDocuments
-from app.infrastructure.relational_db.schemas.regulations import Regulations
+from app.infrastructure.relational_db.schemas.regulations import regulations_table
 
 # Unused import necessary for sqlalchemy
-from app.infrastructure.relational_db.schemas.users import Users  # noqa: F401
+from app.infrastructure.relational_db.schemas.users import users_table  # noqa: F401
 from app.infrastructure.text_transformator.regulation_splitter import RegulationSplitter
 from app.infrastructure.text_transformator.text_embedder import TextsEmbedder
 from app.shared.settings.text_transformator import text_transformator_settings
@@ -60,6 +60,7 @@ async def init_regulations():
                             "user_id": None,
                             "header": document.title,
                             "text": document.text,
+                            "chunk_order": document.chunk_order,
                             "vector": document.vector,
                             "regulation_id": regulation_id,
                         }
@@ -67,7 +68,7 @@ async def init_regulations():
 
             async with async_session_maker.begin() as session:
                 await session.execute(
-                    insert(Regulations),
+                    insert(regulations_table),
                     [
                         {
                             "id": regulation_id,

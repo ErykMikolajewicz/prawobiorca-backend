@@ -1,11 +1,11 @@
 # Application Architecture
 
 ## Introduction
-This project is about the backend of a web application, for which a JavaScript client is planned, but temporarly due to lack of frontend developers HTML views are made.
+This project is about the backend of a web application, with a Vue client.
 
-The main framework is FastAPI. It is intended to run in Podman containers, which may cause issues when running on Windows systems.
+The main framework is FastAPI. It is intended to run in Podman containers.
 
-In the production environment, the application is intended to can be run both on premise or in cloud. Dependence on a specific cloud provider is acceptable, but should be avoided whenever possible, also on premise alternative should be ensured, but some non-critical functions can be disabled in that environment.
+In the production environment, the application is intended to run both on premise or in the GCP.
 
 The main part of the code is located in the `app` folder.
 
