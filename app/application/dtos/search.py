@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 class SearchResult(BaseModel):
     id: UUID
     score: float = Field(ge=-1, le=1)
+    header: str
     text: str
 
 

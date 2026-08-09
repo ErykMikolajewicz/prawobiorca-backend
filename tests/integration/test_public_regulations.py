@@ -148,6 +148,7 @@ async def test_search_regulations_documents(client, override_session_maker, sess
             {
                 "id": str(public_document_id),
                 "score": pytest.approx(1.0),
+                "header": "Public document",
                 "text": "Matching public regulation document",
             }
         ]

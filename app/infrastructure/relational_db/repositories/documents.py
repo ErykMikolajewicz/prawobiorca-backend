@@ -62,6 +62,7 @@ class RegulationsDocumentsRepository:
         subquery = (
             select(
                 regulations_documents_table.c.id,
+                regulations_documents_table.c.header,
                 regulations_documents_table.c.text,
                 regulations_documents_table.c.chunk_order,
                 distance.label("distance"),
@@ -87,6 +88,7 @@ class RegulationsDocumentsRepository:
         return [
             SearchResult(
                 id=row.id,
+                header=row.header,
                 text=row.text,
                 score=1 - row.distance,
             )

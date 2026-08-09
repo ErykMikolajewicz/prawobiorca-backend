@@ -1,6 +1,7 @@
 [tasks]
 run_locally = "uv run cicd/scripts/run_locally.py"
 test_integration = "uv run --group test pytest tests/integration"
+test = "uv run --group test pytest tests/unit"
 build_app = "podman image build --tag=prawobiorca-backend ."
 build_text-transformator = "podman image build --tag=text-transformator text-transformator"
 upgrade_db_schemas = "uv run --group test alembic upgrade head"
