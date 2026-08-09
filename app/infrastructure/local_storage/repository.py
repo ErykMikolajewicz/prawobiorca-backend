@@ -3,7 +3,8 @@ from uuid import UUID
 
 import aiofiles
 import aiofiles.os
-from app.domain.exceptions.exceptions import RegulationContentNotFound
+
+from app.domain.exceptions.regulations import RegulationContentNotFound
 
 
 class LocalRegulationsStorage:
