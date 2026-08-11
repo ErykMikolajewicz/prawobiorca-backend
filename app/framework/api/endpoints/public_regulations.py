@@ -5,11 +5,16 @@ from fastapi import APIRouter, Depends, HTTPException, Path, Query, UploadFile, 
 
 from app.application.dtos.regulations import RegulationData, RegulationRepresentation
 from app.application.dtos.search import SearchParams, SearchResult
-from app.application.use_cases.regulations import AddRegulation, ListRegulations, SearchRegulation
+from app.application.use_cases.regulations import AddRegulation, DeleteRegulation, ListRegulations, SearchRegulation
 from app.domain.exceptions.regulations import RegulationNotFound, RegulationsNotPreparedToSearch
 from app.domain.value_objects.regulations import RegulationType
 from app.framework.dependencies.authentication import require_admin
-from app.framework.dependencies.regulations import get_add_regulation, get_list_regulations, get_search_regulation
+from app.framework.dependencies.regulations import (
+    get_add_regulation,
+    get_delete_regulation,
+    get_list_regulations,
+    get_search_regulation,
+)
 
 public_regulations_router = APIRouter(tags=["regulations"], prefix="/api")
 
@@ -88,3 +93,22 @@ async def add_public_regulation(
 
     regulation_id = await add_regulation_.execute(user_id, regulation_data)
     return regulation_id
+
+
+@public_regulations_router.delete(
+    "/regulations/{regulationId}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=(Depends(require_admin),),
+    responses={
+        status.HTTP_404_NOT_FOUND: {"description": "Regulation not found!"},
+    },
+)
+async def delete_public_regulation(
+    delete_regulation_: Annotated[DeleteRegulation, Depends(get_delete_regulation)],
+    regulation_id: UUID = Path(alias="regulationId"),
+):
+    user_id = None
+    try:
+        await delete_regulation_.execute(user_id, regulation_id)
+    except RegulationNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Regulation not found!")
