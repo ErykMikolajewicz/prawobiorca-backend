@@ -14,7 +14,15 @@ async def seed_db():
 
     # password is PrawobiorcaPassword1;
     statement = insert(users_table).values(
-        username="PrawobiorcaTester", hashed_password=b"$2b$12$NY0/W4kDgXcfQteV/gnsGeqvqGUaNiy/1K/NXAov0kbpEUAPNWRVG"
+        {
+            "username": "PrawobiorcaTester",
+            "hashed_password": b"$2b$12$NY0/W4kDgXcfQteV/gnsGeqvqGUaNiy/1K/NXAov0kbpEUAPNWRVG",
+            "is_admin": True,
+        },
+        {
+            "username": "PrawobiorcaTester2",
+            "hashed_password": b"$2b$12$NY0/W4kDgXcfQteV/gnsGeqvqGUaNiy/1K/NXAov0kbpEUAPNWRVG",
+        },
     )
 
     await session.execute(statement)

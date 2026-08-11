@@ -10,6 +10,7 @@ from sqlalchemy import insert
 
 from app.application.services.embedding import DocumentEmbedder
 from app.application.services.regulations import RegulationPreparator
+from app.domain.value_objects.regulations import RegulationType
 from app.infrastructure.relational_db.connection import async_session_maker
 from app.infrastructure.relational_db.schemas.documents import RegulationsDocuments
 from app.infrastructure.relational_db.schemas.regulations import regulations_table
@@ -19,6 +20,12 @@ from app.infrastructure.relational_db.schemas.users import users_table  # noqa: 
 from app.infrastructure.text_transformator.regulation_splitter import RegulationSplitter
 from app.infrastructure.text_transformator.text_embedder import TextsEmbedder
 from app.shared.settings.text_transformator import text_transformator_settings
+
+REGULATION_TYPES_BY_FILE_NAME = {
+    "Prawo o nauce i szkolnictwie wyższym.pdf": RegulationType.ACT,
+    "PWr - regulamin studiow.pdf": RegulationType.STATUTE,
+    "PWr - reguamin akademik.pdf": RegulationType.STATUTE,
+}
 
 
 async def init_regulations():
@@ -46,6 +53,7 @@ async def init_regulations():
                 file_content = file.read()
 
             regulation_id = uuid.uuid4()
+            regulation_type = REGULATION_TYPES_BY_FILE_NAME.get(file_name)
 
             documents_to_embed = await regulation_preparator.prepare_regulation(file_content)
             print(f"Embedded regulation: {file_name}")
@@ -75,6 +83,7 @@ async def init_regulations():
                             "presentation_name": file_name,
                             "is_prepared": True,
                             "user_id": None,
+                            "regulation_type": regulation_type,
                         }
                     ],
                 )

@@ -233,7 +233,9 @@ async def test_add_regulation_file_exists_error(
 async def test_list_regulations_success(uuid_generator, mock_regulations_repository, mock_session_maker):
     user_id = next(uuid_generator)
 
-    mock_results = [MagicMock(spec=RegulationRepresentation), MagicMock(spec=RegulationRepresentation)]
+    mock_result = MagicMock(spec=RegulationRepresentation)
+    mock_result.regulation_type = RegulationType.ACT
+    mock_results = [mock_result, MagicMock(spec=RegulationRepresentation)]
     mock_regulations_repository.list_regulations.return_value = mock_results
 
     use_case = ListRegulations(
@@ -244,6 +246,7 @@ async def test_list_regulations_success(uuid_generator, mock_regulations_reposit
     result = await use_case.execute(user_id=user_id, regulation_type=RegulationType.ACT)
 
     assert result == mock_results
+    assert result[0].regulation_type == RegulationType.ACT
     mock_regulations_repository.list_regulations.assert_awaited_once()
 
 

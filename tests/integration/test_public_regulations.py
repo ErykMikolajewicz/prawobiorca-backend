@@ -56,8 +56,10 @@ async def test_get_public_regulations(client, override_session_maker, session_ma
                 "id": str(public_act_id),
                 "presentationName": "Public act.pdf",
                 "isPrepared": True,
+                "regulationType": RegulationType.ACT,
             }
         ]
+
     finally:
         async with session_maker.begin() as session:
             await session.execute(delete(regulations_table).where(regulations_table.c.id.in_(regulations_ids)))

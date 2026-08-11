@@ -19,3 +19,4 @@ class RegulationRepresentation:
     id: UUID
     is_prepared: bool
     presentation_name: str = Field(min_length=MIN_FILENAME_LENGTH, max_length=MAX_FILENAME_LENGTH)
+    regulation_type: RegulationType | None = None
