@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 from uuid import UUID
 
-from app.application.dtos.regulations import RegulationData, RegulationRepresentation
+from app.application.dtos.regulations import RegulationData, RegulationRepresentation, RegulationUploadTarget
 from app.application.dtos.search import SearchParams, SearchResult
 from app.application.interfaces.documents import DocumentsRepository
 from app.application.interfaces.regulations import RegulationsRepository, RegulationsStorage
@@ -65,7 +65,6 @@ class PrepareRegulation:
 class AddRegulation:
     session_maker: SessionMaker
     regulations_repository: RegulationsRepository
-    regulation_storage: RegulationsStorage
 
     async def execute(self, user_id: UUID | None, regulation_data: RegulationData) -> UUID:
         regulation_registration_data = RegulationRegistrationData(
@@ -75,13 +74,84 @@ class AddRegulation:
             regulation_id = await self.regulations_repository.register_regulation(
                 session, user_id, regulation_registration_data
             )
-            try:
-                await self.regulation_storage.upload_regulation(regulation_id, regulation_data.file)
-            except FileExistsError:
-                logger.error(f"File, with id {regulation_id} already exists in storage!")
-                raise
 
         return regulation_id
+
+
+@dataclass
+class GetRegulationUploadTarget:
+    session_maker: SessionMaker
+    regulations_repository: RegulationsRepository
+    regulations_storage: RegulationsStorage
+
+    async def execute(self, user_id: UUID | None, regulation_id: UUID) -> RegulationUploadTarget:
+        async with self.session_maker() as session:
+            regulation_representation = await self.regulations_repository.get_regulation_representation(
+                session, user_id, regulation_id
+            )
+
+        if regulation_representation is None:
+            logger.warning(f"Regulation to upload not found! regulation id: {regulation_id}")
+            raise RegulationNotFound
+
+        if regulation_representation.is_prepared:
+            logger.warning(f"Tried upload content of prepared regulation! regulation id: {regulation_id}")
+            raise RegulationAlreadyInitialized
+
+        return await self.regulations_storage.get_upload_target(regulation_id)
+
+
+@dataclass
+class ConfirmRegulationUpload:
+    session_maker: SessionMaker
+    regulations_repository: RegulationsRepository
+    regulations_storage: RegulationsStorage
+
+    async def execute(self, user_id: UUID | None, regulation_id: UUID) -> None:
+        async with self.session_maker.begin() as session:
+            regulation_representation = await self.regulations_repository.get_regulation_representation(
+                session, user_id, regulation_id
+            )
+
+            if regulation_representation is None:
+                logger.warning(f"Regulation to confirm upload not found! regulation id: {regulation_id}")
+                raise RegulationNotFound
+
+            if regulation_representation.is_prepared:
+                logger.warning(
+                    f"Tried to confirm upload for already prepared regulation! regulation id: {regulation_id}"
+                )
+                raise RegulationAlreadyInitialized
+
+            is_in_storage = await self.regulations_storage.check_regulation_exists(regulation_id)
+            if not is_in_storage:
+                logger.error(
+                    f"Cannot confirm upload: Regulation content not found in storage! regulation id: {regulation_id}"
+                )
+                raise RegulationContentNotFound
+
+            await self.regulations_repository.mark_as_uploaded(session, user_id, regulation_id)
+
+        return await self.regulations_storage.get_upload_target(regulation_id)
+
+
+@dataclass
+class GetRegulationDownloadUrl:
+    session_maker: SessionMaker
+    regulations_repository: RegulationsRepository
+    regulations_storage: RegulationsStorage
+
+    async def execute(self, user_id: UUID | None, regulation_id: UUID) -> str:
+        async with self.session_maker() as session:
+            regulation_representation = await self.regulations_repository.get_regulation_representation(
+                session, user_id, regulation_id
+            )
+
+        if regulation_representation is None:
+            logger.warning(f"Regulation to download not found! regulation id: {regulation_id}")
+            raise RegulationNotFound
+
+        return await self.regulations_storage.get_download_url(regulation_id)
 
 
 @dataclass

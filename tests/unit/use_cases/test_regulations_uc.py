@@ -2,11 +2,14 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.application.dtos.regulations import RegulationData, RegulationRepresentation
+from app.application.dtos.regulations import RegulationData, RegulationRepresentation, RegulationUploadTarget
 from app.application.dtos.search import SearchParams
 from app.application.use_cases.regulations import (
     AddRegulation,
+    ConfirmRegulationUpload,
     DeleteRegulation,
+    GetRegulationDownloadUrl,
+    GetRegulationUploadTarget,
     ListRegulations,
     PrepareRegulation,
     SearchRegulation,
@@ -185,45 +188,227 @@ async def test_prepare_regulation_service_unavailable(
 
 
 @pytest.mark.asyncio
-async def test_add_public_regulation_success(
-    uuid_generator, mock_regulations_repository, mock_regulations_storage, mock_session_maker
-):
+async def test_add_public_regulation_success(uuid_generator, mock_regulations_repository, mock_session_maker):
     regulation_id = next(uuid_generator)
     mock_regulations_repository.register_regulation.return_value = regulation_id
 
-    regulation_data = RegulationData(name="regulation.pdf", file=b"content", regulation_type=RegulationType.ACT)
+    regulation_data = RegulationData(name="regulation.pdf", regulation_type=RegulationType.ACT)
 
     add_regulation = AddRegulation(
         regulations_repository=mock_regulations_repository,
-        regulation_storage=mock_regulations_storage,
         session_maker=mock_session_maker,
     )
 
     result = await add_regulation.execute(user_id=None, regulation_data=regulation_data)
 
     assert result == regulation_id
-    mock_regulations_storage.upload_regulation.assert_awaited_once_with(regulation_id, b"content")
+    mock_regulations_repository.register_regulation.assert_awaited_once()
+
+
+# --- GetRegulationUploadTarget Tests ---
 
 
 @pytest.mark.asyncio
-async def test_add_regulation_file_exists_error(
+async def test_get_regulation_upload_target_success(
     uuid_generator, mock_regulations_repository, mock_regulations_storage, mock_session_maker
 ):
+    user_id = next(uuid_generator)
     regulation_id = next(uuid_generator)
-    mock_regulations_repository.register_regulation.return_value = regulation_id
 
-    mock_regulations_storage.upload_regulation.side_effect = FileExistsError
+    regulation_rep = MagicMock()
+    regulation_rep.is_prepared = False
+    mock_regulations_repository.get_regulation_representation.return_value = regulation_rep
 
-    regulation_data = RegulationData(name="regulation.pdf", file=b"content", regulation_type=RegulationType.ACT)
+    upload_target = RegulationUploadTarget(url="http://object-storage", fields={"key": str(regulation_id)})
+    mock_regulations_storage.get_upload_target.return_value = upload_target
 
-    add_regulation = AddRegulation(
-        regulations_repository=mock_regulations_repository,
-        regulation_storage=mock_regulations_storage,
+    use_case = GetRegulationUploadTarget(
         session_maker=mock_session_maker,
+        regulations_repository=mock_regulations_repository,
+        regulations_storage=mock_regulations_storage,
     )
 
-    with pytest.raises(FileExistsError):
-        await add_regulation.execute(user_id=None, regulation_data=regulation_data)
+    result = await use_case.execute(user_id, regulation_id)
+
+    assert result == upload_target
+    mock_regulations_storage.get_upload_target.assert_awaited_once_with(regulation_id)
+
+
+@pytest.mark.asyncio
+async def test_get_regulation_upload_target_not_found(
+    uuid_generator, mock_regulations_repository, mock_regulations_storage, mock_session_maker
+):
+    user_id = next(uuid_generator)
+    regulation_id = next(uuid_generator)
+
+    mock_regulations_repository.get_regulation_representation.return_value = None
+
+    use_case = GetRegulationUploadTarget(
+        session_maker=mock_session_maker,
+        regulations_repository=mock_regulations_repository,
+        regulations_storage=mock_regulations_storage,
+    )
+
+    with pytest.raises(RegulationNotFound):
+        await use_case.execute(user_id, regulation_id)
+
+
+@pytest.mark.asyncio
+async def test_get_regulation_upload_target_already_prepared(
+    uuid_generator, mock_regulations_repository, mock_regulations_storage, mock_session_maker
+):
+    user_id = next(uuid_generator)
+    regulation_id = next(uuid_generator)
+
+    regulation_rep = MagicMock()
+    regulation_rep.is_prepared = True
+    mock_regulations_repository.get_regulation_representation.return_value = regulation_rep
+
+    use_case = GetRegulationUploadTarget(
+        session_maker=mock_session_maker,
+        regulations_repository=mock_regulations_repository,
+        regulations_storage=mock_regulations_storage,
+    )
+
+    with pytest.raises(RegulationAlreadyInitialized):
+        await use_case.execute(user_id, regulation_id)
+
+    mock_regulations_storage.get_upload_target.assert_not_awaited()
+
+
+# --- GetRegulationDownloadUrl Tests ---
+
+
+# --- ConfirmRegulationUpload Tests ---
+
+
+@pytest.mark.asyncio
+async def test_confirm_regulation_upload_success(
+    uuid_generator, mock_regulations_repository, mock_regulations_storage, mock_session_maker
+):
+    user_id = next(uuid_generator)
+    regulation_id = next(uuid_generator)
+
+    regulation_rep = MagicMock()
+    regulation_rep.is_prepared = False
+    mock_regulations_repository.get_regulation_representation.return_value = regulation_rep
+    mock_regulations_storage.check_regulation_exists.return_value = True
+
+    use_case = ConfirmRegulationUpload(
+        session_maker=mock_session_maker,
+        regulations_repository=mock_regulations_repository,
+        regulations_storage=mock_regulations_storage,
+    )
+
+    await use_case.execute(user_id, regulation_id)
+
+    mock_regulations_storage.check_regulation_exists.assert_called_once_with(regulation_id)
+    mock_regulations_repository.mark_as_uploaded.assert_called_once_with(
+        mock_session_maker.begin.return_value.__aenter__.return_value, user_id, regulation_id
+    )
+
+
+@pytest.mark.asyncio
+async def test_confirm_regulation_upload_not_found(
+    uuid_generator, mock_regulations_repository, mock_regulations_storage, mock_session_maker
+):
+    user_id = next(uuid_generator)
+    regulation_id = next(uuid_generator)
+
+    mock_regulations_repository.get_regulation_representation.return_value = None
+
+    use_case = ConfirmRegulationUpload(
+        session_maker=mock_session_maker,
+        regulations_repository=mock_regulations_repository,
+        regulations_storage=mock_regulations_storage,
+    )
+
+    with pytest.raises(RegulationNotFound):
+        await use_case.execute(user_id, regulation_id)
+
+
+@pytest.mark.asyncio
+async def test_confirm_regulation_upload_already_prepared(
+    uuid_generator, mock_regulations_repository, mock_regulations_storage, mock_session_maker
+):
+    user_id = next(uuid_generator)
+    regulation_id = next(uuid_generator)
+
+    regulation_rep = MagicMock()
+    regulation_rep.is_prepared = True
+    mock_regulations_repository.get_regulation_representation.return_value = regulation_rep
+
+    use_case = ConfirmRegulationUpload(
+        session_maker=mock_session_maker,
+        regulations_repository=mock_regulations_repository,
+        regulations_storage=mock_regulations_storage,
+    )
+
+    with pytest.raises(RegulationAlreadyInitialized):
+        await use_case.execute(user_id, regulation_id)
+
+
+@pytest.mark.asyncio
+async def test_confirm_regulation_upload_content_not_found(
+    uuid_generator, mock_regulations_repository, mock_regulations_storage, mock_session_maker
+):
+    user_id = next(uuid_generator)
+    regulation_id = next(uuid_generator)
+
+    regulation_rep = MagicMock()
+    regulation_rep.is_prepared = False
+    mock_regulations_repository.get_regulation_representation.return_value = regulation_rep
+    mock_regulations_storage.check_regulation_exists.return_value = False
+
+    use_case = ConfirmRegulationUpload(
+        session_maker=mock_session_maker,
+        regulations_repository=mock_regulations_repository,
+        regulations_storage=mock_regulations_storage,
+    )
+
+    with pytest.raises(RegulationContentNotFound):
+        await use_case.execute(user_id, regulation_id)
+
+
+@pytest.mark.asyncio
+async def test_get_regulation_download_url_success(
+    uuid_generator, mock_regulations_repository, mock_regulations_storage, mock_session_maker
+):
+    user_id = next(uuid_generator)
+    regulation_id = next(uuid_generator)
+
+    mock_regulations_repository.get_regulation_representation.return_value = MagicMock()
+    mock_regulations_storage.get_download_url.return_value = "http://object-storage/regulation"
+
+    use_case = GetRegulationDownloadUrl(
+        session_maker=mock_session_maker,
+        regulations_repository=mock_regulations_repository,
+        regulations_storage=mock_regulations_storage,
+    )
+
+    result = await use_case.execute(user_id, regulation_id)
+
+    assert result == "http://object-storage/regulation"
+    mock_regulations_storage.get_download_url.assert_awaited_once_with(regulation_id)
+
+
+@pytest.mark.asyncio
+async def test_get_regulation_download_url_not_found(
+    uuid_generator, mock_regulations_repository, mock_regulations_storage, mock_session_maker
+):
+    user_id = next(uuid_generator)
+    regulation_id = next(uuid_generator)
+
+    mock_regulations_repository.get_regulation_representation.return_value = None
+
+    use_case = GetRegulationDownloadUrl(
+        session_maker=mock_session_maker,
+        regulations_repository=mock_regulations_repository,
+        regulations_storage=mock_regulations_storage,
+    )
+
+    with pytest.raises(RegulationNotFound):
+        await use_case.execute(user_id, regulation_id)
 
 
 # --- ListRegulations Tests ---

@@ -13,20 +13,16 @@ async def test_add_user_regulation(
     client,
     override_session_maker,
     session_maker,
-    override_get_regulations_repository,
+    override_get_regulations_storage,
     override_authorize_normal_user,
     set_user,
     clean_user,
 ):
-
-    with open("tests/data/pwr-regulamin_2025_slice_7-9.pdf", "rb") as f:
-        regulation_content = f.read()
-    files = {"regulation": ("user-regulation.pdf", regulation_content, "application/pdf")}
-    params = {"regulationType": RegulationType.ACT}
+    regulation_data = {"name": "user-regulation.pdf", "regulation_type": RegulationType.ACT}
 
     client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
 
-    response = client.post("/api/user/regulations", files=files, params=params)
+    response = client.post("/api/user/regulations", json=regulation_data)
 
     assert response.status_code == status.HTTP_201_CREATED
 
@@ -40,6 +36,8 @@ async def test_add_user_regulation(
     assert regulation is not None
     assert regulation.user_id == USER_ID
     assert regulation.presentation_name == "user-regulation.pdf"
+    assert regulation.is_uploaded is False
+
     assert regulation.is_prepared is False
     assert regulation.regulation_type == RegulationType.ACT
 
@@ -48,7 +46,8 @@ async def test_delete_user_regulation(
     client,
     override_session_maker,
     session_maker,
-    override_get_regulations_repository,
+    override_get_regulations_storage,
+    mock_regulations_storage,
     override_authorize_normal_user,
     set_user,
     clean_user,
@@ -60,6 +59,7 @@ async def test_delete_user_regulation(
                 user_id=USER_ID,
                 presentation_name="do_usuniecia.pdf",
                 is_prepared=False,
+                is_uploaded=False,
                 regulation_type=RegulationType.ACT,
             )
             .returning(regulations_table.c.id)
@@ -70,6 +70,7 @@ async def test_delete_user_regulation(
     response = client.delete(f"/api/user/regulations/{regulation_id}")
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
+    mock_regulations_storage.delete_regulation.assert_awaited_once_with(regulation_id)
 
     async with session_maker() as session:
         statement = select(regulations_table).where(regulations_table.c.id == regulation_id)
@@ -77,3 +78,125 @@ async def test_delete_user_regulation(
     deleted_regulation = result.one_or_none()
 
     assert deleted_regulation is None
+
+
+async def test_confirm_user_regulation_upload(
+    client,
+    override_session_maker,
+    session_maker,
+    override_get_regulations_storage,
+    mock_regulations_storage,
+    override_authorize_normal_user,
+    set_user,
+    clean_user,
+):
+    async with session_maker.begin() as session:
+        regulation_id = await session.scalar(
+            insert(regulations_table)
+            .values(
+                user_id=USER_ID,
+                presentation_name="uploaded_but_unconfirmed.pdf",
+                is_prepared=False,
+                is_uploaded=False,
+                regulation_type=RegulationType.ACT,
+            )
+            .returning(regulations_table.c.id)
+        )
+
+    mock_regulations_storage.check_regulation_exists.return_value = True
+
+    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+
+    response = client.post(f"/api/user/regulations/{regulation_id}/confirm-upload")
+
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    mock_regulations_storage.check_regulation_exists.assert_awaited_once_with(regulation_id)
+
+    async with session_maker() as session:
+        statement = select(regulations_table).where(regulations_table.c.id == regulation_id)
+        result = await session.execute(statement)
+    regulation = result.one_or_none()
+
+    assert regulation is not None
+    assert regulation.is_uploaded is True
+
+
+async def test_confirm_user_regulation_upload_already_prepared(
+    client,
+    override_session_maker,
+    session_maker,
+    override_get_regulations_storage,
+    override_authorize_normal_user,
+    set_user,
+    clean_user,
+):
+    async with session_maker.begin() as session:
+        regulation_id = await session.scalar(
+            insert(regulations_table)
+            .values(
+                user_id=USER_ID,
+                presentation_name="already_prepared.pdf",
+                is_prepared=True,
+                is_uploaded=True,
+                regulation_type=RegulationType.ACT,
+            )
+            .returning(regulations_table.c.id)
+        )
+
+    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+
+    response = client.post(f"/api/user/regulations/{regulation_id}/confirm-upload")
+
+    assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.json()["detail"] == "Regulation is already prepared!"
+
+    async with session_maker() as session:
+        statement = select(regulations_table).where(regulations_table.c.id == regulation_id)
+        result = await session.execute(statement)
+    regulation = result.one_or_none()
+
+    assert regulation is not None
+    assert regulation.is_prepared is True
+    assert regulation.is_uploaded is True
+
+
+async def test_confirm_user_regulation_upload_storage_missing(
+    client,
+    override_session_maker,
+    session_maker,
+    override_get_regulations_storage,
+    mock_regulations_storage,
+    override_authorize_normal_user,
+    set_user,
+    clean_user,
+):
+    async with session_maker.begin() as session:
+        regulation_id = await session.scalar(
+            insert(regulations_table)
+            .values(
+                user_id=USER_ID,
+                presentation_name="missing_in_storage.pdf",
+                is_prepared=False,
+                is_uploaded=False,
+                regulation_type=RegulationType.ACT,
+            )
+            .returning(regulations_table.c.id)
+        )
+
+    mock_regulations_storage.check_regulation_exists.return_value = False
+
+    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+
+    response = client.post(f"/api/user/regulations/{regulation_id}/confirm-upload")
+
+    assert response.status_code == status.HTTP_409_CONFLICT
+    assert response.json()["detail"] == "Regulation content not found in storage!"
+    mock_regulations_storage.check_regulation_exists.assert_awaited_once_with(regulation_id)
+
+    async with session_maker() as session:
+        statement = select(regulations_table).where(regulations_table.c.id == regulation_id)
+        result = await session.execute(statement)
+    regulation = result.one_or_none()
+
+    assert regulation is not None
+    assert regulation.is_uploaded is False

@@ -1,6 +1,6 @@
-from typing import Annotated
+from typing import Annotated, Any
 
-from fastapi import Depends
+from fastapi import Depends, Request
 
 from app.application.interfaces.documents import DocumentsRepository
 from app.application.interfaces.regulations import RegulationsRepository, RegulationsStorage
@@ -11,7 +11,10 @@ from app.application.services.embedding import DocumentEmbedder
 from app.application.services.regulations import RegulationPreparator
 from app.application.use_cases.regulations import (
     AddRegulation,
+    ConfirmRegulationUpload,
     DeleteRegulation,
+    GetRegulationDownloadUrl,
+    GetRegulationUploadTarget,
     ListRegulations,
     PrepareRegulation,
     SearchRegulation,
@@ -30,10 +33,14 @@ def get_documents_repository() -> DocumentsRepository:
     return RegulationsDocumentsRepository()
 
 
-def get_regulations_storage() -> RegulationsStorage:
-    from app.infrastructure.local_storage.repository import LocalRegulationsStorage
+def get_file_storage_client(request: Request) -> Any:
+    return request.app.state.file_storage_client
 
-    return LocalRegulationsStorage()
+
+def get_regulations_storage(client: Annotated[Any, Depends(get_file_storage_client)]) -> RegulationsStorage:
+    from app.infrastructure.object_storage.on_premise.repository import S3RegulationsStorage
+
+    return S3RegulationsStorage(client)
 
 
 def get_regulation_repository() -> RegulationsRepository:
@@ -93,6 +100,29 @@ def get_search_regulation(
 def get_add_regulation(
     session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
     regulations_repository: Annotated[RegulationsRepository, Depends(get_regulation_repository)],
-    regulations_storage: Annotated[RegulationsStorage, Depends(get_regulations_storage)],
 ) -> AddRegulation:
-    return AddRegulation(session_maker, regulations_repository, regulations_storage)
+    return AddRegulation(session_maker, regulations_repository)
+
+
+def get_regulation_upload_target(
+    session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
+    regulations_repository: Annotated[RegulationsRepository, Depends(get_regulation_repository)],
+    regulations_storage: Annotated[RegulationsStorage, Depends(get_regulations_storage)],
+) -> GetRegulationUploadTarget:
+    return GetRegulationUploadTarget(session_maker, regulations_repository, regulations_storage)
+
+
+def get_confirm_regulation_upload(
+    session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
+    regulations_repository: Annotated[RegulationsRepository, Depends(get_regulation_repository)],
+    regulations_storage: Annotated[RegulationsStorage, Depends(get_regulations_storage)],
+) -> ConfirmRegulationUpload:
+    return ConfirmRegulationUpload(session_maker, regulations_repository, regulations_storage)
+
+
+def get_regulation_download_url(
+    session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
+    regulations_repository: Annotated[RegulationsRepository, Depends(get_regulation_repository)],
+    regulations_storage: Annotated[RegulationsStorage, Depends(get_regulations_storage)],
+) -> GetRegulationDownloadUrl:
+    return GetRegulationDownloadUrl(session_maker, regulations_repository, regulations_storage)

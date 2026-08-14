@@ -56,6 +56,19 @@ class RegulationsManagerRepository:
             raise FileNotFoundError
 
     @staticmethod
+    @staticmethod
+    async def mark_as_uploaded(session: AsyncSession, user_id: UUID | None, id_: UUID) -> None:
+        statement = (
+            update(regulations_table)
+            .where(regulations_table.c.user_id == user_id, regulations_table.c.id == id_)
+            .values(is_uploaded=True)
+            .returning(regulations_table.c.id)
+        )
+        result = await session.execute(statement)
+
+        if result.scalar_one() is None:
+            raise FileNotFoundError
+
     async def mark_as_prepared(session: AsyncSession, user_id: UUID | None, id_: UUID) -> None:
         statement = (
             update(regulations_table)

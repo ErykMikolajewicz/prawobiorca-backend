@@ -10,13 +10,20 @@ from app.shared.consts import MAX_FILENAME_LENGTH, MIN_FILENAME_LENGTH
 
 class RegulationData(BaseModel):
     name: str = Field(min_length=MIN_FILENAME_LENGTH, max_length=MAX_FILENAME_LENGTH)
-    file: bytes = Field(min_length=1)
     regulation_type: RegulationType | None = None
+
+
+@dataclass(config=ConfigDict(alias_generator=to_camel))
+class RegulationUploadTarget:
+    url: str
+    fields: dict[str, str]
 
 
 @dataclass(config=ConfigDict(alias_generator=to_camel))
 class RegulationRepresentation:
     id: UUID
     is_prepared: bool
+    is_uploaded: bool = False
+
     presentation_name: str = Field(min_length=MIN_FILENAME_LENGTH, max_length=MAX_FILENAME_LENGTH)
     regulation_type: RegulationType | None = None

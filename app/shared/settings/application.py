@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class FileStorageType(StrEnum):
     GOOGLE_CLOUD = "GOOGLE_CLOUD"
-    LOCAL_FILES = "LOCAL_FILES"
+    ON_PREMISE = "ON_PREMISE"
 
 
 class HttpClientType(StrEnum):

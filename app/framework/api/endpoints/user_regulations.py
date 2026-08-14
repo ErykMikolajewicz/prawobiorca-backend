@@ -1,13 +1,16 @@
-from typing import Annotated, cast
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 
-from app.application.dtos.regulations import RegulationData, RegulationRepresentation
+from app.application.dtos.regulations import RegulationData, RegulationRepresentation, RegulationUploadTarget
 from app.application.dtos.search import SearchParams, SearchResult
 from app.application.use_cases.regulations import (
     AddRegulation,
+    ConfirmRegulationUpload,
     DeleteRegulation,
+    GetRegulationDownloadUrl,
+    GetRegulationUploadTarget,
     ListRegulations,
     PrepareRegulation,
     RegulationNotFound,
@@ -15,6 +18,7 @@ from app.application.use_cases.regulations import (
 )
 from app.domain.exceptions.regulations import (
     RegulationAlreadyInitialized,
+    RegulationContentNotFound,
     RegulationServiceUnavailable,
     RegulationsNotPreparedToSearch,
 )
@@ -22,9 +26,12 @@ from app.domain.value_objects.regulations import RegulationType
 from app.framework.dependencies.authentication import require_logged_user
 from app.framework.dependencies.regulations import (
     get_add_regulation,
+    get_confirm_regulation_upload,
     get_delete_regulation,
     get_list_regulations,
     get_prepare_regulation,
+    get_regulation_download_url,
+    get_regulation_upload_target,
     get_search_regulation,
 )
 
@@ -64,21 +71,79 @@ async def get_user_regulations(
 async def add_user_regulation(
     user_id: Annotated[UUID, Depends(require_logged_user)],
     add_regulation_: Annotated[AddRegulation, Depends(get_add_regulation)],
-    regulation: UploadFile,
-    regulation_type: RegulationType | None = Query(default=None, alias="regulationType"),
+    regulation_data: RegulationData,
 ) -> UUID:
-    regulation_content = await regulation.read()
-    regulation_name = cast(str, regulation.filename)
-    try:
-        regulation_data = RegulationData(name=regulation_name, file=regulation_content, regulation_type=regulation_type)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Regulation {regulation_name} is empty, can't add empty file!",
-        )
-
     regulation_id = await add_regulation_.execute(user_id, regulation_data)
     return regulation_id
+
+
+@user_regulations_router.get(
+    "/user/regulations/{regulationId}/upload-target",
+    responses={
+        status.HTTP_404_NOT_FOUND: {"description": "Regulation not found!"},
+        status.HTTP_409_CONFLICT: {"description": "Regulation already prepared, can't replace its content!"},
+    },
+)
+async def get_user_regulation_upload_target(
+    user_id: Annotated[UUID, Depends(require_logged_user)],
+    get_upload_target: Annotated[GetRegulationUploadTarget, Depends(get_regulation_upload_target)],
+    regulation_id: Annotated[UUID, Path(alias="regulationId")],
+) -> RegulationUploadTarget:
+    try:
+        return await get_upload_target.execute(user_id, regulation_id)
+    except RegulationNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Regulation not found!")
+    except RegulationAlreadyInitialized:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Regulation already prepared, can't replace its content!",
+        )
+
+
+@user_regulations_router.post(
+    "/user/regulations/{regulationId}/confirm-upload",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_404_NOT_FOUND: {"description": "Regulation not found!"},
+        status.HTTP_409_CONFLICT: {"description": "Regulation already prepared or content not found on storage!"},
+    },
+)
+async def confirm_user_regulation_upload(
+    user_id: Annotated[UUID, Depends(require_logged_user)],
+    confirm_upload: Annotated[ConfirmRegulationUpload, Depends(get_confirm_regulation_upload)],
+    regulation_id: Annotated[UUID, Path(alias="regulationId")],
+):
+    try:
+        await confirm_upload.execute(user_id, regulation_id)
+    except RegulationNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Regulation not found!")
+    except RegulationContentNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Regulation content not found in storage!",
+        )
+    except RegulationAlreadyInitialized:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Regulation is already prepared!",
+        )
+
+
+@user_regulations_router.get(
+    "/user/regulations/{regulationId}/download-url",
+    responses={
+        status.HTTP_404_NOT_FOUND: {"description": "Regulation not found!"},
+    },
+)
+async def get_user_regulation_download_url(
+    user_id: Annotated[UUID, Depends(require_logged_user)],
+    get_download_url: Annotated[GetRegulationDownloadUrl, Depends(get_regulation_download_url)],
+    regulation_id: Annotated[UUID, Path(alias="regulationId")],
+) -> str:
+    try:
+        return await get_download_url.execute(user_id, regulation_id)
+    except RegulationNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Regulation not found!")
 
 
 @user_regulations_router.delete(
@@ -134,7 +199,7 @@ async def search_regulation_documents(
     status_code=status.HTTP_201_CREATED,
     responses={
         status.HTTP_404_NOT_FOUND: {"description": "Regulation to prepare not found!"},
-        status.HTTP_409_CONFLICT: {"description": "Regulation already prepared to search!"},
+        status.HTTP_409_CONFLICT: {"description": "Regulation already prepared, or its content not uploaded!"},
         status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Preparation service not working!"},
     },
 )
@@ -154,6 +219,11 @@ async def prepare_regulation(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Regulation already prepared to search!",
+        )
+    except RegulationContentNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Regulation content not uploaded!",
         )
     except RegulationServiceUnavailable:
         raise HTTPException(

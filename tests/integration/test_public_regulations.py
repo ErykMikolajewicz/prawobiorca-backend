@@ -56,6 +56,7 @@ async def test_get_public_regulations(client, override_session_maker, session_ma
                 "id": str(public_act_id),
                 "presentationName": "Public act.pdf",
                 "isPrepared": True,
+                "isUploaded": False,
                 "regulationType": RegulationType.ACT,
             }
         ]
@@ -170,16 +171,13 @@ async def test_add_public_regulation_as_admin(
     override_session_maker,
     session_maker,
     override_authorize_admin_user,
-    override_get_regulations_repository,
+    override_get_regulations_storage,
 ):
-    with open("tests/data/pwr-regulamin_2025_slice_7-9.pdf", "rb") as f:
-        regulation_content = f.read()
-    files = {"regulation": ("public-regulation.pdf", regulation_content, "plain/text")}
-    params = {"regulationType": RegulationType.DECREE}
+    regulation_data = {"name": "public-regulation.pdf", "regulation_type": RegulationType.DECREE}
 
     client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
 
-    response = client.post("/api/regulations", files=files, params=params)
+    response = client.post("/api/regulations", json=regulation_data)
 
     assert response.status_code == status.HTTP_201_CREATED
 

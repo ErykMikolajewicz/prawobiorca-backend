@@ -31,8 +31,8 @@ docs = [
 google-cloud = [
     "google-cloud-storage==3.13.*",
 ]
-local-storage = [
-    "aiofiles==25.1.*",
+on-premise = [
+    "aiobotocore==3.9.*",
 ]
 
 test = [

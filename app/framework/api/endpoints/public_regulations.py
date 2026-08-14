@@ -1,18 +1,31 @@
-from typing import Annotated, cast
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 
-from app.application.dtos.regulations import RegulationData, RegulationRepresentation
+from app.application.dtos.regulations import RegulationData, RegulationRepresentation, RegulationUploadTarget
 from app.application.dtos.search import SearchParams, SearchResult
-from app.application.use_cases.regulations import AddRegulation, DeleteRegulation, ListRegulations, SearchRegulation
-from app.domain.exceptions.regulations import RegulationNotFound, RegulationsNotPreparedToSearch
+from app.application.use_cases.regulations import (
+    AddRegulation,
+    DeleteRegulation,
+    GetRegulationDownloadUrl,
+    GetRegulationUploadTarget,
+    ListRegulations,
+    SearchRegulation,
+)
+from app.domain.exceptions.regulations import (
+    RegulationAlreadyInitialized,
+    RegulationNotFound,
+    RegulationsNotPreparedToSearch,
+)
 from app.domain.value_objects.regulations import RegulationType
 from app.framework.dependencies.authentication import require_admin
 from app.framework.dependencies.regulations import (
     get_add_regulation,
     get_delete_regulation,
     get_list_regulations,
+    get_regulation_download_url,
+    get_regulation_upload_target,
     get_search_regulation,
 )
 
@@ -70,29 +83,58 @@ async def search_regulation_documents(
 
 @public_regulations_router.post(
     "/regulations",
-    responses={status.HTTP_400_BAD_REQUEST: {"description": "Can't add empty regulation."}},
     dependencies=(Depends(require_admin),),
     status_code=status.HTTP_201_CREATED,
 )
 async def add_public_regulation(
     add_regulation_: Annotated[AddRegulation, Depends(get_add_regulation)],
-    regulation: UploadFile,
-    regulation_type: RegulationType | None = Query(default=None, alias="regulationType"),
+    regulation_data: RegulationData,
 ) -> UUID:
     user_id = None
 
-    regulation_content = await regulation.read()
-    regulation_name = cast(str, regulation.filename)
-    try:
-        regulation_data = RegulationData(name=regulation_name, file=regulation_content, regulation_type=regulation_type)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Regulation {regulation_name} is empty, can't add empty file!",
-        )
-
     regulation_id = await add_regulation_.execute(user_id, regulation_data)
     return regulation_id
+
+
+@public_regulations_router.get(
+    "/regulations/{regulationId}/upload-target",
+    dependencies=(Depends(require_admin),),
+    responses={
+        status.HTTP_404_NOT_FOUND: {"description": "Regulation not found!"},
+        status.HTTP_409_CONFLICT: {"description": "Regulation already prepared, can't replace its content!"},
+    },
+)
+async def get_public_regulation_upload_target(
+    get_upload_target: Annotated[GetRegulationUploadTarget, Depends(get_regulation_upload_target)],
+    regulation_id: Annotated[UUID, Path(alias="regulationId")],
+) -> RegulationUploadTarget:
+    user_id = None
+    try:
+        return await get_upload_target.execute(user_id, regulation_id)
+    except RegulationNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Regulation not found!")
+    except RegulationAlreadyInitialized:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Regulation already prepared, can't replace its content!",
+        )
+
+
+@public_regulations_router.get(
+    "/regulations/{regulationId}/download-url",
+    responses={
+        status.HTTP_404_NOT_FOUND: {"description": "Regulation not found!"},
+    },
+)
+async def get_public_regulation_download_url(
+    get_download_url: Annotated[GetRegulationDownloadUrl, Depends(get_regulation_download_url)],
+    regulation_id: Annotated[UUID, Path(alias="regulationId")],
+) -> str:
+    user_id = None
+    try:
+        return await get_download_url.execute(user_id, regulation_id)
+    except RegulationNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Regulation not found!")
 
 
 @public_regulations_router.delete(

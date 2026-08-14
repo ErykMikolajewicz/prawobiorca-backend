@@ -44,12 +44,6 @@ def mock_tokens_repo():
 
 
 @pytest.fixture
-def mock_regulations_storage():
-    repo = create_autospec(RegulationsStorage)
-    return repo
-
-
-@pytest.fixture
 def mock_regulations_repository():
     repo = create_autospec(RegulationsRepository)
     return repo
@@ -77,3 +71,8 @@ def mock_cases_repo():
 def mock_case_documents_repo():
     repo = create_autospec(CaseDocumentsRepository)
     return repo
+
+
+@pytest.fixture
+def mock_regulations_storage():
+    return create_autospec(RegulationsStorage)

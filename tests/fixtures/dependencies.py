@@ -1,6 +1,5 @@
 from enum import StrEnum
 from typing import Callable
-from uuid import UUID
 
 import pytest
 from fastapi.requests import Request
@@ -13,19 +12,11 @@ from main import prawobiorca
 from tests.consts import AUTHORIZATION_TOKEN, USER_ID
 
 
-class MockStorageRepository:
-    async def upload_regulation(self, id_: UUID, file_data: bytes):
-        pass
-
-    async def delete_regulation(self, id_: UUID):
-        pass
-
-
 @pytest.fixture
-def override_get_regulations_repository():
-    prawobiorca.dependency_overrides[get_regulations_storage] = lambda: MockStorageRepository()
+def override_get_regulations_storage(mock_regulations_storage):
+    prawobiorca.dependency_overrides[get_regulations_storage] = lambda: mock_regulations_storage
     yield
-    prawobiorca.dependency_overrides = {}
+    prawobiorca.dependency_overrides.pop(get_regulations_storage, None)
 
 
 class UserType(StrEnum):
