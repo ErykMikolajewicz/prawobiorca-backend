@@ -59,8 +59,6 @@ The repository maintains the following branches:
 
 [longer description]
 
-[breaking changes/issues]
-
 **Common commit types:**
 
 - `feature` – New functionality

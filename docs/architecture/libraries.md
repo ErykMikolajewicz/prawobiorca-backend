@@ -1,7 +1,7 @@
 # Library Overview
 
 This document contains information about selected libraries along with the reasoning behind their use. It also compares alternative solutions — both other services and different implementation approaches.  
-This means the section explains, for example, why a specific Postgres driver was chosen, but does not explain why Postgres was selected over MySQL.  
+This means the section explains, for example, why a specific Postgres driver was chosen but does not explain why Postgres was selected over MySQL.  
 Justifications for choosing components that work with the application can be found in [external services](external_services.md).
 
 If a library is used with a major version lower than the latest, a justification for this should also be provided.
@@ -27,7 +27,7 @@ Switching the driver later should be relatively easy thanks to the use of the [S
 
 ### bcrypt
 
-A password hashing library chosen for security reasons.  
+Password hashing library chosen for security reasons.  
 `bcrypt` provides strong resistance to brute-force attacks and is easy to use.
 
 Alternatives:  
@@ -111,7 +111,7 @@ Alternative: **[Tortoise ORM](https://tortoise.github.io/){target=_blank}** — 
 
 ## Storage Dependencies - choose one option
 
-Actually work only local storage with aiofiles, due to developing app in scientific club, perhaps in futureGoogle Cloud will be implemented again.
+Actually works only local storage with aiofiles, due to developing app in scientific club; perhaps in the future Google Cloud will be implemented again.
 
 ### aiofiles
 
