@@ -7,25 +7,29 @@ from app.application.dtos.regulations import RegulationData, RegulationRepresent
 from app.application.dtos.search import SearchParams, SearchResult
 from app.application.use_cases.regulations import (
     AddRegulation,
+    ConfirmRegulationUpload,
     DeleteRegulation,
     GetRegulationDownloadUrl,
-    GetRegulationUploadTarget,
     ListRegulations,
+    PrepareRegulation,
     SearchRegulation,
 )
 from app.domain.exceptions.regulations import (
     RegulationAlreadyInitialized,
+    RegulationContentNotFound,
     RegulationNotFound,
+    RegulationServiceUnavailable,
     RegulationsNotPreparedToSearch,
 )
 from app.domain.value_objects.regulations import RegulationType
 from app.framework.dependencies.authentication import require_admin
 from app.framework.dependencies.regulations import (
     get_add_regulation,
+    get_confirm_regulation_upload,
     get_delete_regulation,
     get_list_regulations,
+    get_prepare_regulation,
     get_regulation_download_url,
-    get_regulation_upload_target,
     get_search_regulation,
 )
 
@@ -89,34 +93,39 @@ async def search_regulation_documents(
 async def add_public_regulation(
     add_regulation_: Annotated[AddRegulation, Depends(get_add_regulation)],
     regulation_data: RegulationData,
-) -> UUID:
-    user_id = None
-
-    regulation_id = await add_regulation_.execute(user_id, regulation_data)
-    return regulation_id
-
-
-@public_regulations_router.get(
-    "/regulations/{regulationId}/upload-target",
-    dependencies=(Depends(require_admin),),
-    responses={
-        status.HTTP_404_NOT_FOUND: {"description": "Regulation not found!"},
-        status.HTTP_409_CONFLICT: {"description": "Regulation already prepared, can't replace its content!"},
-    },
-)
-async def get_public_regulation_upload_target(
-    get_upload_target: Annotated[GetRegulationUploadTarget, Depends(get_regulation_upload_target)],
-    regulation_id: Annotated[UUID, Path(alias="regulationId")],
 ) -> RegulationUploadTarget:
     user_id = None
+
+    return await add_regulation_.execute(user_id, regulation_data)
+
+
+@public_regulations_router.post(
+    "/regulations/{regulationId}/confirm-upload",
+    dependencies=(Depends(require_admin),),
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_404_NOT_FOUND: {"description": "Regulation not found!"},
+        status.HTTP_409_CONFLICT: {"description": "Regulation already prepared or content not found on storage!"},
+    },
+)
+async def confirm_public_regulation_upload(
+    confirm_upload: Annotated[ConfirmRegulationUpload, Depends(get_confirm_regulation_upload)],
+    regulation_id: Annotated[UUID, Path(alias="regulationId")],
+):
+    user_id = None
     try:
-        return await get_upload_target.execute(user_id, regulation_id)
+        await confirm_upload.execute(user_id, regulation_id)
     except RegulationNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Regulation not found!")
+    except RegulationContentNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Regulation content not found in storage!",
+        )
     except RegulationAlreadyInitialized:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="Regulation already prepared, can't replace its content!",
+            detail="Regulation is already prepared!",
         )
 
 
@@ -154,3 +163,42 @@ async def delete_public_regulation(
         await delete_regulation_.execute(user_id, regulation_id)
     except RegulationNotFound:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Regulation not found!")
+
+
+@public_regulations_router.post(
+    "/regulations/{regulationId}/preparation",
+    dependencies=(Depends(require_admin),),
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        status.HTTP_404_NOT_FOUND: {"description": "Regulation to prepare not found!"},
+        status.HTTP_409_CONFLICT: {"description": "Regulation already prepared, or its content not uploaded!"},
+        status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Preparation service not working!"},
+    },
+)
+async def prepare_public_regulation(
+    prepare_regulation_: Annotated[PrepareRegulation, Depends(get_prepare_regulation)],
+    regulation_id: Annotated[UUID, Path(alias="regulationId")],
+):
+    user_id = None
+    try:
+        await prepare_regulation_.execute(user_id, regulation_id)
+    except RegulationNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Regulation to prepare not found!",
+        )
+    except RegulationAlreadyInitialized:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Regulation already prepared to search!",
+        )
+    except RegulationContentNotFound:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Regulation content not uploaded!",
+        )
+    except RegulationServiceUnavailable:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Preparation service not working!",
+        )

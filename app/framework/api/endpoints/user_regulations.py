@@ -10,7 +10,6 @@ from app.application.use_cases.regulations import (
     ConfirmRegulationUpload,
     DeleteRegulation,
     GetRegulationDownloadUrl,
-    GetRegulationUploadTarget,
     ListRegulations,
     PrepareRegulation,
     RegulationNotFound,
@@ -31,7 +30,6 @@ from app.framework.dependencies.regulations import (
     get_list_regulations,
     get_prepare_regulation,
     get_regulation_download_url,
-    get_regulation_upload_target,
     get_search_regulation,
 )
 
@@ -72,32 +70,8 @@ async def add_user_regulation(
     user_id: Annotated[UUID, Depends(require_logged_user)],
     add_regulation_: Annotated[AddRegulation, Depends(get_add_regulation)],
     regulation_data: RegulationData,
-) -> UUID:
-    regulation_id = await add_regulation_.execute(user_id, regulation_data)
-    return regulation_id
-
-
-@user_regulations_router.get(
-    "/user/regulations/{regulationId}/upload-target",
-    responses={
-        status.HTTP_404_NOT_FOUND: {"description": "Regulation not found!"},
-        status.HTTP_409_CONFLICT: {"description": "Regulation already prepared, can't replace its content!"},
-    },
-)
-async def get_user_regulation_upload_target(
-    user_id: Annotated[UUID, Depends(require_logged_user)],
-    get_upload_target: Annotated[GetRegulationUploadTarget, Depends(get_regulation_upload_target)],
-    regulation_id: Annotated[UUID, Path(alias="regulationId")],
 ) -> RegulationUploadTarget:
-    try:
-        return await get_upload_target.execute(user_id, regulation_id)
-    except RegulationNotFound:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Regulation not found!")
-    except RegulationAlreadyInitialized:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Regulation already prepared, can't replace its content!",
-        )
+    return await add_regulation_.execute(user_id, regulation_data)
 
 
 @user_regulations_router.post(

@@ -4,7 +4,7 @@ import pytest
 
 from app.application.interfaces.cases import CaseDocumentsRepository, CasesRepository
 from app.application.interfaces.documents import DocumentsRepository
-from app.application.interfaces.regulations import RegulationsRepository, RegulationsStorage
+from app.application.interfaces.regulations import RegulationsRepository
 from app.application.interfaces.relational import AsyncSession, SessionMaker
 from app.application.interfaces.users import UsersRepository, UsersTokensRepository
 from app.application.ports.texts import TextsEmbedder
@@ -71,8 +71,3 @@ def mock_cases_repo():
 def mock_case_documents_repo():
     repo = create_autospec(CaseDocumentsRepository)
     return repo
-
-
-@pytest.fixture
-def mock_regulations_storage():
-    return create_autospec(RegulationsStorage)

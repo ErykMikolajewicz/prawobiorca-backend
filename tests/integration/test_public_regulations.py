@@ -4,6 +4,7 @@ import pytest
 from fastapi import status
 from sqlalchemy import delete, insert, select
 
+from app.application.dtos.regulations import RegulationUploadTarget
 from app.domain.value_objects.regulations import RegulationType
 from app.framework.dependencies.text_transformation import get_texts_embedder
 from app.infrastructure.relational_db.schemas.documents import regulations_documents_table
@@ -172,8 +173,13 @@ async def test_add_public_regulation_as_admin(
     session_maker,
     override_authorize_admin_user,
     override_get_regulations_storage,
+    mock_regulations_storage,
 ):
     regulation_data = {"name": "public-regulation.pdf", "regulation_type": RegulationType.DECREE}
+
+    mock_regulations_storage.get_upload_target.side_effect = lambda id_: RegulationUploadTarget(
+        id=id_, url="http://storage.local/bucket", fields={"key": str(id_)}
+    )
 
     client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
 
@@ -181,7 +187,11 @@ async def test_add_public_regulation_as_admin(
 
     assert response.status_code == status.HTTP_201_CREATED
 
-    regulation_id = UUID(response.json())
+    response_json = response.json()
+    assert "id" in response_json
+    assert "url" in response_json
+    assert "fields" in response_json
+    regulation_id = UUID(response_json["id"])
 
     try:
         async with session_maker() as session:
@@ -194,6 +204,49 @@ async def test_add_public_regulation_as_admin(
         assert regulation.presentation_name == "public-regulation.pdf"
         assert regulation.is_prepared is False
         assert regulation.regulation_type == RegulationType.DECREE
+    finally:
+        async with session_maker.begin() as session:
+            await session.execute(delete(regulations_table).where(regulations_table.c.id == regulation_id))
+
+
+async def test_confirm_public_regulation_upload_as_admin(
+    client,
+    override_session_maker,
+    session_maker,
+    override_authorize_admin_user,
+    override_get_regulations_storage,
+    mock_regulations_storage,
+):
+    async with session_maker.begin() as session:
+        regulation_id = await session.scalar(
+            insert(regulations_table)
+            .values(
+                user_id=None,
+                presentation_name="public_confirm.pdf",
+                is_prepared=False,
+                is_uploaded=False,
+                regulation_type=RegulationType.ACT,
+            )
+            .returning(regulations_table.c.id)
+        )
+
+    mock_regulations_storage.check_regulation_exists.return_value = True
+
+    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+
+    try:
+        response = client.post(f"/api/regulations/{regulation_id}/confirm-upload")
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        mock_regulations_storage.check_regulation_exists.assert_awaited_once_with(regulation_id)
+
+        async with session_maker() as session:
+            statement = select(regulations_table).where(regulations_table.c.id == regulation_id)
+            result = await session.execute(statement)
+        regulation = result.one_or_none()
+
+        assert regulation is not None
+        assert regulation.is_uploaded is True
     finally:
         async with session_maker.begin() as session:
             await session.execute(delete(regulations_table).where(regulations_table.c.id == regulation_id))

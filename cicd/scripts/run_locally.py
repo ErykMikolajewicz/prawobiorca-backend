@@ -35,6 +35,11 @@ def main():
         " -v pg_data:/var/lib/postgresql pgvector:0.8.4-pg18-trixie",
     )
 
+    run_container_if_not_running(
+        "rustfs",
+        "-p 127.0.0.1:9000:9000 -p 127.0.0.1:9001:9001 -v rustfs_data:/data rustfs/rustfs:latest",
+    )
+
     run_container_if_not_running("text-transformator", "-p 127.0.0.1:8080:8080 text-transformator")
 
     subprocess.run(

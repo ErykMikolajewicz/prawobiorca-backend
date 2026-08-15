@@ -6,11 +6,15 @@ from pathlib import Path
 sys.path.append("")
 
 import httpx2
+from aiobotocore.config import AioConfig
+from aiobotocore.session import get_session
+from botocore.exceptions import ClientError
 from sqlalchemy import insert
 
 from app.application.services.embedding import DocumentEmbedder
 from app.application.services.regulations import RegulationPreparator
 from app.domain.value_objects.regulations import RegulationType
+from app.infrastructure.object_storage.on_premise.repository import S3RegulationsStorage
 from app.infrastructure.relational_db.connection import async_session_maker
 from app.infrastructure.relational_db.schemas.documents import RegulationsDocuments
 from app.infrastructure.relational_db.schemas.regulations import regulations_table
@@ -19,6 +23,7 @@ from app.infrastructure.relational_db.schemas.regulations import regulations_tab
 from app.infrastructure.relational_db.schemas.users import users_table  # noqa: F401
 from app.infrastructure.text_transformator.regulation_splitter import RegulationSplitter
 from app.infrastructure.text_transformator.text_embedder import TextsEmbedder
+from app.shared.settings.object_storage import object_storage_settings
 from app.shared.settings.text_transformator import text_transformator_settings
 
 REGULATION_TYPES_BY_FILE_NAME = {
@@ -30,8 +35,25 @@ REGULATION_TYPES_BY_FILE_NAME = {
 
 async def init_regulations():
     init_files_dir = Path("cicd/init/files")
+    session = get_session()
 
-    async with httpx2.AsyncClient(timeout=900) as client:
+    async with (
+        httpx2.AsyncClient(timeout=900) as client,
+        session.create_client(
+            "s3",
+            endpoint_url=object_storage_settings.ENDPOINT_URL,
+            region_name=object_storage_settings.REGION,
+            aws_access_key_id=object_storage_settings.ACCESS_KEY,
+            aws_secret_access_key=object_storage_settings.SECRET_KEY,
+            config=AioConfig(signature_version="s3v4"),
+        ) as s3_client,
+    ):
+        try:
+            await s3_client.head_bucket(Bucket=object_storage_settings.BUCKET)
+        except ClientError:
+            await s3_client.create_bucket(Bucket=object_storage_settings.BUCKET)
+
+        regulations_storage = S3RegulationsStorage(s3_client)
         texts_embedder = TextsEmbedder(
             client=client,
             texts_transformator_url=text_transformator_settings.URL,
@@ -93,12 +115,7 @@ async def init_regulations():
                     regulation_documents,
                 )
 
-                public_files_dir = Path("regulations")
-                public_files_dir.mkdir(exist_ok=True)
-
-                file_destination = public_files_dir / str(regulation_id)
-                with open(file_destination, "wb") as file:
-                    file.write(file_content)
+                await regulations_storage.upload_regulation(id_=regulation_id, file_data=file_content)
 
             print(f"Saved regulation: {file_name}, ")
 

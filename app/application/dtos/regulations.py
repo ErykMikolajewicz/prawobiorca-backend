@@ -15,6 +15,7 @@ class RegulationData(BaseModel):
 
 @dataclass(config=ConfigDict(alias_generator=to_camel))
 class RegulationUploadTarget:
+    id: UUID
     url: str
     fields: dict[str, str]
 

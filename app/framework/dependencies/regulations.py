@@ -14,7 +14,6 @@ from app.application.use_cases.regulations import (
     ConfirmRegulationUpload,
     DeleteRegulation,
     GetRegulationDownloadUrl,
-    GetRegulationUploadTarget,
     ListRegulations,
     PrepareRegulation,
     SearchRegulation,
@@ -100,16 +99,9 @@ def get_search_regulation(
 def get_add_regulation(
     session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
     regulations_repository: Annotated[RegulationsRepository, Depends(get_regulation_repository)],
-) -> AddRegulation:
-    return AddRegulation(session_maker, regulations_repository)
-
-
-def get_regulation_upload_target(
-    session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
-    regulations_repository: Annotated[RegulationsRepository, Depends(get_regulation_repository)],
     regulations_storage: Annotated[RegulationsStorage, Depends(get_regulations_storage)],
-) -> GetRegulationUploadTarget:
-    return GetRegulationUploadTarget(session_maker, regulations_repository, regulations_storage)
+) -> AddRegulation:
+    return AddRegulation(session_maker, regulations_repository, regulations_storage)
 
 
 def get_confirm_regulation_upload(

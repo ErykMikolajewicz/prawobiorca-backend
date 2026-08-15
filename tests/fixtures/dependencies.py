@@ -1,15 +1,22 @@
 from enum import StrEnum
 from typing import Callable
+from unittest.mock import create_autospec
 
 import pytest
 from fastapi.requests import Request
 
+from app.application.interfaces.regulations import RegulationsStorage
 from app.domain.value_objects.users import UserPrivileges
 from app.framework.dependencies.authentication import authorize_user
 from app.framework.dependencies.regulations import get_regulations_storage
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME
 from main import prawobiorca
 from tests.consts import AUTHORIZATION_TOKEN, USER_ID
+
+
+@pytest.fixture
+def mock_regulations_storage():
+    return create_autospec(RegulationsStorage)
 
 
 @pytest.fixture

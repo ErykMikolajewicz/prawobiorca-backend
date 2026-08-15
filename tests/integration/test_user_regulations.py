@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import status
 from sqlalchemy import insert, select
 
+from app.application.dtos.regulations import RegulationUploadTarget
 from app.domain.value_objects.regulations import RegulationType
 from app.infrastructure.relational_db.schemas.regulations import regulations_table
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME
@@ -14,11 +15,16 @@ async def test_add_user_regulation(
     override_session_maker,
     session_maker,
     override_get_regulations_storage,
+    mock_regulations_storage,
     override_authorize_normal_user,
     set_user,
     clean_user,
 ):
     regulation_data = {"name": "user-regulation.pdf", "regulation_type": RegulationType.ACT}
+
+    mock_regulations_storage.get_upload_target.side_effect = lambda id_: RegulationUploadTarget(
+        id=id_, url="http://storage.local/bucket", fields={"key": str(id_)}
+    )
 
     client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
 
@@ -26,7 +32,11 @@ async def test_add_user_regulation(
 
     assert response.status_code == status.HTTP_201_CREATED
 
-    regulation_id = UUID(response.json())
+    response_json = response.json()
+    assert "id" in response_json
+    assert "url" in response_json
+    assert "fields" in response_json
+    regulation_id = UUID(response_json["id"])
 
     async with session_maker() as session:
         statement = select(regulations_table).where(regulations_table.c.id == regulation_id)

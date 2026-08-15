@@ -43,7 +43,7 @@ class S3RegulationsStorage:
             ExpiresIn=object_storage_settings.SIGNED_URL_EXPIRATION_SECONDS,
         )
 
-        return RegulationUploadTarget(url=response["url"], fields=response["fields"])
+        return RegulationUploadTarget(id=id_, url=response["url"], fields=response["fields"])
 
     async def check_regulation_exists(self, id_: UUID) -> bool:
         try:

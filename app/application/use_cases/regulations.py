@@ -65,8 +65,9 @@ class PrepareRegulation:
 class AddRegulation:
     session_maker: SessionMaker
     regulations_repository: RegulationsRepository
+    regulations_storage: RegulationsStorage
 
-    async def execute(self, user_id: UUID | None, regulation_data: RegulationData) -> UUID:
+    async def execute(self, user_id: UUID | None, regulation_data: RegulationData) -> RegulationUploadTarget:
         regulation_registration_data = RegulationRegistrationData(
             presentation_name=regulation_data.name, regulation_type=regulation_data.regulation_type
         )
@@ -74,29 +75,6 @@ class AddRegulation:
             regulation_id = await self.regulations_repository.register_regulation(
                 session, user_id, regulation_registration_data
             )
-
-        return regulation_id
-
-
-@dataclass
-class GetRegulationUploadTarget:
-    session_maker: SessionMaker
-    regulations_repository: RegulationsRepository
-    regulations_storage: RegulationsStorage
-
-    async def execute(self, user_id: UUID | None, regulation_id: UUID) -> RegulationUploadTarget:
-        async with self.session_maker() as session:
-            regulation_representation = await self.regulations_repository.get_regulation_representation(
-                session, user_id, regulation_id
-            )
-
-        if regulation_representation is None:
-            logger.warning(f"Regulation to upload not found! regulation id: {regulation_id}")
-            raise RegulationNotFound
-
-        if regulation_representation.is_prepared:
-            logger.warning(f"Tried upload content of prepared regulation! regulation id: {regulation_id}")
-            raise RegulationAlreadyInitialized
 
         return await self.regulations_storage.get_upload_target(regulation_id)
 
@@ -131,8 +109,6 @@ class ConfirmRegulationUpload:
                 raise RegulationContentNotFound
 
             await self.regulations_repository.mark_as_uploaded(session, user_id, regulation_id)
-
-        return await self.regulations_storage.get_upload_target(regulation_id)
 
 
 @dataclass
