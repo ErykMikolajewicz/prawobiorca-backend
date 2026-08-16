@@ -4,7 +4,6 @@ import tomllib
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 
 from app.framework.api.router import include_all_routers
 from app.framework.dependencies.file_storage import init_file_storage_client
@@ -59,14 +58,6 @@ async def lifespan(app: FastAPI):
 prawobiorca = FastAPI(lifespan=lifespan, title="PRAWOBIORCA", version=version)
 
 origins = ["http://localhost:5173"]
-
-prawobiorca.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 include_all_routers(prawobiorca)
 

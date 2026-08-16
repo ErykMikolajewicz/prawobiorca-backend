@@ -10,7 +10,7 @@ from app.application.interfaces.users import UsersRepository, UsersTokensReposit
 from app.application.services.accounts import check_user_can_log
 from app.domain.exceptions.users import UserCantLog
 from app.domain.services.security import generate_authorization_token, prevent_timing_attack
-from app.framework.dependencies.file_storage import app_settings
+from app.shared.settings.application import app_settings
 
 logger = logging.getLogger(__name__)
 

@@ -5,11 +5,6 @@ from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class FileStorageType(StrEnum):
-    GOOGLE_CLOUD = "GOOGLE_CLOUD"
-    ON_PREMISE = "ON_PREMISE"
-
-
 class HttpClientType(StrEnum):
     HTTPX = "HTTPX"
 
@@ -18,8 +13,6 @@ class ApplicationSettings(BaseSettings):
     LOGGING_LEVEL: str = ...
 
     SESSION_ID_EXPIRATION_SECONDS: int = ...
-
-    FILE_STORAGE: FileStorageType = ...
 
     HTTP_CLIENT: HttpClientType = ...
 

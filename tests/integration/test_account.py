@@ -4,10 +4,10 @@ from http.cookies import SimpleCookie
 from fastapi import status
 from sqlalchemy import delete, select
 
-from app.framework.dependencies.file_storage import app_settings
 from app.infrastructure.relational_db.repositories.users import UsersRepository, UsersTokensRepository
 from app.infrastructure.relational_db.schemas.users import users_tokens_table
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME
+from app.shared.settings.application import app_settings
 from tests.consts import AUTHORIZATION_TOKEN, STRONG_PASSWORD, USER_ID, VALID_USERNAME
 
 SESSION_ID_EXPIRATION_SECONDS = app_settings.SESSION_ID_EXPIRATION_SECONDS

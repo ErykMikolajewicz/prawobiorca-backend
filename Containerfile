@@ -1,6 +1,6 @@
 FROM python:3.14-slim-trixie
 
-RUN pip install --no-cache uv==0.11.*
+RUN pip install --no-cache uv==0.12.*
 
 RUN useradd -r prawobiorca_app
 
@@ -12,7 +12,7 @@ USER prawobiorca_app
 
 COPY pyproject.toml pyproject.toml
 COPY uv.lock uv.lock
-RUN uv sync --compile-bytecode --no-cache --group on-premise
+RUN uv sync --compile-bytecode --no-cache
 
 ENV PATH="/prawobiorca/.venv/bin:$PATH"
 

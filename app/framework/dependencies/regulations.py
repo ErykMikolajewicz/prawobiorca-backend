@@ -24,6 +24,7 @@ from app.framework.dependencies.text_transformation import (
     get_regulations_splitter,
     get_texts_embedder,
 )
+from app.infrastructure.object_storage.repository import S3RegulationsStorage
 from app.infrastructure.relational_db.repositories.documents import RegulationsDocumentsRepository
 from app.infrastructure.relational_db.repositories.regulations import RegulationsManagerRepository
 
@@ -37,8 +38,6 @@ def get_file_storage_client(request: Request) -> Any:
 
 
 def get_regulations_storage(client: Annotated[Any, Depends(get_file_storage_client)]) -> RegulationsStorage:
-    from app.infrastructure.object_storage.on_premise.repository import S3RegulationsStorage
-
     return S3RegulationsStorage(client)
 
 

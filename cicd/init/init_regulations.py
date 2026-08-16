@@ -14,7 +14,7 @@ from sqlalchemy import insert
 from app.application.services.embedding import DocumentEmbedder
 from app.application.services.regulations import RegulationPreparator
 from app.domain.value_objects.regulations import RegulationType
-from app.infrastructure.object_storage.on_premise.repository import S3RegulationsStorage
+from app.infrastructure.object_storage.repository import S3RegulationsStorage
 from app.infrastructure.relational_db.connection import async_session_maker
 from app.infrastructure.relational_db.schemas.documents import RegulationsDocuments
 from app.infrastructure.relational_db.schemas.regulations import regulations_table
