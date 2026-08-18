@@ -1,62 +1,41 @@
 import subprocess
 
 
-def run_command(cmd):
-    return subprocess.run(cmd, shell=True, check=True, text=True, capture_output=True)
-
-
-def container_exists(name):
-    result = run_command('podman ps -a --format "{{.Names}}"')
-    return name in result.stdout.splitlines()
-
-
-def container_running(name):
-    result = run_command('podman ps --format "{{.Names}}"')
-    return name in result.stdout.splitlines()
-
-
-def run_container_if_not_running(name, args):
-    if container_exists(name):
-        if container_running(name):
-            print(f"Container {name} is already running - pass.")
-        else:
-            print(f"Container {name} already exists, but not running, launching.")
-            subprocess.run(["podman", "start", name], check=True)
-    else:
-        print(f"Create and launch container {name}.")
-        cmd = f"podman run -d --name {name} {args}"
-        subprocess.run(cmd, shell=True, check=True)
+def image_exists(name: str) -> bool:
+    result = subprocess.run(["podman", "image", "exists", name])
+    return result.returncode == 0
 
 
 def main():
-    run_container_if_not_running(
-        "postgres_db_prawobiorca",
-        "-e POSTGRES_PASSWORD=postgres -p 127.0.0.1:5432:5432"
-        " -v pg_data:/var/lib/postgresql pgvector:0.8.4-pg18-trixie",
-    )
+    if not image_exists("localhost/prawobiorca-backend:latest") and not image_exists("prawobiorca-backend:latest"):
+        print("Building prawobiorca-backend image...")
+        subprocess.run(["podman", "image", "build", "--tag=prawobiorca-backend", "."], check=True)
 
-    run_container_if_not_running(
-        "rustfs",
-        "-p 127.0.0.1:9000:9000 -p 127.0.0.1:9001:9001 -v rustfs_data:/data rustfs/rustfs:latest",
-    )
+    if not image_exists("localhost/text-transformator:latest") and not image_exists("text-transformator:latest"):
+        print("Building text-transformator image...")
+        subprocess.run(
+            ["podman", "image", "build", "--tag=text-transformator", "text-transformator"],
+            check=True,
+        )
 
-    run_container_if_not_running("text-transformator", "-p 127.0.0.1:8080:8080 text-transformator")
+    if not image_exists("localhost/prawobiorca-frontend:latest") and not image_exists("prawobiorca-frontend:latest"):
+        print("Warning: prawobiorca-frontend:latest image not found. Frontend may not respond until built.")
 
+    subprocess.run(["podman", "network", "create", "--ignore", "prawobiorca-net"], check=True)
+
+    print("Deploying local environment with podman play kube...")
     subprocess.run(
-        [
-            "granian",
-            "--port",
-            "8000",
-            "--host",
-            "127.0.0.1",
-            "--interface",
-            "asgi",
-            "--reload",
-            "--access-log",
-            "main:prawobiorca",
-        ],
+        ["podman", "play", "kube", "--network", "prawobiorca-net", "cicd/k8s/local/local-deployment.yaml"],
         check=True,
     )
+    print("\nLocal deployment is running.")
+    print("Nginx Ingress available at http://localhost:8080")
+    print("  - Frontend: http://localhost:8080/")
+    print("  - API:      http://localhost:8080/api")
+    print("  - Docs:     http://localhost:8080/docs")
+    print("  - OpenAPI:  http://localhost:8080/openapi.json")
+    print("  - Storage:  http://localhost:8080/storage/")
+    print("\nTo stop the deployment run: poe run_locally_down")
 
 
 if __name__ == "__main__":

@@ -26,20 +26,6 @@ spec:
                 name: prawobiorca-backend
                 port:
                   number: 8000
-          - path: /docs
-            pathType: Prefix
-            backend:
-              service:
-                name: prawobiorca-backend
-                port:
-                  number: 8000
-          - path: /openapi.json
-            pathType: Exact
-            backend:
-              service:
-                name: prawobiorca-backend
-                port:
-                  number: 8000
           - path: /
             pathType: Prefix
             backend:

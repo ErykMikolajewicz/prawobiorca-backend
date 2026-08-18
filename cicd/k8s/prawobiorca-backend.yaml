@@ -43,8 +43,6 @@ spec:
             - name: secrets-store
               mountPath: "/mnt/secrets-store"
               readOnly: true
-            - name: files-volume
-              mountPath: "/files"
           envFrom:
             - configMapRef:
                 name: prawobiorca-backend-config
@@ -61,9 +59,6 @@ spec:
             readOnly: true
             volumeAttributes:
               secretProviderClass: prawobiorca-secrets
-        - name: files-volume
-          persistentVolumeClaim:
-            claimName: prawobiorca-files
 
 ---
 apiVersion: v1
@@ -88,13 +83,8 @@ metadata:
 data:
   APP_LOGGING_LEVEL: "INFO"
   APP_SESSION_ID_EXPIRATION_SECONDS: "500"
-  APP_FILE_STORAGE: "LOCAL_FILES"
-  APP_VECTOR_DB: "QDRANT"
   APP_HTTP_CLIENT: "HTTPX"
   APP_DOCUMENT_DESIRED_TOKENS_LENGTH: "300"
-
-  GC_PRIVATE_COLLECTION: ""
-  GC_PUBLIC_COLLECTION: ""
 
   RELATIONAL_DB_DRIVER: "postgresql+asyncpg"
   RELATIONAL_DB_USER: "postgres"
@@ -110,22 +100,6 @@ data:
   HTTPX_MAX_CONNECTIONS: "20"
   HTTPX_MAX_KEEP_ALIVE_CONNECTIONS: "5"
 
-  QDRANT_HOST: "qdrant"
-  QDRANT_GRPC_PORT: "6334"
-
   TEXT_TRANSFORMATOR_URL: "http://text-transformator:8080"
   TEXT_TRANSFORMATOR_MAX_TOKENS: "2048"
   TEXT_TRANSFORMATOR_MAX_TITLE_TOKENS_OVERHEAD: "16"
-
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: prawobiorca-files
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
