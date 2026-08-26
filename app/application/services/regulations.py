@@ -1,17 +1,24 @@
 from app.application.ports.regulations import RegulationSpliter
+from app.application.ports.tokenizer import Tokenizer
 from app.application.services.embedding import DocumentEmbedder
 from app.domain.value_objects.documents import DocumentsCollection
 from app.domain.value_objects.regulations import RegulationAct
 
 
 class RegulationPreparator:
-    def __init__(self, regulation_spliter: RegulationSpliter, document_embedder: DocumentEmbedder):
+    def __init__(
+        self,
+        regulation_spliter: RegulationSpliter,
+        document_embedder: DocumentEmbedder,
+        tokenizer: Tokenizer,
+    ):
         self._regulation_spliter = regulation_spliter
         self._document_embedder = document_embedder
+        self._tokenizer = tokenizer
 
     async def prepare_regulation(self, regulation: bytes) -> DocumentsCollection:
         regulations_elements = await self._regulation_spliter.split(regulation)
-        regulation_act = RegulationAct(regulations_elements)
+        regulation_act = RegulationAct(regulations_elements, self._tokenizer)
 
         documents = regulation_act.get_documents_to_embed()
 

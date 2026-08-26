@@ -100,9 +100,10 @@ data:
   HTTPX_MAX_CONNECTIONS: "20"
   HTTPX_MAX_KEEP_ALIVE_CONNECTIONS: "5"
 
-  TEXT_TRANSFORMATOR_URL: "http://text-transformator:8080"
-  TEXT_TRANSFORMATOR_MAX_TOKENS: "2048"
-  TEXT_TRANSFORMATOR_MAX_TITLE_TOKENS_OVERHEAD: "16"
+  EMBEDDING_SERVICE_URL: "http://embedding-service:8080"
+  EXTRACTION_SERVICE_URL: "http://extraction-service:8080"
+  TOKENIZER_MAX_TOKENS: "2048"
+  TOKENIZER_MAX_TITLE_TOKENS_OVERHEAD: "16"
 
   OBJECT_STORAGE_ENDPOINT_URL: "http://rustfs:9000"
   OBJECT_STORAGE_REGION: "us-east-1"
@@ -129,7 +130,7 @@ spec:
           hostPort: 5432
       volumeMounts:
         - name: postgres-data
-          mountPath: /var/lib/postgresql/data
+          mountPath: /var/lib/postgresql
       env:
         - name: POSTGRES_USER
           value: "postgres"
@@ -143,7 +144,7 @@ spec:
   volumes:
     - name: postgres-data
       persistentVolumeClaim:
-        claimName: postgres_data_local
+        claimName: postgres_data
 
 ---
 apiVersion: v1
@@ -167,26 +168,42 @@ spec:
   volumes:
     - name: rustfs-data
       persistentVolumeClaim:
-        claimName: rustfs_data_local
+        claimName: rustfs_data
 
 ---
 apiVersion: v1
 kind: Pod
 metadata:
-  name: text-transformator
+  name: embedding-service
   labels:
     app: prawobiorca
-    component: text-transformator
+    component: embedding-service
 spec:
   containers:
-    - name: text-transformator
-      image: localhost/text-transformator:latest
+    - name: embedding-service
+      image: localhost/embedding-service:latest
       ports:
         - containerPort: 8080
           hostPort: 8081
       env:
         - name: OMP_NUM_THREADS
           value: "2"
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: extraction-service
+  labels:
+    app: prawobiorca
+    component: extraction-service
+spec:
+  containers:
+    - name: extraction-service
+      image: localhost/extraction-service:latest
+      ports:
+        - containerPort: 8080
+          hostPort: 8082
 
 ---
 apiVersion: v1

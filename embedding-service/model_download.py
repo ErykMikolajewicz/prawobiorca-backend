@@ -5,7 +5,7 @@ from pathlib import Path
 from huggingface_hub import hf_hub_download
 from transformers import AutoTokenizer
 
-model_root_dir = "/text-transformator"
+model_root_dir = "/embedding-service"
 
 MODEL_ID = "onnx-community/embeddinggemma-300m-ONNX"
 

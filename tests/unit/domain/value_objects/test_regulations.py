@@ -1,17 +1,22 @@
+from unittest.mock import MagicMock
+
 from app.domain.value_objects.regulations import RegulationAct, RegulationElement, UsefulLabels
 
 
 def test_regulation_act_assigns_chunk_order():
     elements = [
-        RegulationElement(label=UsefulLabels.SECTION_HEADER, text="Header 1", tokens_number=5),
-        RegulationElement(label=UsefulLabels.TEXT, text="Content 1", tokens_number=10),
-        RegulationElement(label=UsefulLabels.TEXT, text="Content 1.1", tokens_number=10),
-        RegulationElement(label=UsefulLabels.SECTION_HEADER, text="Header 2", tokens_number=5),
-        RegulationElement(label=UsefulLabels.TEXT, text="Content 2", tokens_number=10),
-        RegulationElement(label=UsefulLabels.TEXT, text="Content 2.1", tokens_number=10),
+        RegulationElement(label=UsefulLabels.SECTION_HEADER, text="Header 1"),
+        RegulationElement(label=UsefulLabels.TEXT, text="Content 1"),
+        RegulationElement(label=UsefulLabels.TEXT, text="Content 1.1"),
+        RegulationElement(label=UsefulLabels.SECTION_HEADER, text="Header 2"),
+        RegulationElement(label=UsefulLabels.TEXT, text="Content 2"),
+        RegulationElement(label=UsefulLabels.TEXT, text="Content 2.1"),
     ]
 
-    act = RegulationAct(elements)
+    mock_tokenizer = MagicMock()
+    mock_tokenizer.count_tokens.return_value = 10
+
+    act = RegulationAct(elements, mock_tokenizer)
     collection = act.get_documents_to_embed()
     documents = list(collection)
 

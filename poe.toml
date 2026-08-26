@@ -5,7 +5,8 @@ run_locally_down = "podman play kube --down cicd/k8s/local/local-deployment.yaml
 test_integration = "uv run --group test pytest tests/integration"
 test = "uv run --group test pytest tests/unit"
 build_app = "podman image build --tag=prawobiorca-backend ."
-build_text-transformator = "podman image build --tag=text-transformator text-transformator"
+build_embedding-service = "podman image build --tag=embedding-service embedding-service"
+build_extraction-service = "podman image build --tag=extraction-service extraction-service"
 upgrade_db_schemas = "uv run --group test alembic upgrade head"
 seed = "uv run cicd/init/seed_relational_db.py"
 init_regulations = "uv run cicd/init/init_regulations.py"
@@ -18,7 +19,7 @@ sequence = [
 ]
 
 [tasks.build_images]
-sequence = ["build_app", "build_text-transformator"]
+sequence = ["build_app", "build_embedding-service", "build_extraction-service"]
 
 [tasks.init_db]
 sequence = ["upgrade_db_schemas", "seed", "init_regulations"]

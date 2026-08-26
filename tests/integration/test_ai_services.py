@@ -5,7 +5,7 @@ from pathlib import Path
 import httpx2
 import pytest
 
-from tests.consts import TEXT_TRANSFORMATOR_PORT
+from tests.consts import EMBEDDING_SERVICE_PORT, EXTRACTION_SERVICE_PORT
 
 DATA_DIR = Path(__file__).parents[1] / "data"
 PDF_PATH = DATA_DIR / "pwr-regulamin_2025_slice_7-9.pdf"
@@ -13,10 +13,10 @@ EXPECTED_RESPONSE_PATH = DATA_DIR / "pwr-regulamin_2025_slice_7-9.json"
 
 
 @pytest.mark.slow
-def test_parse_regulation(text_transformator_container):
+def test_parse_regulation(extraction_service_container):
     url = (
-        f"http://{text_transformator_container.get_container_host_ip()}:"
-        f"{text_transformator_container.get_exposed_port(TEXT_TRANSFORMATOR_PORT)}/parse-regulation"
+        f"http://{extraction_service_container.get_container_host_ip()}:"
+        f"{extraction_service_container.get_exposed_port(EXTRACTION_SERVICE_PORT)}/parse-regulation"
     )
 
     with PDF_PATH.open("rb") as pdf_file:
@@ -41,10 +41,10 @@ def test_parse_regulation(text_transformator_container):
 
 
 @pytest.mark.slow
-def test_embed_texts(text_transformator_container):
+def test_embed_texts(embedding_service_container):
     url = (
-        f"http://{text_transformator_container.get_container_host_ip()}:"
-        f"{text_transformator_container.get_exposed_port(TEXT_TRANSFORMATOR_PORT)}/embed"
+        f"http://{embedding_service_container.get_container_host_ip()}:"
+        f"{embedding_service_container.get_exposed_port(EMBEDDING_SERVICE_PORT)}/embed"
     )
 
     texts_to_embed = (

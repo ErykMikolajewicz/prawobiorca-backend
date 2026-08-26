@@ -14,6 +14,8 @@ from sqlalchemy import insert
 from app.application.services.embedding import DocumentEmbedder
 from app.application.services.regulations import RegulationPreparator
 from app.domain.value_objects.regulations import RegulationType
+from app.infrastructure.ai_services.regulation_splitter import RegulationSplitter
+from app.infrastructure.ai_services.text_embedder import TextsEmbedder
 from app.infrastructure.object_storage.repository import S3RegulationsStorage
 from app.infrastructure.relational_db.connection import async_session_maker
 from app.infrastructure.relational_db.schemas.documents import RegulationsDocuments
@@ -21,10 +23,12 @@ from app.infrastructure.relational_db.schemas.regulations import regulations_tab
 
 # Unused import necessary for sqlalchemy
 from app.infrastructure.relational_db.schemas.users import users_table  # noqa: F401
-from app.infrastructure.text_transformator.regulation_splitter import RegulationSplitter
-from app.infrastructure.text_transformator.text_embedder import TextsEmbedder
+from app.infrastructure.tokenizers.gemma import GemmaTokenizer
+from app.shared.settings.ai_services import (
+    embedding_service_settings,
+    extraction_service_settings,
+)
 from app.shared.settings.object_storage import object_storage_settings
-from app.shared.settings.text_transformator import text_transformator_settings
 
 REGULATION_TYPES_BY_FILE_NAME = {
     "Prawo o nauce i szkolnictwie wyższym.pdf": RegulationType.ACT,
@@ -56,18 +60,21 @@ async def init_regulations():
         regulations_storage = S3RegulationsStorage(s3_client)
         texts_embedder = TextsEmbedder(
             client=client,
-            texts_transformator_url=text_transformator_settings.URL,
+            embedding_service_url=embedding_service_settings.URL,
         )
         regulation_splitter = RegulationSplitter(
             client=client,
-            texts_transformator_url=text_transformator_settings.URL,
+            extraction_service_url=extraction_service_settings.URL,
         )
         document_embedder = DocumentEmbedder(texts_embedder)
+        tokenizer = GemmaTokenizer()
         regulation_preparator = RegulationPreparator(
             regulation_splitter,
             document_embedder,
+            tokenizer,
         )
 
+        print("Start preparing regulations")
         for file_path in init_files_dir.iterdir():
             file_name = file_path.name
 

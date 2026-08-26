@@ -11,10 +11,17 @@ def main():
         print("Building prawobiorca-backend image...")
         subprocess.run(["podman", "image", "build", "--tag=prawobiorca-backend", "."], check=True)
 
-    if not image_exists("localhost/text-transformator:latest") and not image_exists("text-transformator:latest"):
-        print("Building text-transformator image...")
+    if not image_exists("localhost/embedding-service:latest") and not image_exists("embedding-service:latest"):
+        print("Building embedding-service image...")
         subprocess.run(
-            ["podman", "image", "build", "--tag=text-transformator", "text-transformator"],
+            ["podman", "image", "build", "--tag=embedding-service", "embedding-service"],
+            check=True,
+        )
+
+    if not image_exists("localhost/extraction-service:latest") and not image_exists("extraction-service:latest"):
+        print("Building extraction-service image...")
+        subprocess.run(
+            ["podman", "image", "build", "--tag=extraction-service", "extraction-service"],
             check=True,
         )
 

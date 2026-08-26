@@ -1,0 +1,11 @@
+[project]
+name = "extraction-service"
+version = "0.1.0"
+description = "Service to parse and extract text from documents."
+requires-python = "==3.14.*"
+dependencies = [
+    "docling==2.110.*",
+    "fastapi==0.139.*",
+    "granian==2.7.*",
+    "python-multipart==0.0.32",
+]

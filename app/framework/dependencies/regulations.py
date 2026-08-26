@@ -7,6 +7,7 @@ from app.application.interfaces.regulations import RegulationsRepository, Regula
 from app.application.interfaces.relational import SessionMaker
 from app.application.ports.regulations import RegulationSpliter
 from app.application.ports.texts import TextsEmbedder
+from app.application.ports.tokenizer import Tokenizer
 from app.application.services.embedding import DocumentEmbedder
 from app.application.services.regulations import RegulationPreparator
 from app.application.use_cases.regulations import (
@@ -18,12 +19,13 @@ from app.application.use_cases.regulations import (
     PrepareRegulation,
     SearchRegulation,
 )
-from app.framework.dependencies.relational import get_session_maker
-from app.framework.dependencies.text_transformation import (
+from app.framework.dependencies.ai_services import (
     get_document_embedder,
     get_regulations_splitter,
     get_texts_embedder,
 )
+from app.framework.dependencies.relational import get_session_maker
+from app.framework.dependencies.tokenizer import get_tokenizer
 from app.infrastructure.object_storage.repository import S3RegulationsStorage
 from app.infrastructure.relational_db.repositories.documents import RegulationsDocumentsRepository
 from app.infrastructure.relational_db.repositories.regulations import RegulationsManagerRepository
@@ -48,8 +50,9 @@ def get_regulation_repository() -> RegulationsRepository:
 def get_regulation_preparator(
     document_embedder: Annotated[DocumentEmbedder, Depends(get_document_embedder)],
     regulations_splitter: Annotated[RegulationSpliter, Depends(get_regulations_splitter)],
+    tokenizer: Annotated[Tokenizer, Depends(get_tokenizer)],
 ) -> RegulationPreparator:
-    return RegulationPreparator(regulations_splitter, document_embedder)
+    return RegulationPreparator(regulations_splitter, document_embedder, tokenizer)
 
 
 def get_list_regulations(

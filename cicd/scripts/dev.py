@@ -40,7 +40,8 @@ def main():
         "-p 127.0.0.1:9000:9000 -p 127.0.0.1:9001:9001 -v rustfs_data:/data rustfs/rustfs:latest",
     )
 
-    run_container_if_not_running("text-transformator", "-p 127.0.0.1:8080:8080 text-transformator")
+    run_container_if_not_running("embedding-service", "-p 127.0.0.1:8081:8080 embedding-service")
+    run_container_if_not_running("extraction-service", "-p 127.0.0.1:8082:8080 extraction-service")
 
     subprocess.run(
         [

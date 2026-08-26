@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: extraction-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prawobiorca
+      component: extraction-service
+  template:
+    metadata:
+      labels:
+        app: prawobiorca
+        component: extraction-service
+    spec:
+      containers:
+        - name: extraction-service
+          image: europe-central2-docker.pkg.dev/prawobiorca/prawobiorca-repo/extraction-service:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1.5Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: extraction-service
+spec:
+  selector:
+    app: prawobiorca
+    component: extraction-service
+  ports:
+    - port: 8080
+      targetPort: 8080

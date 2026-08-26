@@ -6,7 +6,7 @@ from sqlalchemy import delete, insert, select
 
 from app.application.dtos.regulations import RegulationUploadTarget
 from app.domain.value_objects.regulations import RegulationType
-from app.framework.dependencies.text_transformation import get_texts_embedder
+from app.framework.dependencies.ai_services import get_texts_embedder
 from app.infrastructure.relational_db.schemas.documents import regulations_documents_table
 from app.infrastructure.relational_db.schemas.regulations import regulations_table
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME, VECTOR_LENGTH

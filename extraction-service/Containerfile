@@ -11,26 +11,22 @@ RUN apt-get update && apt-get install -y \
 
 RUN pip install --no-cache uv==0.11.*
 
-RUN useradd -m text_transformator
+RUN useradd -m extraction_service
 
-WORKDIR /text-transformator
-RUN chown text_transformator /text-transformator
+WORKDIR /extraction-service
+RUN chown extraction_service /extraction-service
 
-USER text_transformator
+USER extraction_service
 
 COPY pyproject.toml pyproject.toml
 COPY uv.lock uv.lock
 
 RUN uv sync --compile-bytecode --no-cache
 
-COPY model_download.py model_download.py
-
-RUN .venv/bin/python model_download.py
-
 COPY src src
 
 EXPOSE 8080
 
-ENV PATH="/text-transformator/.venv/bin:$PATH"
+ENV PATH="/extraction-service/.venv/bin:$PATH"
 
 ENTRYPOINT ["granian", "--port", "8080", "--host", "0.0.0.0", "--interface", "asgi", "src.main:app"]

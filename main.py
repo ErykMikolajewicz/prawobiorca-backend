@@ -7,8 +7,8 @@ from fastapi import FastAPI
 
 from app.framework.api.router import include_all_routers
 from app.framework.dependencies.file_storage import init_file_storage_client
+from app.infrastructure.ai_services.initialization import init_ai_services_client
 from app.infrastructure.relational_db.connection import check_relational_db_connection
-from app.infrastructure.text_transformator.initialization import init_text_transformator_client
 from app.shared.logging_config import setup_logging
 
 setup_logging()
@@ -32,8 +32,8 @@ async def lifespan(app: FastAPI):
         app.state.file_storage_client = file_storage_client
         closing_callbacks.insert(0, file_storage_closing_callback)
 
-        http_client, http_closing_callback = await init_text_transformator_client()
-        app.state.embedding_client = http_client
+        http_client, http_closing_callback = await init_ai_services_client()
+        app.state.ai_services_client = http_client
         closing_callbacks.insert(0, http_closing_callback)
 
     except Exception as e:

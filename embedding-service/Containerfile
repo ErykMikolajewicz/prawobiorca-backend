@@ -1,0 +1,36 @@
+FROM python:3.14-slim-trixie
+
+RUN apt-get update && apt-get install -y \
+    libgl1 \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender1 \
+    libxcb1 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache uv==0.11.*
+
+RUN useradd -m embedding_service
+
+WORKDIR /embedding-service
+RUN chown embedding_service /embedding-service
+
+USER embedding_service
+
+COPY pyproject.toml pyproject.toml
+COPY uv.lock uv.lock
+
+RUN uv sync --compile-bytecode --no-cache
+
+COPY model_download.py model_download.py
+
+RUN .venv/bin/python model_download.py
+
+COPY src src
+
+EXPOSE 8080
+
+ENV PATH="/embedding-service/.venv/bin:$PATH"
+
+ENTRYPOINT ["granian", "--port", "8080", "--host", "0.0.0.0", "--interface", "asgi", "src.main:app"]
