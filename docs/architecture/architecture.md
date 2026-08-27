@@ -2,7 +2,7 @@
 
 ## 1. Introduction and System Overview
 
-**Prawobiorca** is a modern backend platform providing intelligent legal search and document management capabilities. The system supports both classical and AI-assisted (semantic vector search) retrieval of legal acts and court rulings, as well as case management and document drafting for authenticated users.
+**Prawobiorca** is a modern backend platform providing intelligent legal search and document management capabilities. The system supports AI-assisted (semantic vector search) retrieval of legal acts, as well as case management and document drafting for authenticated users.
 
 The system is designed to run in two primary environments:
 - **Cloud (GCP / Google Cloud Platform)**: Utilizing containerized workloads with scale-to-zero capabilities for resource-heavy operations to optimize cost and resource allocation.
@@ -12,7 +12,7 @@ The system is designed to run in two primary environments:
 
 ## 2. System Architecture & Components
 
-The architecture follows a **Modular Monolith** pattern for core business logic, paired with **specialized microservices** for compute-heavy tasks:
+The architecture follows a **Monolith** pattern for core business logic, paired with **specialized microservices** for compute-heavy tasks:
 
 ```text
                             [Client / Vue]
@@ -20,18 +20,18 @@ The architecture follows a **Modular Monolith** pattern for core business logic,
                                   │ (HTTP REST)
                                   ▼
        ┌────────────────────────────────────────────────────────┐
-       │             core-service (FastAPI App)                 │
-       │        (Auth, Cases, Files, Search Engine)             │
+       │                     core-service                       │
+       │           (Auth, Cases, Files, Search Engine)          │
        └────┬─────────────────────────────┬─────────────────┬───┘
             │                             │                 │
-      (Dispatches                         │ (Generates      │ (Vector &
-     Taskiq Task)                         │  Query Embed)   │  Relational DB)
+      (Dispatches Task)                   │ (Generates      │ (Vector &
+            |                             │  Query Embed)   │  Relational DB)
             │                             │                 │
             ▼                             ▼                 │
        ┌──────────┐              ┌──────────────┐           │
        │  Broker  │              │ embeddings-  │           │
-       │ (Redis / │              │   service    │           │
-       │ RabbitMQ)│              │ (ONNX/Scale) │           │
+       │          │              │   service    │           │
+       │          │              │ (ONNX/Scale) │           │
        └────┬─────┘              └──────────────┘           │
             │                            ▲                  │
             │ (Consumes Task)            │ (Batch Embed)    │
@@ -42,12 +42,11 @@ The architecture follows a **Modular Monolith** pattern for core business logic,
        │  Chunking / Indexing)  │                           │
        └────┬───────────────────┘                           │
             │                                               │
- (HTTP POST │                                               │
-  for OCR)  │                                               │
-            ▼                                               │
+ (extract)  │                                               │
+   text)    ▼                                               │
  ┌──────────────────────┐                       ┌───────────▼────────────┐
- │  extraction-service  │                       │ PostgreSQL + pgvector  │
- │(OCR/Layout, Scale-0) │                       │(Metadata, Chunks, DB)  │
+ │                      │                       │ PostgreSQL + pgvector  │
+ │  extraction-service  │                       │(Metadata, Chunks, DB)  │
  └──────────────────────┘                       └────────────────────────┘
 ```
 
@@ -74,7 +73,7 @@ Hosts the core domain logic, user-facing endpoints, and background document inde
 
 ### 2.3. `extraction-service`
 * **Responsibilities**:
-  * Heavy OCR, document layout analysis, and text extraction (PDFs, scans) into structured JSON format (e.g., using Docling).
+  * Document layout analysis, and text extraction (PDFs) into structured JSON format, using Docling.
 * **Characteristics**:
   * Completely stateless service.
   * **Scale-to-0 on GCP**: Instances spin up on incoming HTTP processing requests and scale down to 0 during idle periods, significantly reducing RAM and compute costs.
@@ -84,11 +83,12 @@ Hosts the core domain logic, user-facing endpoints, and background document inde
 
 ## 3. Key Architectural Decisions & Patterns
 
-### 3.1. Modular Monolith for Core Business (`core-service`)
-* **Simplicity & Velocity**: Merging user management, storage orchestration, and search into a single codebase eliminates distributed transaction complexities, unnecessary inter-service network calls, and duplicate schema management.
-* **Shared Clean Architecture**: Use cases and domain entities for documents, cases, and search results share a unified PostgreSQL database and connection pool.
+### 3.1. Monolith for Core Business (`core-service`)
+* **Simplicity & Velocity**: Simple monolith, but with clean architecture, possibly to modularize, if team growth.
+* **Architecture**: Use cases and domain entities for documents, cases, with separate layers for framework, and infrastructure (e.g. db connection).
 
 ### 3.2. Asynchronous Job Processing with Taskiq
+NOT YET IMPLEMENTED
 * **Modern Async-First Design**: Native integration with FastAPI and asynchronous Python runtimes.
 * **Broker Agnostic**: Supports Redis, RabbitMQ, or other brokers with minimal configuration changes.
 * **Resilience**: Provides built-in retry mechanisms, failure handling, and transparent task parameter serialization.
@@ -99,7 +99,7 @@ Hosts the core domain logic, user-facing endpoints, and background document inde
 
 ---
 
-## 4. Clean Architecture Structure
+## 4. More about core-service architecture
 
 Each microservice in the repository follows **Clean Architecture** principles, enforcing strict inward-pointing dependency rules.
 
@@ -107,11 +107,11 @@ Each microservice in the repository follows **Clean Architecture** principles, e
                     ┌────────────────────────┐
                     │       Framework        │ (FastAPI, Taskiq Workers)
                     │  ┌──────────────────┐  │
-                    │  │  Infrastructure  │  │ (DB Repos, HTTP/gRPC Clients, Storage)
+                    │  │  Infrastructure  │  │ (DB Repos, HTTP Clients, Storage)
                     │  │  ┌────────────┐  │  │
                     │  │  │Application │  │  │ (Use Cases, DTOs, Ports)
                     │  │  │  ┌──────┐  │  │  │
-                    │  │  │  │Domain│  │  │  │ (Entities, Rules, Value Objects)
+                    │  │  │  │Domain│  │  │  │ (Entities, Value Objects)
                     │  │  │  └──────┘  │  │  │
                     │  │  └────────────┘  │  │
                     │  └──────────────────┘  │
@@ -120,32 +120,32 @@ Each microservice in the repository follows **Clean Architecture** principles, e
 
 ### 4.1. Layers
 
-#### `src/domain`
+#### `app/domain`
 The innermost core of the service containing **Enterprise Business Rules**. It has zero dependencies on outer layers or external frameworks.
 - **Entities**: Business models encapsulating identity and business state (e.g., `User`, `Case`, `Document`, `Chunk`).
 - **Value Objects**: Immutable data structures representing concepts without identity.
 - **Services**: Pure business algorithms and domain rules.
 - **Exceptions**: Domain-specific error definitions.
 
-#### `src/application` (or `src/app`)
+#### `app/application` (or `src/app`)
 Contains **Application Business Rules** and use case orchestrations.
 - **Use Cases**: Individual business workflows (e.g., `RegisterUser`, `ProcessUploadedDocument`, `SearchDocuments`).
 - **DTOs**: Data Transfer Objects defining input/output contracts.
 - **Ports & Interfaces**: Abstract contracts for repositories, vector embedders, and external APIs implemented by the Infrastructure layer.
 
-#### `src/infrastructure`
+#### `app/infrastructure`
 Acts as adapters for external systems and technical tools, implementing ports defined in domain/application.
 - **Relational DB**: SQLAlchemy repositories, connection pools, and database schemas.
 - **External Clients**: HTTP/gRPC clients communicating with external services (`embeddings-service`, `extraction-service`).
 - **Object Storage**: S3 / Google Cloud Storage / local filesystem adapters.
 
-#### `src/framework`
+#### `app/framework`
 The outermost delivery mechanism and dependency injection root.
 - **API**: FastAPI routes, middleware, and request/response serialization.
 - **Workers**: Taskiq worker definitions and task registrations.
 - **Dependencies**: Dependency injection wiring combining infrastructure implementations with application use cases.
 
-#### `src/shared`
+#### `app/shared`
 Cross-cutting concerns across layers (configuration settings, logging utilities, common base exceptions).
 
 ---
@@ -158,5 +158,3 @@ To preserve architectural boundaries:
 - **`infrastructure`** can import from `application` (interfaces, DTOs) and `domain`. It must NOT import from `framework`.
 - **`framework`** is the assembly root and can import from `application`, `domain`, and `infrastructure` to wire dependencies.
 - **`shared`** can be imported by any layer, but should not depend on domain or infrastructure specifics.
-
-
