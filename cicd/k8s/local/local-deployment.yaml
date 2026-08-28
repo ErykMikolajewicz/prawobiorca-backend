@@ -113,6 +113,8 @@ data:
   OBJECT_STORAGE_SIGNED_URL_EXPIRATION_SECONDS: "3600"
   OBJECT_STORAGE_MAX_FILE_SIZE_BYTES: "10485760"
 
+  BROKER_URL: "redis://redis:6379"
+
 ---
 apiVersion: v1
 kind: Pod
@@ -174,6 +176,22 @@ spec:
 apiVersion: v1
 kind: Pod
 metadata:
+  name: redis
+  labels:
+    app: prawobiorca
+    component: redis
+spec:
+  containers:
+    - name: redis
+      image: docker.io/library/redis:8-alpine
+      ports:
+        - containerPort: 6379
+          hostPort: 6379
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
   name: embedding-service
   labels:
     app: prawobiorca
@@ -219,6 +237,29 @@ spec:
       image: localhost/prawobiorca-backend:latest
       ports:
         - containerPort: 8000
+      envFrom:
+        - configMapRef:
+            name: prawobiorca-backend-config
+      env:
+        - name: RELATIONAL_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: prawobiorca-secrets
+              key: POSTGRES_PASSWORD
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prawobiorca-worker
+  labels:
+    app: prawobiorca
+    component: prawobiorca-worker
+spec:
+  containers:
+    - name: prawobiorca-worker
+      image: localhost/prawobiorca-backend:latest
+      command: ["taskiq", "worker", "app.framework.workers.regulations:broker"]
       envFrom:
         - configMapRef:
             name: prawobiorca-backend-config

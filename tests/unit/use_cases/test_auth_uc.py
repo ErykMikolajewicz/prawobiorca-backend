@@ -11,7 +11,6 @@ from app.domain.exceptions.users import UserCantLog
 from tests.consts import AUTHORIZATION_TOKEN, VALID_USERNAME
 
 
-@pytest.mark.asyncio
 async def test_log_user_success(
     mock_opened_session,
     mock_session_maker,
@@ -52,7 +51,6 @@ async def test_log_user_success(
         assert result.expires_in > 0
 
 
-@pytest.mark.asyncio
 async def test_log_user_failure(
     mock_opened_session,
     mock_session_maker,
@@ -82,7 +80,6 @@ async def test_log_user_failure(
         mock_tokens_repo.add_token.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_logout_user(mock_opened_session, mock_session_maker, mock_tokens_repo):
 
     use_case = LogoutUser(session_maker=mock_session_maker, tokens_repo=mock_tokens_repo)

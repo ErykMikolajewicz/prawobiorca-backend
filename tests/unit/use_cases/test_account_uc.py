@@ -9,7 +9,6 @@ from app.domain.exceptions.users import UserExists
 from tests.consts import STRONG_PASSWORD, VALID_USERNAME
 
 
-@pytest.mark.asyncio
 async def test_create_account_success(mock_session_maker, mock_opened_session, mock_users_repo):
     login_data = LoginData(username=VALID_USERNAME, password=SecretStr(STRONG_PASSWORD))
 
@@ -27,7 +26,6 @@ async def test_create_account_success(mock_session_maker, mock_opened_session, m
         mock_users_repo.add.assert_awaited_once_with(mock_opened_session, create_data)
 
 
-@pytest.mark.asyncio
 async def test_create_account_user_exists(mock_session_maker, mock_opened_session, mock_users_repo):
     login_data = LoginData(username="existinguser", password=SecretStr(STRONG_PASSWORD))
 

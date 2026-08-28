@@ -1,7 +1,8 @@
 from typing import Iterable
 
-from httpx2 import AsyncClient
+from httpx2 import AsyncClient, HTTPError
 
+from app.domain.exceptions.regulations import RegulationServiceUnavailable
 from app.domain.value_objects.documents import Document
 
 
@@ -20,7 +21,11 @@ class TextsEmbedder:
             prefix = f"title: {title} | text: "
             prefixed_docs.append(prefix + document.text)
 
-        response = await self._client.post(self._embedding_url, json=prefixed_docs)
+        try:
+            response = await self._client.post(self._embedding_url, json=prefixed_docs)
+            response.raise_for_status()
+        except HTTPError as e:
+            raise RegulationServiceUnavailable() from e
         embeddings = response.json()
 
         return embeddings
@@ -30,7 +35,11 @@ class TextsEmbedder:
 
         queries_with_prefix = [prefix + query for query in queries]
 
-        response = await self._client.post(self._embedding_url, json=queries_with_prefix)
+        try:
+            response = await self._client.post(self._embedding_url, json=queries_with_prefix)
+            response.raise_for_status()
+        except HTTPError as e:
+            raise RegulationServiceUnavailable() from e
         embeddings = response.json()
 
         return embeddings

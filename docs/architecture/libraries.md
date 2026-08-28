@@ -109,6 +109,22 @@ Cons:
 
 Alternative: **[Tortoise ORM](https://tortoise.github.io/){target=_blank}** — natively asynchronous and simpler to use, though less popular.
 
+---
+
+### taskiq
+
+Distributed task queue used to run heavy, long-running document preparation (extraction + chunking + embedding) in a background worker instead of blocking the request-response cycle. Chosen for its native async-first design and straightforward FastAPI-style dependency injection, which fits the existing codebase.
+
+Alternative: **Celery** — the most established Python task queue, but it is not async-native and requires more configuration to work well with an asyncio-based codebase.
+
+---
+
+### taskiq-redis
+
+Redis broker/result-backend implementation for [taskiq](#taskiq). Redis was chosen because it is lightweight, easy to run both on-premise (Podman) and in the cloud, and does not introduce a new class of infrastructure beyond what a typical cache/broker setup already requires.
+
+Alternative: **RabbitMQ** — more feature-rich broker, but heavier to operate for a single-queue use case like this one.
+
 ## Storage Dependencies - choose one option
 
 Actually works only local storage with aiofiles, due to developing app in scientific club; perhaps in the future Google Cloud will be implemented again.

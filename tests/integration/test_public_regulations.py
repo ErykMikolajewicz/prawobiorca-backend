@@ -5,7 +5,7 @@ from fastapi import status
 from sqlalchemy import delete, insert, select
 
 from app.application.dtos.regulations import RegulationUploadTarget
-from app.domain.value_objects.regulations import RegulationType
+from app.domain.value_objects.regulations import RegulationPreparationStatus, RegulationType
 from app.framework.dependencies.ai_services import get_texts_embedder
 from app.infrastructure.relational_db.schemas.documents import regulations_documents_table
 from app.infrastructure.relational_db.schemas.regulations import regulations_table
@@ -23,19 +23,19 @@ async def test_get_public_regulations(client, override_session_maker, session_ma
                     {
                         "user_id": None,
                         "presentation_name": "Public act.pdf",
-                        "is_prepared": True,
+                        "preparation_status": RegulationPreparationStatus.PREPARED,
                         "regulation_type": RegulationType.ACT,
                     },
                     {
                         "user_id": None,
                         "presentation_name": "Public decree.pdf",
-                        "is_prepared": False,
+                        "preparation_status": RegulationPreparationStatus.NOT_STARTED,
                         "regulation_type": RegulationType.DECREE,
                     },
                     {
                         "user_id": USER_ID,
                         "presentation_name": "Private act.pdf",
-                        "is_prepared": True,
+                        "preparation_status": RegulationPreparationStatus.PREPARED,
                         "regulation_type": RegulationType.ACT,
                     },
                 ]
@@ -56,9 +56,8 @@ async def test_get_public_regulations(client, override_session_maker, session_ma
             {
                 "id": str(public_act_id),
                 "presentationName": "Public act.pdf",
-                "isPrepared": True,
-                "isUploaded": False,
                 "regulationType": RegulationType.ACT,
+                "preparationStatus": RegulationPreparationStatus.PREPARED,
             }
         ]
 
@@ -88,13 +87,13 @@ async def test_search_regulations_documents(client, override_session_maker, sess
                     {
                         "user_id": None,
                         "presentation_name": "Public searchable regulation.pdf",
-                        "is_prepared": True,
+                        "preparation_status": RegulationPreparationStatus.PREPARED,
                         "regulation_type": RegulationType.ACT,
                     },
                     {
                         "user_id": USER_ID,
                         "presentation_name": "User searchable regulation.pdf",
-                        "is_prepared": True,
+                        "preparation_status": RegulationPreparationStatus.PREPARED,
                         "regulation_type": RegulationType.ACT,
                     },
                 ]
@@ -202,7 +201,7 @@ async def test_add_public_regulation_as_admin(
         assert regulation is not None
         assert regulation.user_id is None
         assert regulation.presentation_name == "public-regulation.pdf"
-        assert regulation.is_prepared is False
+        assert regulation.preparation_status == RegulationPreparationStatus.NOT_STARTED
         assert regulation.regulation_type == RegulationType.DECREE
     finally:
         async with session_maker.begin() as session:
@@ -216,6 +215,8 @@ async def test_confirm_public_regulation_upload_as_admin(
     override_authorize_admin_user,
     override_get_regulations_storage,
     mock_regulations_storage,
+    override_get_regulations_preparation_scheduler,
+    mock_regulation_preparation_scheduler,
 ):
     async with session_maker.begin() as session:
         regulation_id = await session.scalar(
@@ -223,8 +224,6 @@ async def test_confirm_public_regulation_upload_as_admin(
             .values(
                 user_id=None,
                 presentation_name="public_confirm.pdf",
-                is_prepared=False,
-                is_uploaded=False,
                 regulation_type=RegulationType.ACT,
             )
             .returning(regulations_table.c.id)
@@ -237,8 +236,11 @@ async def test_confirm_public_regulation_upload_as_admin(
     try:
         response = client.post(f"/api/regulations/{regulation_id}/confirm-upload")
 
-        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert response.status_code == status.HTTP_202_ACCEPTED
         mock_regulations_storage.check_regulation_exists.assert_awaited_once_with(regulation_id)
+        mock_regulation_preparation_scheduler.schedule_regulation_preparation.assert_awaited_once_with(
+            None, regulation_id
+        )
 
         async with session_maker() as session:
             statement = select(regulations_table).where(regulations_table.c.id == regulation_id)
@@ -246,7 +248,7 @@ async def test_confirm_public_regulation_upload_as_admin(
         regulation = result.one_or_none()
 
         assert regulation is not None
-        assert regulation.is_uploaded is True
+        assert regulation.preparation_status == RegulationPreparationStatus.IN_PROGRESS
     finally:
         async with session_maker.begin() as session:
             await session.execute(delete(regulations_table).where(regulations_table.c.id == regulation_id))

@@ -1,4 +1,3 @@
-import pytest
 from pydantic import SecretStr
 
 from app.application.dtos.account import LoginData
@@ -8,7 +7,6 @@ from app.domain.services.security import hash_password
 from tests.consts import STRONG_PASSWORD, VALID_USERNAME
 
 
-@pytest.mark.asyncio
 async def test_check_user_can_log_user_not_found(mock_session, mock_users_repo):
     mock_users_repo.get_by_username.return_value = None
 
@@ -20,7 +18,6 @@ async def test_check_user_can_log_user_not_found(mock_session, mock_users_repo):
     mock_users_repo.get_by_username.assert_awaited_once_with(mock_session, "unknown_user")
 
 
-@pytest.mark.asyncio
 async def test_check_user_can_log_invalid_password(mock_session, mock_users_repo, uuid_generator):
     user_id = next(uuid_generator)
     correct_password = SecretStr(STRONG_PASSWORD)
@@ -38,7 +35,6 @@ async def test_check_user_can_log_invalid_password(mock_session, mock_users_repo
     users_repo.get_by_username.assert_awaited_once_with(mock_session, VALID_USERNAME)
 
 
-@pytest.mark.asyncio
 async def test_check_user_can_log_success(mock_session, mock_users_repo, uuid_generator):
     user_id = next(uuid_generator)
     password = SecretStr(STRONG_PASSWORD)

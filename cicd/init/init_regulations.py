@@ -13,7 +13,7 @@ from sqlalchemy import insert
 
 from app.application.services.embedding import DocumentEmbedder
 from app.application.services.regulations import RegulationPreparator
-from app.domain.value_objects.regulations import RegulationType
+from app.domain.value_objects.regulations import RegulationPreparationStatus, RegulationType
 from app.infrastructure.ai_services.regulation_splitter import RegulationSplitter
 from app.infrastructure.ai_services.text_embedder import TextsEmbedder
 from app.infrastructure.object_storage.repository import S3RegulationsStorage
@@ -110,7 +110,7 @@ async def init_regulations():
                         {
                             "id": regulation_id,
                             "presentation_name": file_name,
-                            "is_prepared": True,
+                            "preparation_status": RegulationPreparationStatus.PREPARED,
                             "user_id": None,
                             "regulation_type": regulation_type,
                         }

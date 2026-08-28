@@ -6,7 +6,11 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.dtos.regulations import RegulationRepresentation
-from app.domain.value_objects.regulations import RegulationRegistrationData, RegulationType
+from app.domain.value_objects.regulations import (
+    RegulationPreparationStatus,
+    RegulationRegistrationData,
+    RegulationType,
+)
 from app.infrastructure.relational_db.schemas.regulations import regulations_table
 
 
@@ -56,24 +60,13 @@ class RegulationsManagerRepository:
             raise FileNotFoundError
 
     @staticmethod
-    async def mark_as_uploaded(session: AsyncSession, user_id: UUID | None, id_: UUID) -> None:
+    async def set_preparation_status(
+        session: AsyncSession, user_id: UUID | None, id_: UUID, status: RegulationPreparationStatus
+    ) -> None:
         statement = (
             update(regulations_table)
             .where(regulations_table.c.user_id == user_id, regulations_table.c.id == id_)
-            .values(is_uploaded=True)
-            .returning(regulations_table.c.id)
-        )
-        result = await session.execute(statement)
-
-        if result.scalar_one() is None:
-            raise FileNotFoundError
-
-    @staticmethod
-    async def mark_as_prepared(session: AsyncSession, user_id: UUID | None, id_: UUID) -> None:
-        statement = (
-            update(regulations_table)
-            .where(regulations_table.c.user_id == user_id, regulations_table.c.id == id_)
-            .values(is_prepared=True)
+            .values(preparation_status=status)
             .returning(regulations_table.c.id)
         )
         result = await session.execute(statement)

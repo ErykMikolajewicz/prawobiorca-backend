@@ -3,7 +3,11 @@ from uuid import UUID
 
 from app.application.dtos.regulations import RegulationRepresentation, RegulationUploadTarget
 from app.application.interfaces.relational import AsyncSession
-from app.domain.value_objects.regulations import RegulationRegistrationData, RegulationType
+from app.domain.value_objects.regulations import (
+    RegulationPreparationStatus,
+    RegulationRegistrationData,
+    RegulationType,
+)
 
 
 class RegulationsStorage(Protocol):
@@ -33,9 +37,9 @@ class RegulationsRepository(Protocol):
 
     async def unregister_regulation(self, session: AsyncSession, user_id: UUID | None, id_: UUID) -> None: ...
 
-    async def mark_as_prepared(self, session: AsyncSession, user_id: UUID | None, id_: UUID) -> None: ...
-
-    async def mark_as_uploaded(self, session: AsyncSession, user_id: UUID | None, id_: UUID) -> None: ...
+    async def set_preparation_status(
+        self, session: AsyncSession, user_id: UUID | None, id_: UUID, status: RegulationPreparationStatus
+    ) -> None: ...
 
     async def get_regulation_representation(
         self, session: AsyncSession, user_id: UUID | None, id_: UUID

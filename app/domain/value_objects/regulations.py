@@ -132,6 +132,13 @@ class RegulationType(StrEnum):
     STATUTE = "STATUTE"
 
 
+class RegulationPreparationStatus(StrEnum):
+    NOT_STARTED = "NOT_STARTED"
+    IN_PROGRESS = "IN_PROGRESS"
+    PREPARED = "PREPARED"
+    FAILED = "FAILED"
+
+
 @dataclass
 class RegulationRegistrationData:
     presentation_name: str

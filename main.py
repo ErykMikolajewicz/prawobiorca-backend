@@ -9,6 +9,7 @@ from app.framework.api.router import include_all_routers
 from app.framework.dependencies.file_storage import init_file_storage_client
 from app.infrastructure.ai_services.initialization import init_ai_services_client
 from app.infrastructure.relational_db.connection import check_relational_db_connection
+from app.infrastructure.tasks.connection import init_broker
 from app.shared.logging_config import setup_logging
 
 setup_logging()
@@ -35,6 +36,10 @@ async def lifespan(app: FastAPI):
         http_client, http_closing_callback = await init_ai_services_client()
         app.state.ai_services_client = http_client
         closing_callbacks.insert(0, http_closing_callback)
+
+        broker, broker_closing_callback = await init_broker()
+        app.state.broker = broker
+        closing_callbacks.insert(0, broker_closing_callback)
 
     except Exception as e:
         logger.critical(f"Can not connect to external service: {e}")

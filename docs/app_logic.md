@@ -35,8 +35,9 @@ This is the starting point of the application.
 - **My Documents**:
     - Ability to upload own files (legal acts, regulations).
     - List of files added by themselves.
-    - **"Prepare for search" option**: For own files, the user must manually trigger the indexing process (creating embeddings).
-    - **Note (MVP)**: This process blocks the interface ("hangs") until processing by the server is finished.
+    - **Automatic indexing**: Once an upload is confirmed, the indexing process (creating embeddings) is queued automatically. No manual action is required.
+    - **Preparation status**: Each file shows its state (`NOT_STARTED`, `IN_PROGRESS`, `PREPARED`, `FAILED`). Only `PREPARED` files can be searched.
+    - **Retry option**: A file that ends up `FAILED` (after the automatic attempts are exhausted) can be retried by the user.
 - **My Cases**:
     - List of created cases.
     - Ability to create a new case.

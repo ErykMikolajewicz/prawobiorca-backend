@@ -10,6 +10,7 @@ build_extraction-service = "podman image build --tag=extraction-service extracti
 upgrade_db_schemas = "uv run --group test alembic upgrade head"
 seed = "uv run cicd/init/seed_relational_db.py"
 init_regulations = "uv run cicd/init/init_regulations.py"
+run_worker = "uv run taskiq worker app.framework.workers.regulations:broker"
 
 [tasks.cov]
 sequence = [

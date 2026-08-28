@@ -5,30 +5,23 @@ from fastapi import Depends, Request
 from app.application.interfaces.documents import DocumentsRepository
 from app.application.interfaces.regulations import RegulationsRepository, RegulationsStorage
 from app.application.interfaces.relational import SessionMaker
-from app.application.ports.regulations import RegulationSpliter
+from app.application.ports.tasks import RegulationPreparationScheduler
 from app.application.ports.texts import TextsEmbedder
-from app.application.ports.tokenizer import Tokenizer
-from app.application.services.embedding import DocumentEmbedder
-from app.application.services.regulations import RegulationPreparator
 from app.application.use_cases.regulations import (
     AddRegulation,
     ConfirmRegulationUpload,
     DeleteRegulation,
     GetRegulationDownloadUrl,
     ListRegulations,
-    PrepareRegulation,
+    RetryRegulationPreparation,
     SearchRegulation,
 )
-from app.framework.dependencies.ai_services import (
-    get_document_embedder,
-    get_regulations_splitter,
-    get_texts_embedder,
-)
+from app.framework.dependencies.ai_services import get_texts_embedder
 from app.framework.dependencies.relational import get_session_maker
-from app.framework.dependencies.tokenizer import get_tokenizer
 from app.infrastructure.object_storage.repository import S3RegulationsStorage
 from app.infrastructure.relational_db.repositories.documents import RegulationsDocumentsRepository
 from app.infrastructure.relational_db.repositories.regulations import RegulationsManagerRepository
+from app.infrastructure.tasks.regulations import TaskiqRegulationPreparationScheduler
 
 
 def get_documents_repository() -> DocumentsRepository:
@@ -47,12 +40,14 @@ def get_regulation_repository() -> RegulationsRepository:
     return RegulationsManagerRepository()
 
 
-def get_regulation_preparator(
-    document_embedder: Annotated[DocumentEmbedder, Depends(get_document_embedder)],
-    regulations_splitter: Annotated[RegulationSpliter, Depends(get_regulations_splitter)],
-    tokenizer: Annotated[Tokenizer, Depends(get_tokenizer)],
-) -> RegulationPreparator:
-    return RegulationPreparator(regulations_splitter, document_embedder, tokenizer)
+def get_broker(request: Request) -> Any:
+    return request.app.state.broker
+
+
+def get_regulations_preparation_scheduler(
+    broker: Annotated[Any, Depends(get_broker)],
+) -> RegulationPreparationScheduler:
+    return TaskiqRegulationPreparationScheduler(broker)
 
 
 def get_list_regulations(
@@ -63,21 +58,14 @@ def get_list_regulations(
     return ListRegulations(session_maker, regulation_manager)
 
 
-def get_prepare_regulation(
+def get_retry_regulation_preparation(
     session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
-    regulations_storage: Annotated[RegulationsStorage, Depends(get_regulations_storage)],
-    documents_repository: Annotated[DocumentsRepository, Depends(get_documents_repository)],
     regulations_repository: Annotated[RegulationsRepository, Depends(get_regulation_repository)],
-    regulation_preparator: Annotated[RegulationPreparator, Depends(get_regulation_preparator)],
-) -> PrepareRegulation:
-
-    return PrepareRegulation(
-        session_maker,
-        regulations_storage,
-        documents_repository,
-        regulations_repository,
-        regulation_preparator,
-    )
+    regulation_preparation_scheduler: Annotated[
+        RegulationPreparationScheduler, Depends(get_regulations_preparation_scheduler)
+    ],
+) -> RetryRegulationPreparation:
+    return RetryRegulationPreparation(session_maker, regulations_repository, regulation_preparation_scheduler)
 
 
 def get_delete_regulation(
@@ -110,8 +98,13 @@ def get_confirm_regulation_upload(
     session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
     regulations_repository: Annotated[RegulationsRepository, Depends(get_regulation_repository)],
     regulations_storage: Annotated[RegulationsStorage, Depends(get_regulations_storage)],
+    regulation_preparation_scheduler: Annotated[
+        RegulationPreparationScheduler, Depends(get_regulations_preparation_scheduler)
+    ],
 ) -> ConfirmRegulationUpload:
-    return ConfirmRegulationUpload(session_maker, regulations_repository, regulations_storage)
+    return ConfirmRegulationUpload(
+        session_maker, regulations_repository, regulations_storage, regulation_preparation_scheduler
+    )
 
 
 def get_regulation_download_url(

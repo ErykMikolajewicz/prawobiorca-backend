@@ -7,6 +7,10 @@ class RegulationAlreadyInitialized(Exception):
     pass
 
 
+class RegulationPreparationInProgress(Exception):
+    pass
+
+
 class RegulationInInvalidState(Exception):
     pass
 

@@ -12,7 +12,6 @@ from app.application.use_cases.cases import (
 from app.domain.exceptions.cases import CaseNotFound
 
 
-@pytest.mark.asyncio
 async def test_list_cases_success(mock_session_maker, mock_opened_session, mock_cases_repo, uuid_generator):
     user_id = next(uuid_generator)
     case_1 = CaseData(id=next(uuid_generator), name="Case 1")
@@ -25,7 +24,6 @@ async def test_list_cases_success(mock_session_maker, mock_opened_session, mock_
     mock_cases_repo.list_by_user_id.assert_awaited_once_with(mock_opened_session, user_id)
 
 
-@pytest.mark.asyncio
 async def test_delete_case_success(mock_session_maker, mock_opened_session, mock_cases_repo, uuid_generator):
     user_id = next(uuid_generator)
     case_id = next(uuid_generator)
@@ -36,7 +34,6 @@ async def test_delete_case_success(mock_session_maker, mock_opened_session, mock
     mock_cases_repo.delete.assert_awaited_once_with(mock_opened_session, user_id, case_id)
 
 
-@pytest.mark.asyncio
 async def test_delete_case_not_found(mock_session_maker, mock_opened_session, mock_cases_repo, uuid_generator):
     user_id = next(uuid_generator)
     case_id = next(uuid_generator)
@@ -50,7 +47,6 @@ async def test_delete_case_not_found(mock_session_maker, mock_opened_session, mo
     mock_cases_repo.delete.assert_awaited_once_with(mock_opened_session, user_id, case_id)
 
 
-@pytest.mark.asyncio
 async def test_add_case_success(mock_session_maker, mock_opened_session, mock_cases_repo, uuid_generator):
     user_id = next(uuid_generator)
     case_id = next(uuid_generator)
@@ -64,7 +60,6 @@ async def test_add_case_success(mock_session_maker, mock_opened_session, mock_ca
     mock_cases_repo.add.assert_awaited_once_with(mock_opened_session, user_id, case_name)
 
 
-@pytest.mark.asyncio
 async def test_add_case_document_success(
     mock_session_maker, mock_opened_session, mock_case_documents_repo, uuid_generator
 ):
@@ -78,7 +73,6 @@ async def test_add_case_document_success(
     mock_case_documents_repo.add.assert_awaited_once_with(mock_opened_session, user_id, case_id, new_doc)
 
 
-@pytest.mark.asyncio
 async def test_add_case_document_case_not_found(
     mock_session_maker, mock_opened_session, mock_case_documents_repo, uuid_generator
 ):
@@ -95,7 +89,6 @@ async def test_add_case_document_case_not_found(
     mock_case_documents_repo.add.assert_awaited_once_with(mock_opened_session, user_id, case_id, new_doc)
 
 
-@pytest.mark.asyncio
 async def test_delete_case_document_success(
     mock_session_maker, mock_opened_session, mock_case_documents_repo, uuid_generator
 ):
@@ -108,7 +101,6 @@ async def test_delete_case_document_success(
     mock_case_documents_repo.delete.assert_awaited_once_with(mock_opened_session, user_id, document_id)
 
 
-@pytest.mark.asyncio
 async def test_list_case_documents_success(
     mock_session_maker, mock_opened_session, mock_case_documents_repo, uuid_generator
 ):

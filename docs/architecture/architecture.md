@@ -57,11 +57,12 @@ Hosts the core domain logic, user-facing endpoints, and background document inde
   * Case (*Sprawy*) management and document metadata handling (filenames, upload status, permissions).
   * Storage orchestration: uploading and retrieving raw documents to/from Google Cloud Storage / S3 / local storage.
   * Fast synchronous search execution: requests single query embeddings from `embeddings-service` and performs vector similarity search against PostgreSQL (`pgvector`).
-  * Dispatches asynchronous file processing tasks to the broker using **Taskiq**.
+  * Dispatches asynchronous file processing tasks to the broker using **Taskiq**, automatically upon upload confirmation — no separate request is needed to start indexing.
 * **File Preparator (Taskiq Worker)**:
   * Consumes document preparation jobs from the Taskiq broker.
   * Coordinates document processing pipeline: sends file to `extraction-service`, chunks structured text, requests batch embeddings from `embeddings-service`, and persists vector embeddings into PostgreSQL.
   * Updates document processing status in PostgreSQL directly without inter-service RPC overhead.
+  * Retries a document up to 3 times when `extraction-service` or `embeddings-service` is unavailable; after the last attempt the document is marked as failed and can be retried on demand.
 
 ### 2.2. `embeddings-service`
 * **Responsibilities**:
@@ -88,7 +89,6 @@ Hosts the core domain logic, user-facing endpoints, and background document inde
 * **Architecture**: Use cases and domain entities for documents, cases, with separate layers for framework, and infrastructure (e.g. db connection).
 
 ### 3.2. Asynchronous Job Processing with Taskiq
-NOT YET IMPLEMENTED
 * **Modern Async-First Design**: Native integration with FastAPI and asynchronous Python runtimes.
 * **Broker Agnostic**: Supports Redis, RabbitMQ, or other brokers with minimal configuration changes.
 * **Resilience**: Provides built-in retry mechanisms, failure handling, and transparent task parameter serialization.

@@ -6,9 +6,10 @@ import pytest
 from fastapi.requests import Request
 
 from app.application.interfaces.regulations import RegulationsStorage
+from app.application.ports.tasks import RegulationPreparationScheduler
 from app.domain.value_objects.users import UserPrivileges
 from app.framework.dependencies.authentication import authorize_user
-from app.framework.dependencies.regulations import get_regulations_storage
+from app.framework.dependencies.regulations import get_regulations_preparation_scheduler, get_regulations_storage
 from app.shared.consts import AUTHORIZATION_COOKIE_NAME
 from main import prawobiorca
 from tests.consts import AUTHORIZATION_TOKEN, USER_ID
@@ -24,6 +25,20 @@ def override_get_regulations_storage(mock_regulations_storage):
     prawobiorca.dependency_overrides[get_regulations_storage] = lambda: mock_regulations_storage
     yield
     prawobiorca.dependency_overrides.pop(get_regulations_storage, None)
+
+
+@pytest.fixture
+def mock_regulation_preparation_scheduler():
+    return create_autospec(RegulationPreparationScheduler)
+
+
+@pytest.fixture
+def override_get_regulations_preparation_scheduler(mock_regulation_preparation_scheduler):
+    prawobiorca.dependency_overrides[get_regulations_preparation_scheduler] = lambda: (
+        mock_regulation_preparation_scheduler
+    )
+    yield
+    prawobiorca.dependency_overrides.pop(get_regulations_preparation_scheduler, None)
 
 
 class UserType(StrEnum):

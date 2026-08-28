@@ -11,13 +11,15 @@ from app.application.use_cases.regulations import (
     DeleteRegulation,
     GetRegulationDownloadUrl,
     ListRegulations,
-    PrepareRegulation,
+    RetryRegulationPreparation,
     SearchRegulation,
 )
 from app.domain.exceptions.regulations import (
     RegulationAlreadyInitialized,
     RegulationContentNotFound,
+    RegulationInInvalidState,
     RegulationNotFound,
+    RegulationPreparationInProgress,
     RegulationServiceUnavailable,
     RegulationsNotPreparedToSearch,
 )
@@ -28,8 +30,8 @@ from app.framework.dependencies.regulations import (
     get_confirm_regulation_upload,
     get_delete_regulation,
     get_list_regulations,
-    get_prepare_regulation,
     get_regulation_download_url,
+    get_retry_regulation_preparation,
     get_search_regulation,
 )
 
@@ -102,10 +104,13 @@ async def add_public_regulation(
 @public_regulations_router.post(
     "/regulations/{regulationId}/confirm-upload",
     dependencies=(Depends(require_admin),),
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_202_ACCEPTED,
     responses={
         status.HTTP_404_NOT_FOUND: {"description": "Regulation not found!"},
-        status.HTTP_409_CONFLICT: {"description": "Regulation already prepared or content not found on storage!"},
+        status.HTTP_409_CONFLICT: {
+            "description": "Regulation upload already confirmed, or its content not found on storage!"
+        },
+        status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Preparation service not working!"},
     },
 )
 async def confirm_public_regulation_upload(
@@ -126,6 +131,21 @@ async def confirm_public_regulation_upload(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Regulation is already prepared!",
+        )
+    except RegulationPreparationInProgress:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Regulation preparation already in progress!",
+        )
+    except RegulationInInvalidState:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Regulation upload already confirmed!",
+        )
+    except RegulationServiceUnavailable:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Preparation service not working!",
         )
 
 
@@ -166,22 +186,24 @@ async def delete_public_regulation(
 
 
 @public_regulations_router.post(
-    "/regulations/{regulationId}/preparation",
+    "/regulations/{regulationId}/preparation-retry",
     dependencies=(Depends(require_admin),),
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_202_ACCEPTED,
     responses={
         status.HTTP_404_NOT_FOUND: {"description": "Regulation to prepare not found!"},
-        status.HTTP_409_CONFLICT: {"description": "Regulation already prepared, or its content not uploaded!"},
+        status.HTTP_409_CONFLICT: {
+            "description": "Regulation already prepared, preparation in progress, or its content not uploaded!"
+        },
         status.HTTP_503_SERVICE_UNAVAILABLE: {"description": "Preparation service not working!"},
     },
 )
-async def prepare_public_regulation(
-    prepare_regulation_: Annotated[PrepareRegulation, Depends(get_prepare_regulation)],
+async def retry_public_regulation_preparation(
+    retry_regulation_preparation: Annotated[RetryRegulationPreparation, Depends(get_retry_regulation_preparation)],
     regulation_id: Annotated[UUID, Path(alias="regulationId")],
 ):
     user_id = None
     try:
-        await prepare_regulation_.execute(user_id, regulation_id)
+        await retry_regulation_preparation.execute(user_id, regulation_id)
     except RegulationNotFound:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -192,7 +214,12 @@ async def prepare_public_regulation(
             status_code=status.HTTP_409_CONFLICT,
             detail="Regulation already prepared to search!",
         )
-    except RegulationContentNotFound:
+    except RegulationPreparationInProgress:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Regulation preparation already in progress!",
+        )
+    except RegulationInInvalidState:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Regulation content not uploaded!",

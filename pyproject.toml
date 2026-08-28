@@ -1,6 +1,6 @@
 [project]
 name = "prawobiorca-backend"
-version = "0.53.2"
+version = "0.1.0"
 description = "Law acts search engine with AI features."
 readme = "README.md"
 requires-python = "==3.14.*"
@@ -11,12 +11,14 @@ dependencies = [
     "email-validator==2.3.*",
     "fastapi==0.141.*",
     "granian==2.8.*",
-    "httpx2==2.10.*",
+    "httpx2==2.12.*",
     "pgvector==0.5.*",
     "pydantic==2.13.*",
     "pydantic-settings==2.15.*",
     "python-multipart==0.0.32",
     "sqlalchemy[asyncio]==2.0.*",
+    "taskiq==0.12.*",
+    "taskiq-redis==1.2.*",
     "tokenizers>=0.23.1",
 ]
 
