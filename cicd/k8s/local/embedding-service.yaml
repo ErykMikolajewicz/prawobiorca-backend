@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: embedding-service
+  labels:
+    app: prawobiorca
+    component: embedding-service
+spec:
+  containers:
+    - name: embedding-service
+      image: localhost/embedding-service:latest
+      ports:
+        - containerPort: 8080
+          hostPort: 8081
+      env:
+        - name: OMP_NUM_THREADS
+          value: "2"

@@ -1,7 +1,7 @@
 [tasks]
 dev = "uv run cicd/scripts/dev.py"
 run_locally = "uv run cicd/scripts/run_locally.py"
-run_locally_down = "podman play kube --down cicd/k8s/local/local-deployment.yaml"
+run_locally_down = "uv run cicd/scripts/stop_locally.py"
 test_integration = "uv run --group test pytest tests/integration"
 test = "uv run --group test pytest tests/unit"
 build_app = "podman image build --tag=prawobiorca-backend ."

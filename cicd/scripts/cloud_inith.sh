@@ -52,3 +52,30 @@ gcloud iam service-accounts create prawobiorca-runner \
 gcloud secrets add-iam-policy-binding postgres-password \
   --role=roles/secretmanager.secretAccessor \
   --member="principal://iam.googleapis.com/projects/296630821006/locations/global/workloadIdentityPools/prawobiorca.svc.id.goog/subject/ns/default/sa/prawobiorca-runner"
+gcloud storage buckets create gs://prawobiorca-regulations \
+  --project=prawobiorca \
+  --location=europe-central2 \
+  --uniform-bucket-level-access
+
+gcloud storage buckets add-iam-policy-binding gs://prawobiorca-regulations \
+  --member="serviceAccount:prawobiorca-runner@prawobiorca.iam.gserviceaccount.com" \
+  --role="roles/storage.objectAdmin"
+
+gcloud storage hmac create prawobiorca-runner@prawobiorca.iam.gserviceaccount.com \
+  --project=prawobiorca
+
+gcloud secrets create object-storage-access-key \
+  --data-file=./cicd/secrets/object-storage-access-key.txt \
+  --replication-policy=automatic
+
+gcloud secrets create object-storage-secret-key \
+  --data-file=./cicd/secrets/object-storage-secret-key.txt \
+  --replication-policy=automatic
+
+gcloud secrets add-iam-policy-binding object-storage-access-key \
+  --role=roles/secretmanager.secretAccessor \
+  --member="principal://iam.googleapis.com/projects/296630821006/locations/global/workloadIdentityPools/prawobiorca.svc.id.goog/subject/ns/default/sa/prawobiorca-runner"
+
+gcloud secrets add-iam-policy-binding object-storage-secret-key \
+  --role=roles/secretmanager.secretAccessor \
+  --member="principal://iam.googleapis.com/projects/296630821006/locations/global/workloadIdentityPools/prawobiorca.svc.id.goog/subject/ns/default/sa/prawobiorca-runner"

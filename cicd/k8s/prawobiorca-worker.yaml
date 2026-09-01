@@ -1,44 +1,31 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: prawobiorca-backend
+  name: prawobiorca-worker
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: prawobiorca
-      component: prawobiorca-backend
+      component: prawobiorca-worker
   template:
     metadata:
       labels:
         app: prawobiorca
-        component: prawobiorca-backend
+        component: prawobiorca-worker
     spec:
       serviceAccountName: prawobiorca-runner
       containers:
-        - name: prawobiorca-backend
+        - name: prawobiorca-worker
           image: europe-central2-docker.pkg.dev/prawobiorca/prawobiorca-repo/prawobiorca-backend:latest
-          ports:
-            - containerPort: 8000
+          command: ["taskiq", "worker", "app.framework.workers.regulations:broker"]
           resources:
             requests:
-              cpu: "100m"
-              memory: "256Mi"
-            limits:
-              cpu: "500m"
+              cpu: "200m"
               memory: "512Mi"
-          readinessProbe:
-            httpGet:
-              path: /health/ready
-              port: 8000
-            initialDelaySeconds: 5
-            periodSeconds: 10
-          livenessProbe:
-            httpGet:
-              path: /health/liveness
-              port: 8000
-            initialDelaySeconds: 15
-            periodSeconds: 20
+            limits:
+              cpu: "1"
+              memory: "1Gi"
           volumeMounts:
             - name: secrets-store
               mountPath: "/mnt/secrets-store"
@@ -69,17 +56,3 @@ spec:
             readOnly: true
             volumeAttributes:
               secretProviderClass: prawobiorca-secrets
-
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: prawobiorca-backend
-spec:
-  type: NodePort
-  selector:
-    app: prawobiorca
-    component: prawobiorca-backend
-  ports:
-    - port: 8000
-      targetPort: 8000

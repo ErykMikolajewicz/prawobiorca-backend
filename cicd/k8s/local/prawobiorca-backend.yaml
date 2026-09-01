@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prawobiorca-backend
+  labels:
+    app: prawobiorca
+    component: prawobiorca-backend
+spec:
+  containers:
+    - name: prawobiorca-backend
+      image: localhost/prawobiorca-backend:latest
+      ports:
+        - containerPort: 8000
+      envFrom:
+        - configMapRef:
+            name: prawobiorca-backend-config
+      env:
+        - name: RELATIONAL_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: prawobiorca-secrets
+              key: POSTGRES_PASSWORD

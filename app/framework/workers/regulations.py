@@ -21,12 +21,15 @@ from app.shared.settings.ai_services import embedding_service_settings, extracti
 
 @broker.on_event(TaskiqEvents.WORKER_STARTUP)
 async def on_worker_startup(state) -> None:
-    ai_services_client, close_ai_services_client = await init_ai_services_client()
-    file_storage_client, close_file_storage_client = await init_file_storage_client()
+    state.closing_callbacks = []
 
+    ai_services_client, close_ai_services_client = await init_ai_services_client()
     state.ai_services_client = ai_services_client
+    state.closing_callbacks.insert(0, close_ai_services_client)
+
+    file_storage_client, close_file_storage_client = await init_file_storage_client()
     state.file_storage_client = file_storage_client
-    state.closing_callbacks = [close_file_storage_client, close_ai_services_client]
+    state.closing_callbacks.insert(0, close_file_storage_client)
 
 
 @broker.on_event(TaskiqEvents.WORKER_SHUTDOWN)

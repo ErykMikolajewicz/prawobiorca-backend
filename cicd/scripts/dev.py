@@ -32,16 +32,17 @@ def main():
     run_container_if_not_running(
         "postgres_db_prawobiorca",
         "-e POSTGRES_PASSWORD=postgres -p 127.0.0.1:5432:5432"
-        " -v pg_data:/var/lib/postgresql pgvector:0.8.4-pg18-trixie",
+        " -v pg-data:/var/lib/postgresql pgvector:0.8.4-pg18-trixie",
     )
 
     run_container_if_not_running(
         "rustfs",
-        "-p 127.0.0.1:9000:9000 -p 127.0.0.1:9001:9001 -v rustfs_data:/data rustfs/rustfs:latest",
+        "-p 127.0.0.1:9000:9000 -p 127.0.0.1:9001:9001 -v rustfs-data:/data rustfs/rustfs:latest",
     )
 
     run_container_if_not_running("embedding-service", "-p 127.0.0.1:8081:8080 embedding-service")
     run_container_if_not_running("extraction-service", "-p 127.0.0.1:8082:8080 extraction-service")
+    run_container_if_not_running("redis", "-p 127.0.0.1:6379:6379 redis:8-alpine")
 
     subprocess.run(
         [
