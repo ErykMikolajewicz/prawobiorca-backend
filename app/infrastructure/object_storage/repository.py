@@ -12,6 +12,7 @@ from app.shared.settings.object_storage import object_storage_settings
 @dataclass
 class S3RegulationsStorage:
     client: Any
+    presign_client: Any
 
     async def get_regulation(self, id_: UUID) -> bytes:
         try:
@@ -29,14 +30,14 @@ class S3RegulationsStorage:
         await self.client.delete_object(Bucket=object_storage_settings.BUCKET, Key=str(id_))
 
     async def get_download_url(self, id_: UUID) -> str:
-        return await self.client.generate_presigned_url(
+        return await self.presign_client.generate_presigned_url(
             "get_object",
             Params={"Bucket": object_storage_settings.BUCKET, "Key": str(id_)},
             ExpiresIn=object_storage_settings.SIGNED_URL_EXPIRATION_SECONDS,
         )
 
     async def get_upload_target(self, id_: UUID) -> RegulationUploadTarget:
-        response = await self.client.generate_presigned_post(
+        response = await self.presign_client.generate_presigned_post(
             Bucket=object_storage_settings.BUCKET,
             Key=str(id_),
             Conditions=[["content-length-range", 1, object_storage_settings.MAX_FILE_SIZE_BYTES]],

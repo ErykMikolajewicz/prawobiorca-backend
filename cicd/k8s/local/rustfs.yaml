@@ -11,7 +11,7 @@ spec:
       image: docker.io/rustfs/rustfs:latest
       env:
         - name: RUSTFS_CORS_ALLOWED_ORIGINS
-          value: "*"
+          value: "http://localhost:4173,http://localhost:5173,http://localhost:8080"
       ports:
         - containerPort: 9000
           hostPort: 9000

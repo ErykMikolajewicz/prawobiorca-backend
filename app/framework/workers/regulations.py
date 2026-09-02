@@ -27,8 +27,9 @@ async def on_worker_startup(state) -> None:
     state.ai_services_client = ai_services_client
     state.closing_callbacks.insert(0, close_ai_services_client)
 
-    file_storage_client, close_file_storage_client = await init_file_storage_client()
+    file_storage_client, file_storage_presign_client, close_file_storage_client = await init_file_storage_client()
     state.file_storage_client = file_storage_client
+    state.file_storage_presign_client = file_storage_presign_client
     state.closing_callbacks.insert(0, close_file_storage_client)
 
 
@@ -46,6 +47,7 @@ async def prepare_regulation_task(
 ) -> None:
     ai_services_client = context.state.ai_services_client
     file_storage_client = context.state.file_storage_client
+    file_storage_presign_client = context.state.file_storage_presign_client
 
     texts_embedder = TextsEmbedder(client=ai_services_client, embedding_service_url=embedding_service_settings.URL)
     regulations_splitter = RegulationSplitter(
@@ -54,7 +56,7 @@ async def prepare_regulation_task(
 
     prepare_regulation = PrepareRegulation(
         session_maker=async_session_maker,
-        regulations_storage=S3RegulationsStorage(file_storage_client),
+        regulations_storage=S3RegulationsStorage(file_storage_client, file_storage_presign_client),
         documents_repository=RegulationsDocumentsRepository(),
         regulations_repository=RegulationsManagerRepository(),
         regulation_preparator=RegulationPreparator(

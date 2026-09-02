@@ -32,8 +32,15 @@ def get_file_storage_client(request: Request) -> Any:
     return request.app.state.file_storage_client
 
 
-def get_regulations_storage(client: Annotated[Any, Depends(get_file_storage_client)]) -> RegulationsStorage:
-    return S3RegulationsStorage(client)
+def get_file_storage_presign_client(request: Request) -> Any:
+    return request.app.state.file_storage_presign_client
+
+
+def get_regulations_storage(
+    client: Annotated[Any, Depends(get_file_storage_client)],
+    presign_client: Annotated[Any, Depends(get_file_storage_presign_client)],
+) -> RegulationsStorage:
+    return S3RegulationsStorage(client, presign_client)
 
 
 def get_regulation_repository() -> RegulationsRepository:

@@ -29,8 +29,13 @@ async def lifespan(app: FastAPI):
         relational_closing_callback = await check_relational_db_connection()
         closing_callbacks.insert(0, relational_closing_callback)
 
-        file_storage_client, file_storage_closing_callback = await init_file_storage_client()
+        (
+            file_storage_client,
+            file_storage_presign_client,
+            file_storage_closing_callback,
+        ) = await init_file_storage_client()
         app.state.file_storage_client = file_storage_client
+        app.state.file_storage_presign_client = file_storage_presign_client
         closing_callbacks.insert(0, file_storage_closing_callback)
 
         http_client, http_closing_callback = await init_ai_services_client()

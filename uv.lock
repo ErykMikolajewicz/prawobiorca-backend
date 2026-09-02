@@ -511,6 +511,12 @@ wheels = [
 ]
 
 [[package]]
+name = "gitignore-parser"
+version = "0.1.13"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e5/51/e391a1a4238f18d0abb47be479b07af265ad4519022cf51b7da47ef82487/gitignore_parser-0.1.13.tar.gz", hash = "sha256:c7e10c8190accb8ae57fb3711889e73a9c0dbc04d4222b91ace8a4bf64d2f746", size = 5603, upload-time = "2025-08-25T06:33:22.704Z" }
+
+[[package]]
 name = "granian"
 version = "2.8.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1027,6 +1033,7 @@ dev = [
     { name = "granian", extra = ["reload"] },
     { name = "poethepoet" },
     { name = "ruff" },
+    { name = "taskiq", extra = ["reload"] },
 ]
 docs = [
     { name = "mkdocstrings", extra = ["python"] },
@@ -1064,6 +1071,7 @@ dev = [
     { name = "granian", extras = ["reload"], specifier = "==2.8.*" },
     { name = "poethepoet", specifier = "==0.48.*" },
     { name = "ruff", specifier = "==0.15.*" },
+    { name = "taskiq", extras = ["reload"], specifier = "==0.12.*" },
 ]
 docs = [
     { name = "mkdocstrings", extras = ["python"], specifier = "==1.0.*" },
@@ -1452,6 +1460,12 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e4/68/7b3c557782af291e22b26479127f287520fdf066d4684838e1bdd146cdc0/taskiq-0.12.5.tar.gz", hash = "sha256:fbdfc949fdefe746f771195faa34769fa6dbbb109cbd41cb1d056b794f933f43", size = 407451, upload-time = "2026-08-21T14:25:50.031Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/0a/4b/c37a3cdfaff2ff53c3ca5d5289636b42141c9964f67d16df3017a97be9c6/taskiq-0.12.5-py3-none-any.whl", hash = "sha256:3937969fcb5290d1a007e068e7af45d0a44f885e3bfe4bf1860f7e81794930f8", size = 94204, upload-time = "2026-08-21T14:25:48.948Z" },
+]
+
+[package.optional-dependencies]
+reload = [
+    { name = "gitignore-parser" },
+    { name = "watchdog" },
 ]
 
 [[package]]

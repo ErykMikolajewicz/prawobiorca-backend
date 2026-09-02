@@ -27,6 +27,7 @@ dev = [
     "granian[reload]==2.8.*",
     "poethepoet==0.48.*",
     "ruff==0.15.*",
+    "taskiq[reload]==0.12.*",
 ]
 docs = [
     "mkdocstrings[python]==1.0.*",
