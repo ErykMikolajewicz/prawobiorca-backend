@@ -4,12 +4,12 @@ import pytest
 from fastapi import status
 from sqlalchemy import delete, insert, select
 
-from main import prawobiorca
 from src.app.dtos.regulations import RegulationUploadTarget
 from src.domain.value_objects.regulations import RegulationPreparationStatus, RegulationType
 from src.framework.dependencies.ai_services import get_texts_embedder
 from src.infrastructure.relational_db.schemas.documents import regulations_documents_table
 from src.infrastructure.relational_db.schemas.regulations import regulations_table
+from src.main import prawobiorca
 from src.shared.consts import ACCESS_COOKIE_NAME, VECTOR_LENGTH
 from tests.consts import ACCESS_TOKEN, USER_ID
 

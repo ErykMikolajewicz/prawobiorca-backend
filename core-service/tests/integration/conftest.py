@@ -17,8 +17,8 @@ from testcontainers.community.postgres import PostgresContainer
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.wait_strategies import HttpWaitStrategy
 
-from main import prawobiorca
 from src.framework.dependencies.relational import get_session_maker
+from src.main import prawobiorca
 from tests.consts import EMBEDDING_SERVICE_PORT, EXTRACTION_SERVICE_PORT
 
 POSTGRES_IMAGE_VERSION = "pgvector/pgvector:0.8.4-pg18-trixie"
@@ -47,7 +47,7 @@ def run_migrations(postgres_container: PostgresContainer) -> None:
     Args:
         postgres_container (PostgresContainer): Running PostgresSQL test container.
     """
-    alembic_cfg = alembic.config.Config("tools/config/alembic.ini")
+    alembic_cfg = alembic.config.Config("alembic.ini")
     db_url = postgres_container.get_connection_url()
     alembic_cfg.set_main_option("sqlalchemy.url", db_url)
     alembic.command.upgrade(alembic_cfg, "head")

@@ -11,7 +11,7 @@ from uuid import UUID
 import pytest
 from httpx2 import ASGITransport, AsyncClient
 
-from main import prawobiorca
+from src.main import prawobiorca
 
 
 @pytest.fixture(scope="function")

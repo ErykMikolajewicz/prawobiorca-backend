@@ -18,4 +18,4 @@ __pycache__/
 postman/
 .postman
 /regulations/
-/.coverage
+.coverage

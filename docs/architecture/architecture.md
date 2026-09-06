@@ -120,32 +120,32 @@ Each microservice in the repository follows **Clean Architecture** principles, e
 
 ### 4.1. Layers
 
-#### `../../src/domain`
+#### `../../core-service/src/domain`
 The innermost core of the service containing **Enterprise Business Rules**. It has zero dependencies on outer layers or external frameworks.
 - **Entities**: Business models encapsulating identity and business state (e.g., `User`, `Case`, `Document`, `Chunk`).
 - **Value Objects**: Immutable data structures representing concepts without identity.
 - **Services**: Pure business algorithms and domain rules.
 - **Exceptions**: Domain-specific error definitions.
 
-#### `../../src/app` (or `src/app`)
+#### `../../core-service/src/app` (or `../../core-service/src/app`)
 Contains **Application Business Rules** and use case orchestrations.
 - **Use Cases**: Individual business workflows (e.g., `RegisterUser`, `ProcessUploadedDocument`, `SearchDocuments`).
 - **DTOs**: Data Transfer Objects defining input/output contracts.
 - **Ports & Interfaces**: Abstract contracts for repositories, vector embedders, and external APIs implemented by the Infrastructure layer.
 
-#### `../../src/infrastructure`
+#### `../../core-service/src/infrastructure`
 Acts as adapters for external systems and technical tools, implementing ports defined in domain/application.
 - **Relational DB**: SQLAlchemy repositories, connection pools, and database schemas.
 - **External Clients**: HTTP/gRPC clients communicating with external services (`embeddings-service`, `extraction-service`).
 - **Object Storage**: S3 / Google Cloud Storage / local filesystem adapters.
 
-#### `../../src/framework`
+#### `../../core-service/src/framework`
 The outermost delivery mechanism and dependency injection root.
 - **API**: FastAPI routes, middleware, and request/response serialization.
 - **Workers**: Taskiq worker definitions and task registrations.
 - **Dependencies**: Dependency injection wiring combining infrastructure implementations with application use cases.
 
-#### `../../src/shared`
+#### `../../core-service/src/shared`
 Cross-cutting concerns across layers (configuration settings, logging utilities, common base exceptions).
 
 ---

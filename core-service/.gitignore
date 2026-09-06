@@ -1,0 +1,12 @@
+# Duplikat wzorców z root .gitignore. Istnieje, bo taskiq worker --reload szuka .gitignore
+# tylko od CWD w górę do katalogu nadrzędnego wyłącznie (taskiq/cli/watcher.py), więc bez tego
+# pliku nie odfiltrowuje niczego i restartuje się przy każdym zapisie .pyc.
+__pycache__/
+*.pyc
+
+.venv/
+.env
+
+.coverage
+.pytest_cache/
+.ruff_cache/

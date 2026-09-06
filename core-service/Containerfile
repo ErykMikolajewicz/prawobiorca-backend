@@ -11,14 +11,12 @@ RUN chown prawobiorca_app /prawobiorca
 USER prawobiorca_app
 
 COPY pyproject.toml pyproject.toml
-COPY uv.lock uv.lock
-RUN uv sync --compile-bytecode --no-cache
+RUN uv sync --compile-bytecode --no-cache --no-default-groups
 
 ENV PATH="/prawobiorca/.venv/bin:$PATH"
 
 COPY src src
-COPY main.py main.py
 
 EXPOSE 8000
 
-CMD ["granian", "--port", "8000", "--host", "0.0.0.0", "--interface", "asgi", "main:prawobiorca"]
+CMD ["granian", "--port", "8000", "--host", "0.0.0.0", "--interface", "asgi", "src.main:prawobiorca"]

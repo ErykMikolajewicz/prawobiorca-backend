@@ -25,15 +25,15 @@ Currently, there are **no plans to use plugins** for test parallelization or dat
 - Each test directory level contains a **`conftest.py`** file with commonly used fixtures.
 
 ### Key files include:
-- `tests/conftest.py`
-- `tests/integration/conftest.py`
+- `../../core-service/tests/conftest.py`
+- `../../core-service/tests/integration/conftest.py`
 
 Detailed documentation for these files can be found on separate documentation pages.  
 Other `conftest.py` files are documented with docstrings inside the files themselves.
 
 ### Test Data File
 
-- The `tests/test_consts.py` file contains example test data, for example,
+- The `../../core-service/tests/test_consts.py` file contains example test data, for example,
 STRONG_PASSWORD = "StrongPassword12;"
 
 - Place recurring, valid data used for success scenarios there.
@@ -72,6 +72,6 @@ Please note that during these tests, storage and external services are running i
 - Each test should prepare its own test environment (e.g., insert data into the database) and clean up after itself.
 - Tests must be fully independent of each other.
 - It’s recommended to use a try block with cleanup in `finally` to ensure container state consistency even on test failure.
-- **Before creating integration tests, carefully review the fixture documentation in `tests/integration/conftest.py`.**
+- **Before creating integration tests, carefully review the fixture documentation in `../../core-service/tests/integration/conftest.py`.**
 
 When writing tests, use existing examples from the repository as a reference.

@@ -38,7 +38,7 @@ REGULATION_TYPES_BY_FILE_NAME = {
 
 
 async def init_regulations():
-    init_files_dir = Path("cicd/init/files")
+    init_files_dir = Path("scripts/files")
     session = get_session()
 
     async with (

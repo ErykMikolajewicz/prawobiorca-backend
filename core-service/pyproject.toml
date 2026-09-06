@@ -1,0 +1,47 @@
+[project]
+name = "core-service"
+version = "0.1.0"
+description = "Law acts search engine with AI features."
+readme = "README.md"
+requires-python = "==3.14.*"
+dependencies = [
+    "aiobotocore==3.9.*",
+    "asyncpg==0.31.*",
+    "bcrypt==5.0.*",
+    "email-validator==2.3.*",
+    "fastapi==0.141.*",
+    "granian==2.8.*",
+    "httpx2==2.12.*",
+    "pgvector==0.5.*",
+    "pydantic==2.13.*",
+    "pydantic-settings==2.15.*",
+    "pyjwt==2.13.*",
+    "python-multipart==0.0.32",
+    "sqlalchemy[asyncio]==2.0.*",
+    "taskiq==0.12.*",
+    "taskiq-redis==1.2.*",
+    "tokenizers==0.23.*",
+]
+
+[dependency-groups]
+dev = [
+    "granian[reload]==2.8.*",
+    "poethepoet==0.48.*",
+    "ruff==0.16.*",
+    "taskiq[reload]==0.12.*",
+]
+docs = [
+    "mkdocstrings[python]==1.0.*",
+    "zensical==0.0.59",
+]
+
+test = [
+    "alembic==1.19.*",
+    "pytest==9.1.*",
+    "pytest-asyncio==1.4.*",
+    "pytest-cov==7.1.*",
+    "testcontainers[postgres]==4.15.*",
+]
+
+[tool.uv]
+default-groups = ["dev", "test"]

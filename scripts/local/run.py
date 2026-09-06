@@ -6,7 +6,16 @@ from manifests import MANIFESTS
 IGNORED_DIRS = {".venv", "__pycache__"}
 
 IMAGES = (
-    ("prawobiorca-backend", ".", ("Containerfile", "pyproject.toml", "uv.lock", "main.py", "src")),
+    (
+        "prawobiorca-backend",
+        "core-service",
+        (
+            "core-service/Containerfile",
+            "core-service/pyproject.toml",
+            "core-service/uv.lock",
+            "core-service/src",
+        ),
+    ),
     ("embedding-service", "embedding-service", ("embedding-service",)),
     ("extraction-service", "extraction-service", ("extraction-service",)),
 )
