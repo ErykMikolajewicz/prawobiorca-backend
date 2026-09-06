@@ -6,8 +6,8 @@ from sqlalchemy import insert, select
 from app.application.dtos.regulations import RegulationUploadTarget
 from app.domain.value_objects.regulations import RegulationPreparationStatus, RegulationType
 from app.infrastructure.relational_db.schemas.regulations import regulations_table
-from app.shared.consts import AUTHORIZATION_COOKIE_NAME
-from tests.consts import AUTHORIZATION_TOKEN, USER_ID
+from app.shared.consts import ACCESS_COOKIE_NAME
+from tests.consts import ACCESS_TOKEN, USER_ID
 
 
 async def test_add_user_regulation(
@@ -26,7 +26,7 @@ async def test_add_user_regulation(
         id=id_, url="http://storage.local/bucket", fields={"key": str(id_)}
     )
 
-    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+    client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
     response = client.post("/api/user/regulations", json=regulation_data)
 
@@ -71,7 +71,7 @@ async def test_delete_user_regulation(
             .returning(regulations_table.c.id)
         )
 
-    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+    client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
     response = client.delete(f"/api/user/regulations/{regulation_id}")
 
@@ -111,7 +111,7 @@ async def test_confirm_user_regulation_upload(
 
     mock_regulations_storage.check_regulation_exists.return_value = True
 
-    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+    client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
     response = client.post(f"/api/user/regulations/{regulation_id}/confirm-upload")
 
@@ -152,7 +152,7 @@ async def test_confirm_user_regulation_upload_already_prepared(
             .returning(regulations_table.c.id)
         )
 
-    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+    client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
     response = client.post(f"/api/user/regulations/{regulation_id}/confirm-upload")
 
@@ -192,7 +192,7 @@ async def test_confirm_user_regulation_upload_storage_missing(
 
     mock_regulations_storage.check_regulation_exists.return_value = False
 
-    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+    client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
     response = client.post(f"/api/user/regulations/{regulation_id}/confirm-upload")
 
@@ -231,7 +231,7 @@ async def test_retry_user_regulation_preparation(
             .returning(regulations_table.c.id)
         )
 
-    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+    client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
     response = client.post(f"/api/user/regulations/{regulation_id}/preparation-retry")
 
@@ -271,7 +271,7 @@ async def test_retry_user_regulation_preparation_already_prepared(
             .returning(regulations_table.c.id)
         )
 
-    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+    client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
     response = client.post(f"/api/user/regulations/{regulation_id}/preparation-retry")
 

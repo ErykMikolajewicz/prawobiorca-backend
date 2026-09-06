@@ -6,7 +6,7 @@ from sqlalchemy import pool, Connection
 from alembic import context
 
 from app.infrastructure.relational_db.schemas.cases import cases_table, case_documents_table
-from app.infrastructure.relational_db.schemas.users import users_table, users_tokens_table
+from app.infrastructure.relational_db.schemas.users import users_table, users_sessions_table
 from app.infrastructure.relational_db.schemas.documents import regulations_documents_table
 from app.infrastructure.relational_db.schemas.regulations import regulations_table
 from app.infrastructure.relational_db.connection import metadata

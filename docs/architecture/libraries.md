@@ -89,6 +89,22 @@ Alternatives were not extensively researched.
 
 ---
 
+### pyjwt
+
+Library used to issue and verify the signed JSON Web Tokens that carry the user session (access tokens).
+Chosen because it is the reference Python JWT implementation, has no transitive dependencies, and exposes exactly
+the primitives needed here — `encode`/`decode` with an explicit algorithm allow-list.
+
+Alternatives:
+- **`python-jose`** — covers the whole JOSE suite (JWE, JWK, JWS), far more than a symmetric HS256 token needs,
+  and is maintained less actively.
+- **`authlib`** — a full OAuth2/OIDC framework; the application only issues its own first-party tokens,
+  so the extra surface would be unused.
+- **hand-written HMAC signing** on top of `hmac`/`hashlib` — avoids a dependency but means maintaining custom
+  cryptographic code, including claim validation and constant-time comparison. Not worth the risk.
+
+---
+
 ### python-multipart
 
 A library for handling file uploads in applications based on [FastAPI](#fastapi).

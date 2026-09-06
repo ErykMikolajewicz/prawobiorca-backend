@@ -1,7 +1,8 @@
 from enum import StrEnum
 from pathlib import Path
+from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,7 +13,17 @@ class HttpClientType(StrEnum):
 class ApplicationSettings(BaseSettings):
     LOGGING_LEVEL: str = ...
 
-    SESSION_ID_EXPIRATION_SECONDS: int = ...
+    JWT_SECRET_KEY: SecretStr = Field(..., min_length=32)
+
+    JWT_ALGORITHM: str = "HS256"
+
+    ACCESS_TOKEN_EXPIRATION_SECONDS: int = Field(default=900, gt=0)
+
+    REFRESH_TOKEN_EXPIRATION_SECONDS: int = Field(default=1209600, gt=0)
+
+    COOKIE_SECURE: bool = True
+
+    COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
 
     HTTP_CLIENT: HttpClientType = ...
 

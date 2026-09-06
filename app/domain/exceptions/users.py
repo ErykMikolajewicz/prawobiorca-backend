@@ -4,3 +4,11 @@ class UserExists(Exception):
 
 class UserCantLog(Exception):
     pass
+
+
+class InvalidAccessToken(Exception):
+    pass
+
+
+class InvalidRefreshToken(Exception):
+    pass

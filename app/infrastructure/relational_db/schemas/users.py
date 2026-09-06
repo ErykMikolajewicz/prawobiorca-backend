@@ -14,24 +14,16 @@ users_table = sqla.Table(
     sqla.UniqueConstraint("username"),
 )
 
-users_tokens_table = sqla.Table(
-    "users_tokens",
+users_sessions_table = sqla.Table(
+    "users_sessions",
     metadata,
+    sqla.Column("id", sqla.UUID, primary_key=True, server_default=sqla.text("gen_random_uuid()")),
     sqla.Column("create_date", sqla.DateTime, server_default=sqla.text("now()"), nullable=False),
     sqla.Column("user_id", sqla.UUID, sqla.ForeignKey("users.id", ondelete="CASCADE"), nullable=False),
-    sqla.Column("session_id", sqla.String(64), primary_key=True),
+    sqla.Column("refresh_token_hash", sqla.String(64), nullable=False),
     sqla.Column("valid_until", sqla.DateTime(timezone=True), nullable=False),
+    sqla.UniqueConstraint("refresh_token_hash"),
 )
-
-
-class UserToken:
-    pass
 
 
 mapper_registry.map_imperatively(User, users_table, exclude_properties=["create_date", "is_admin"])
-
-
-mapper_registry.map_imperatively(
-    UserToken,
-    users_tokens_table,
-)

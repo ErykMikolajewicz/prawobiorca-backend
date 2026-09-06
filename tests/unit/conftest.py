@@ -6,7 +6,7 @@ from app.application.interfaces.cases import CaseDocumentsRepository, CasesRepos
 from app.application.interfaces.documents import DocumentsRepository
 from app.application.interfaces.regulations import RegulationsRepository
 from app.application.interfaces.relational import AsyncSession, SessionMaker
-from app.application.interfaces.users import UsersRepository, UsersTokensRepository
+from app.application.interfaces.users import UsersRepository, UsersSessionsRepository
 from app.application.ports.texts import TextsEmbedder
 
 
@@ -38,8 +38,8 @@ def mock_users_repo():
 
 
 @pytest.fixture
-def mock_tokens_repo():
-    repo = create_autospec(UsersTokensRepository)
+def mock_sessions_repo():
+    repo = create_autospec(UsersSessionsRepository)
     return repo
 
 

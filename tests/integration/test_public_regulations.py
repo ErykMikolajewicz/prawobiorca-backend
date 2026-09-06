@@ -9,9 +9,9 @@ from app.domain.value_objects.regulations import RegulationPreparationStatus, Re
 from app.framework.dependencies.ai_services import get_texts_embedder
 from app.infrastructure.relational_db.schemas.documents import regulations_documents_table
 from app.infrastructure.relational_db.schemas.regulations import regulations_table
-from app.shared.consts import AUTHORIZATION_COOKIE_NAME, VECTOR_LENGTH
+from app.shared.consts import ACCESS_COOKIE_NAME, VECTOR_LENGTH
 from main import prawobiorca
-from tests.consts import AUTHORIZATION_TOKEN, USER_ID
+from tests.consts import ACCESS_TOKEN, USER_ID
 
 
 async def test_get_public_regulations(client, override_session_maker, session_maker, set_user, clean_user):
@@ -180,7 +180,7 @@ async def test_add_public_regulation_as_admin(
         id=id_, url="http://storage.local/bucket", fields={"key": str(id_)}
     )
 
-    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+    client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
     response = client.post("/api/regulations", json=regulation_data)
 
@@ -231,7 +231,7 @@ async def test_confirm_public_regulation_upload_as_admin(
 
     mock_regulations_storage.check_regulation_exists.return_value = True
 
-    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+    client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
     try:
         response = client.post(f"/api/regulations/{regulation_id}/confirm-upload")

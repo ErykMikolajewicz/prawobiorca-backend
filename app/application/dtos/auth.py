@@ -5,11 +5,13 @@ from pydantic import BaseModel, StringConstraints
 from app.domain.services.security import url_safe_authorization_token_length
 
 
-class LoginOutput(BaseModel):
-    session_id: Annotated[
+class AuthTokens(BaseModel):
+    access_token: str
+    access_expires_in: int
+    refresh_token: Annotated[
         str,
         StringConstraints(
             min_length=url_safe_authorization_token_length, max_length=url_safe_authorization_token_length
         ),
     ]
-    expires_in: int
+    refresh_expires_in: int

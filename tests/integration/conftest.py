@@ -12,6 +12,7 @@ from typing import AsyncGenerator, Generator
 import alembic.command
 import alembic.config
 import pytest
+from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.wait_strategies import HttpWaitStrategy
@@ -113,7 +114,7 @@ async def override_session_maker(postgres_container: PostgresContainer) -> Async
         This fixture is intended for FastAPI integration tests only.
     """
     url = postgres_container.get_connection_url()
-    db_engine = create_async_engine(url, future=True, echo=False)
+    db_engine = create_async_engine(url, future=True, echo=False, poolclass=NullPool)
     async_session_maker = async_sessionmaker(db_engine, expire_on_commit=False, class_=AsyncSession)
 
     async def _override():

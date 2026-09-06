@@ -1,56 +1,107 @@
-from typing import Annotated, Literal
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordRequestForm
 
 from app.application.dtos.account import LoginData
-from app.application.interfaces.relational import SessionMaker
-from app.application.interfaces.users import UsersRepository, UsersTokensRepository
-from app.application.use_cases.auth import LogoutUser, LogUser
-from app.domain.exceptions.users import UserCantLog
+from app.application.dtos.auth import AuthTokens
+from app.application.use_cases.auth import LogoutUser, LogUser, RefreshTokens
+from app.domain.exceptions.users import InvalidRefreshToken, UserCantLog
 from app.domain.value_objects.users import UserPrivileges
-from app.framework.dependencies.authentication import authorize_user, get_logout_user
-from app.framework.dependencies.relational import get_session_maker
-from app.framework.dependencies.users import get_users_repository, get_users_tokens_repository
-from app.shared.consts import AUTHORIZATION_COOKIE_NAME
+from app.framework.dependencies.authentication import (
+    authorize_user,
+    get_log_user,
+    get_logout_user,
+    get_refresh_tokens,
+)
+from app.shared.consts import ACCESS_COOKIE_NAME, AUTH_COOKIE_PATH, REFRESH_COOKIE_NAME, REFRESH_COOKIE_PATH
+from app.shared.settings.application import app_settings
 
 auth_router = APIRouter(tags=["auth"], prefix="/api")
 
+cookie_secure = app_settings.COOKIE_SECURE
+cookie_samesite = app_settings.COOKIE_SAMESITE
 
-@auth_router.post("/auth/login")
+
+def set_auth_cookies(response: Response, tokens: AuthTokens) -> None:
+    response.set_cookie(
+        key=ACCESS_COOKIE_NAME,
+        value=tokens.access_token,
+        httponly=True,
+        secure=cookie_secure,
+        samesite=cookie_samesite,
+        max_age=tokens.access_expires_in,
+        path=AUTH_COOKIE_PATH,
+    )
+    response.set_cookie(
+        key=REFRESH_COOKIE_NAME,
+        value=tokens.refresh_token,
+        httponly=True,
+        secure=cookie_secure,
+        samesite=cookie_samesite,
+        max_age=tokens.refresh_expires_in,
+        path=REFRESH_COOKIE_PATH,
+    )
+
+
+def clear_auth_cookies(response: Response) -> None:
+    response.delete_cookie(
+        key=ACCESS_COOKIE_NAME,
+        httponly=True,
+        secure=cookie_secure,
+        samesite=cookie_samesite,
+        path=AUTH_COOKIE_PATH,
+    )
+    response.delete_cookie(
+        key=REFRESH_COOKIE_NAME,
+        httponly=True,
+        secure=cookie_secure,
+        samesite=cookie_samesite,
+        path=REFRESH_COOKIE_PATH,
+    )
+
+
+@auth_router.post(
+    "/auth/login",
+    responses={status.HTTP_401_UNAUTHORIZED: {"description": "Incorrect logging data!"}},
+)
 async def log_user(
-    session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
-    users_repo: Annotated[UsersRepository, Depends(get_users_repository)],
-    tokens_repo: Annotated[UsersTokensRepository, Depends(get_users_tokens_repository)],
+    log_user_: Annotated[LogUser, Depends(get_log_user)],
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    delivery: Annotated[Literal["cookie", "json"], Query()] = "cookie",
 ):
     login_data = LoginData(username=form_data.username, password=form_data.password)
 
-    log_user_ = LogUser(session_maker, users_repo, tokens_repo)
     try:
-        login_output = await log_user_.execute(login_data)
+        tokens = await log_user_.execute(login_data)
     except UserCantLog:
-        error_message = "incorrect logging data!"
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=error_message)
-
-    token_string = login_output.session_id
-    expiration_time = login_output.expires_in
-
-    if delivery == "json":
-        return {"access_token": token_string, "token_type": "bearer", "expires_in": expiration_time}
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="incorrect logging data!")
 
     response = JSONResponse({"ok": True})
-    response.set_cookie(
-        key=AUTHORIZATION_COOKIE_NAME,
-        value=token_string,
-        httponly=True,
-        secure=True,
-        samesite="none",
-        max_age=expiration_time,
-        path="/api",
-    )
+    set_auth_cookies(response, tokens)
+
+    return response
+
+
+@auth_router.post(
+    "/auth/refresh",
+    responses={status.HTTP_401_UNAUTHORIZED: {"description": "Invalid or expired refresh token!"}},
+)
+async def refresh_tokens(refresh_tokens_: Annotated[RefreshTokens, Depends(get_refresh_tokens)], request: Request):
+    refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
+
+    if refresh_token is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token missing!")
+
+    try:
+        tokens = await refresh_tokens_.execute(refresh_token)
+    except InvalidRefreshToken:
+        response = JSONResponse({"detail": "Invalid refresh token!"}, status_code=status.HTTP_401_UNAUTHORIZED)
+        clear_auth_cookies(response)
+        return response
+
+    response = JSONResponse({"ok": True})
+    set_auth_cookies(response, tokens)
 
     return response
 
@@ -75,14 +126,12 @@ async def check_is_user_logged(request: Request):
     dependencies=[Depends(authorize_user)],
 )
 async def logout_user(logout_user_: Annotated[LogoutUser, Depends(get_logout_user)], request: Request):
-    authorization_token = request.state.authorization_token
-    await logout_user_.execute(authorization_token)
+    session_id = request.state.session_id
+    refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
+
+    await logout_user_.execute(session_id, refresh_token)
 
     response = JSONResponse({"ok": True})
-
-    response.delete_cookie(
-        key=AUTHORIZATION_COOKIE_NAME,
-        path="/api",
-    )
+    clear_auth_cookies(response)
 
     return response

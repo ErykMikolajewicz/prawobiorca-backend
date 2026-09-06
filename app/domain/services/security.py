@@ -1,13 +1,21 @@
 import asyncio
+import hashlib
 import secrets
+from datetime import datetime, timedelta, timezone
 from math import ceil
+from uuid import UUID
 
 import bcrypt
+import jwt
 from pydantic import SecretStr
 
+from app.domain.exceptions.users import InvalidAccessToken
+from app.domain.value_objects.auth import AccessTokenClaims
 from app.shared.consts import AUTHORIZATION_TOKEN_LENGTH, SECURITY_MIN_RESPONSE_TIME
 
 url_safe_authorization_token_length = ceil(AUTHORIZATION_TOKEN_LENGTH * 4 / 3)
+
+_required_access_token_claims = ["sub", "sid", "adm", "iat", "exp"]
 
 
 def hash_password(password: SecretStr) -> bytes:
@@ -26,6 +34,40 @@ def verify_password(password: SecretStr, hashed_password: bytes) -> bool:
     password = password.get_secret_value()
     password = password.encode("utf-8")
     return bcrypt.checkpw(password, hashed_password)
+
+
+def hash_refresh_token(refresh_token: str) -> str:
+    return hashlib.sha256(refresh_token.encode("utf-8")).hexdigest()
+
+
+def create_access_token(claims: AccessTokenClaims, secret: SecretStr, algorithm: str, expires_in: int) -> str:
+    issued_at = datetime.now(timezone.utc)
+    payload = {
+        "sub": str(claims.user_id),
+        "sid": str(claims.session_id),
+        "adm": claims.is_admin,
+        "iat": issued_at,
+        "exp": issued_at + timedelta(seconds=expires_in),
+        "jti": secrets.token_urlsafe(AUTHORIZATION_TOKEN_LENGTH),
+    }
+    return jwt.encode(payload, secret.get_secret_value(), algorithm=algorithm)
+
+
+def decode_access_token(access_token: str, secret: SecretStr, algorithm: str) -> AccessTokenClaims:
+    try:
+        payload = jwt.decode(
+            access_token,
+            secret.get_secret_value(),
+            algorithms=[algorithm],
+            options={"require": _required_access_token_claims},
+        )
+        claims = AccessTokenClaims(
+            user_id=UUID(payload["sub"]), session_id=UUID(payload["sid"]), is_admin=bool(payload["adm"])
+        )
+    except jwt.InvalidTokenError, ValueError, TypeError:
+        raise InvalidAccessToken
+
+    return claims
 
 
 async def prevent_timing_attack(execution_start_time: float):

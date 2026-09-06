@@ -15,6 +15,11 @@ spec:
         - configMapRef:
             name: prawobiorca-backend-config
       env:
+        - name: APP_JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: prawobiorca-secrets
+              key: JWT_SECRET_KEY
         - name: RELATIONAL_DB_PASSWORD
           valueFrom:
             secretKeyRef:

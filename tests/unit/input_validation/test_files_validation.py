@@ -1,11 +1,9 @@
-import json
-
 import pytest
 from fastapi import status
 
 from app.domain.value_objects.regulations import RegulationType
-from app.shared.consts import AUTHORIZATION_COOKIE_NAME
-from tests.consts import AUTHORIZATION_TOKEN, UNKNOWN_AUTHORIZATION_TOKEN
+from app.shared.consts import ACCESS_COOKIE_NAME
+from tests.consts import ACCESS_TOKEN, UNKNOWN_ACCESS_TOKEN
 
 
 @pytest.mark.parametrize(
@@ -27,7 +25,7 @@ def test_logged_used_add_public_regulation_validation(
 ):
     regulation_data = {"name": file_name, "regulation_type": file_type}
 
-    cookies = {AUTHORIZATION_COOKIE_NAME: AUTHORIZATION_TOKEN}
+    cookies = {ACCESS_COOKIE_NAME: ACCESS_TOKEN}
     client.cookies = cookies
 
     response = client.post("api/user/regulations", json=regulation_data)
@@ -38,10 +36,7 @@ def test_logged_used_add_public_regulation_validation(
 def test_unauthorized_user_add_public_regulation(client, override_authorize_admin_user):
     regulation_data = {"name": "test.txt", "regulation_type": RegulationType.DECREE}
 
-    session_data = {"session_id": UNKNOWN_AUTHORIZATION_TOKEN}
-    cookie_value = json.dumps(session_data)
-
-    cookies = {AUTHORIZATION_COOKIE_NAME: cookie_value}
+    cookies = {ACCESS_COOKIE_NAME: UNKNOWN_ACCESS_TOKEN}
     client.cookies = cookies
 
     response = client.post("api/user/regulations", json=regulation_data)
@@ -52,7 +47,7 @@ def test_unauthorized_user_add_public_regulation(client, override_authorize_admi
 def test_non_admin_user_add_public_regulation(client, override_authorize_normal_user):
     regulation_data = {"name": "test.txt", "regulation_type": RegulationType.DECREE}
 
-    cookies = {AUTHORIZATION_COOKIE_NAME: AUTHORIZATION_TOKEN}
+    cookies = {ACCESS_COOKIE_NAME: ACCESS_TOKEN}
     client.cookies = cookies
 
     response = client.post("api/regulations", json=regulation_data)

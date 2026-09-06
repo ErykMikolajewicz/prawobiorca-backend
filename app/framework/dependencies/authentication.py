@@ -3,53 +3,60 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, Request, status
-from fastapi.security import OAuth2PasswordBearer
 
 from app.application.interfaces.relational import SessionMaker
-from app.application.interfaces.users import UsersRepository, UsersTokensRepository
-from app.application.use_cases.auth import LogoutUser
+from app.application.interfaces.users import UsersRepository, UsersSessionsRepository
+from app.application.use_cases.auth import LogoutUser, LogUser, RefreshTokens
+from app.domain.exceptions.users import InvalidAccessToken
+from app.domain.services.security import decode_access_token
 from app.domain.value_objects.users import UserPrivileges
 from app.framework.dependencies.relational import get_session_maker
-from app.framework.dependencies.users import get_users_repository, get_users_tokens_repository
-from app.shared.consts import AUTHORIZATION_COOKIE_NAME
+from app.framework.dependencies.users import get_users_repository, get_users_sessions_repository
+from app.shared.consts import ACCESS_COOKIE_NAME
+from app.shared.settings.application import app_settings
 
 logger = logging.getLogger(__name__)
 
-_oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login?delivery=json", auto_error=False)
+jwt_secret_key = app_settings.JWT_SECRET_KEY
+jwt_algorithm = app_settings.JWT_ALGORITHM
 
 
-async def authorize_user(
+async def authorize_user(request: Request):
+    access_token = request.cookies.get(ACCESS_COOKIE_NAME)
+
+    claims = None
+    if access_token is not None:
+        try:
+            claims = decode_access_token(access_token, jwt_secret_key, jwt_algorithm)
+        except InvalidAccessToken:
+            logger.warning("Request with invalid or expired access token!")
+
+    request.state.session_id = claims.session_id if claims else None
+    request.state.user_id = claims.user_id if claims else None
+    request.state.user_privileges = UserPrivileges(is_admin=claims.is_admin) if claims else None
+
+
+def get_log_user(
     session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
-    users_tokens_repo: Annotated[UsersTokensRepository, Depends(get_users_tokens_repository)],
     users_repo: Annotated[UsersRepository, Depends(get_users_repository)],
-    header_token: Annotated[str | None, Depends(_oauth2_scheme)],
-    request: Request,
-):
-    if header_token is not None:
-        authorization_token = header_token
-    else:
-        authorization_token = request.cookies.get(AUTHORIZATION_COOKIE_NAME)
-
-    user_id = None
-    user_privileges = None
-    if authorization_token is not None:
-        async with session_maker() as session:
-            user_id = await users_tokens_repo.get_user_id_by_authorization_token(session, authorization_token)
-            if user_id:
-                user_privileges = await users_repo.get_user_privileges(session, user_id)
-            else:
-                logger.warning(f"User for token {authorization_token} not found!")
-
-    request.state.authorization_token = authorization_token
-    request.state.user_id = user_id
-    request.state.user_privileges = user_privileges
+    sessions_repo: Annotated[UsersSessionsRepository, Depends(get_users_sessions_repository)],
+) -> LogUser:
+    return LogUser(session_maker, users_repo, sessions_repo)
 
 
 def get_logout_user(
     session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
-    tokens_repo: Annotated[UsersTokensRepository, Depends(get_users_tokens_repository)],
+    sessions_repo: Annotated[UsersSessionsRepository, Depends(get_users_sessions_repository)],
 ) -> LogoutUser:
-    return LogoutUser(session_maker, tokens_repo)
+    return LogoutUser(session_maker, sessions_repo)
+
+
+def get_refresh_tokens(
+    session_maker: Annotated[SessionMaker, Depends(get_session_maker)],
+    users_repo: Annotated[UsersRepository, Depends(get_users_repository)],
+    sessions_repo: Annotated[UsersSessionsRepository, Depends(get_users_sessions_repository)],
+) -> RefreshTokens:
+    return RefreshTokens(session_maker, users_repo, sessions_repo)
 
 
 async def require_logged_user(request: Request, _: Annotated[None, Depends(authorize_user)]) -> UUID:

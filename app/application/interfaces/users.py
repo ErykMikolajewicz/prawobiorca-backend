@@ -5,6 +5,7 @@ from uuid import UUID
 from app.application.dtos.user import CreateUserData
 from app.application.interfaces.relational import AsyncSession
 from app.domain.entities.user import User
+from app.domain.value_objects.auth import UserSession
 from app.domain.value_objects.users import UserPrivileges
 
 
@@ -16,9 +17,15 @@ class UsersRepository(Protocol):
     async def get_user_privileges(self, session: AsyncSession, user_id: UUID) -> UserPrivileges | None: ...
 
 
-class UsersTokensRepository(Protocol):
-    async def get_user_id_by_authorization_token(self, session: AsyncSession, token: str) -> UUID | None: ...
+class UsersSessionsRepository(Protocol):
+    async def create_session(
+        self, session: AsyncSession, user_id: UUID, refresh_token_hash: str, valid_until: datetime
+    ) -> UUID: ...
 
-    async def add_token(self, session: AsyncSession, user_id: UUID, token: str, valid_until: datetime) -> None: ...
+    async def rotate_session(
+        self, session: AsyncSession, old_refresh_token_hash: str, new_refresh_token_hash: str, valid_until: datetime
+    ) -> UserSession | None: ...
 
-    async def invalidate_token(self, session: AsyncSession, token: str): ...
+    async def delete_session(self, session: AsyncSession, session_id: UUID) -> None: ...
+
+    async def delete_session_by_refresh_token_hash(self, session: AsyncSession, refresh_token_hash: str) -> None: ...

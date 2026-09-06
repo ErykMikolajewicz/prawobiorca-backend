@@ -15,6 +15,7 @@ dependencies = [
     "pgvector==0.5.*",
     "pydantic==2.13.*",
     "pydantic-settings==2.15.*",
+    "pyjwt==2.13.*",
     "python-multipart==0.0.32",
     "sqlalchemy[asyncio]==2.0.*",
     "taskiq==0.12.*",

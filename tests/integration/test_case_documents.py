@@ -2,8 +2,8 @@ from fastapi import status
 from sqlalchemy import insert, select
 
 from app.infrastructure.relational_db.schemas.cases import case_documents_table, cases_table
-from app.shared.consts import AUTHORIZATION_COOKIE_NAME
-from tests.consts import ADMIN_ID, AUTHORIZATION_TOKEN, USER_ID
+from app.shared.consts import ACCESS_COOKIE_NAME
+from tests.consts import ACCESS_TOKEN, ADMIN_ID, USER_ID
 
 
 async def test_add_case_document(
@@ -19,7 +19,7 @@ async def test_add_case_document(
         )
         case_id = await session.scalar(statement)
 
-    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+    client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
     response = client.post(
         f"/api/user/cases/{case_id}/documents",
@@ -67,7 +67,7 @@ async def test_delete_case_document(
         )
         document_id = await session.scalar(create_document_stmt)
 
-    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+    client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
     response = client.delete(f"/api/user/cases/documents/{document_id}")
 
@@ -138,7 +138,7 @@ async def test_get_case_documents(
         )
         first_document_id, second_document_id, _, _ = (await session.scalars(create_documents_stmt)).all()
 
-    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+    client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
     response = client.get(f"/api/user/cases/{target_case_id}/documents")
 

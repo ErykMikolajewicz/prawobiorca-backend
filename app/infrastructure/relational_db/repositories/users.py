@@ -2,14 +2,15 @@ from dataclasses import asdict
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import delete, insert, select
+from sqlalchemy import delete, insert, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.application.dtos.user import CreateUserData
 from app.domain.entities.user import User
+from app.domain.value_objects.auth import UserSession
 from app.domain.value_objects.users import UserPrivileges
-from app.infrastructure.relational_db.schemas.users import users_table, users_tokens_table
+from app.infrastructure.relational_db.schemas.users import users_sessions_table, users_table
 from app.shared.exceptions import ObjectExists
 
 
@@ -34,7 +35,7 @@ class UsersRepository:
         statement = select(users_table.c.is_admin).where(users_table.c.id == user_id)
 
         result = await session.execute(statement)
-        is_admin = result.scalar_one()
+        is_admin = result.scalar_one_or_none()
         if is_admin is None:
             return None
 
@@ -43,31 +44,46 @@ class UsersRepository:
         return user_privileges
 
 
-class UsersTokensRepository:
+class UsersSessionsRepository:
     @staticmethod
-    async def get_user_id_by_authorization_token(session: AsyncSession, token: str) -> UUID | None:
+    async def create_session(
+        session: AsyncSession, user_id: UUID, refresh_token_hash: str, valid_until: datetime
+    ) -> UUID:
         statement = (
-            select(users_tokens_table.c.user_id)
-            .where(
-                users_tokens_table.c.session_id == token, users_tokens_table.c.valid_until > datetime.now(timezone.utc)
-            )
-            .limit(1)
+            insert(users_sessions_table)
+            .values(user_id=user_id, refresh_token_hash=refresh_token_hash, valid_until=valid_until)
+            .returning(users_sessions_table.c.id)
         )
+        session_id = await session.scalar(statement)
 
-        user_id = await session.scalar(statement)
-
-        return user_id
+        return session_id
 
     @staticmethod
-    async def add_token(session: AsyncSession, user_id: UUID, token: str, valid_until: datetime) -> None:
-        statement = insert(users_tokens_table).values(
-            user_id=user_id,
-            session_id=token,
-            valid_until=valid_until,
+    async def rotate_session(
+        session: AsyncSession, old_refresh_token_hash: str, new_refresh_token_hash: str, valid_until: datetime
+    ) -> UserSession | None:
+        statement = (
+            update(users_sessions_table)
+            .where(
+                users_sessions_table.c.refresh_token_hash == old_refresh_token_hash,
+                users_sessions_table.c.valid_until > datetime.now(timezone.utc),
+            )
+            .values(refresh_token_hash=new_refresh_token_hash, valid_until=valid_until)
+            .returning(users_sessions_table.c.id, users_sessions_table.c.user_id)
         )
+        result = await session.execute(statement)
+        row = result.one_or_none()
+        if row is None:
+            return None
+
+        return UserSession(id=row.id, user_id=row.user_id)
+
+    @staticmethod
+    async def delete_session(session: AsyncSession, session_id: UUID) -> None:
+        statement = delete(users_sessions_table).where(users_sessions_table.c.id == session_id)
         await session.execute(statement)
 
     @staticmethod
-    async def invalidate_token(session: AsyncSession, token: str):
-        statement = delete(users_tokens_table).where(users_tokens_table.c.session_id == token)
+    async def delete_session_by_refresh_token_hash(session: AsyncSession, refresh_token_hash: str) -> None:
+        statement = delete(users_sessions_table).where(users_sessions_table.c.refresh_token_hash == refresh_token_hash)
         await session.execute(statement)

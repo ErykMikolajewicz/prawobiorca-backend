@@ -5,8 +5,8 @@ from fastapi import status
 from sqlalchemy import insert, select
 
 from app.infrastructure.relational_db.schemas.cases import cases_table
-from app.shared.consts import AUTHORIZATION_COOKIE_NAME
-from tests.consts import ADMIN_ID, AUTHORIZATION_TOKEN, USER_ID
+from app.shared.consts import ACCESS_COOKIE_NAME
+from tests.consts import ACCESS_TOKEN, ADMIN_ID, USER_ID
 
 
 async def test_get_cases_list(
@@ -38,7 +38,7 @@ async def test_get_cases_list(
 
     first_case_id, second_case_id, _ = ids
 
-    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+    client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
     response = client.get("/api/user/cases")
 
@@ -52,7 +52,7 @@ async def test_get_cases_list(
 async def test_add_case(
     client, override_session_maker, session_maker, override_authorize_normal_user, set_user, clean_user
 ):
-    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+    client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
     response = client.post("/api/user/cases", data={"caseName": "New case"})
 
@@ -84,7 +84,7 @@ async def test_delete_case(
         )
         case_id = await session.scalar(statement)
 
-    client.cookies.set(AUTHORIZATION_COOKIE_NAME, AUTHORIZATION_TOKEN)
+    client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
     response = client.delete(f"/api/user/cases/{case_id}")
 

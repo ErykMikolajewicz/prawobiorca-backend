@@ -10,9 +10,9 @@ from app.application.ports.tasks import RegulationPreparationScheduler
 from app.domain.value_objects.users import UserPrivileges
 from app.framework.dependencies.authentication import authorize_user
 from app.framework.dependencies.regulations import get_regulations_preparation_scheduler, get_regulations_storage
-from app.shared.consts import AUTHORIZATION_COOKIE_NAME
+from app.shared.consts import ACCESS_COOKIE_NAME
 from main import prawobiorca
-from tests.consts import AUTHORIZATION_TOKEN, USER_ID
+from tests.consts import ACCESS_TOKEN, SESSION_ID, USER_ID
 
 
 @pytest.fixture
@@ -51,11 +51,9 @@ def get_set_mock_auth_dependency() -> Callable:
 
     def set_mock_auth_dependency(user_type: UserType):
         async def mock_authorize_user(request: Request):
-            authorization_token = request.cookies.get(AUTHORIZATION_COOKIE_NAME)
-
             user_id = None
             user_privileges = None
-            if authorization_token == AUTHORIZATION_TOKEN:
+            if request.cookies.get(ACCESS_COOKIE_NAME) == ACCESS_TOKEN:
                 user_id = USER_ID
                 match user_type:
                     case UserType.NORMAL:
@@ -65,7 +63,7 @@ def get_set_mock_auth_dependency() -> Callable:
                     case _:
                         raise Exception("Invalid user type!")
 
-            request.state.authorization_token = authorization_token
+            request.state.session_id = SESSION_ID if user_id else None
             request.state.user_id = user_id
             request.state.user_privileges = user_privileges
 
