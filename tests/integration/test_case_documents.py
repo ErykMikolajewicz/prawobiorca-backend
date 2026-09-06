@@ -1,8 +1,8 @@
 from fastapi import status
 from sqlalchemy import insert, select
 
-from app.infrastructure.relational_db.schemas.cases import case_documents_table, cases_table
-from app.shared.consts import ACCESS_COOKIE_NAME
+from src.infrastructure.relational_db.schemas.cases import case_documents_table, cases_table
+from src.shared.consts import ACCESS_COOKIE_NAME
 from tests.consts import ACCESS_TOKEN, ADMIN_ID, USER_ID
 
 
@@ -21,7 +21,7 @@ async def test_add_case_document(
 
     client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
-    response = client.post(
+    response = await client.post(
         f"/api/user/cases/{case_id}/documents",
         json={"presentationName": "document.pdf", "content": "Document content"},
     )
@@ -69,7 +69,7 @@ async def test_delete_case_document(
 
     client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
-    response = client.delete(f"/api/user/cases/documents/{document_id}")
+    response = await client.delete(f"/api/user/cases/documents/{document_id}")
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 
@@ -140,7 +140,7 @@ async def test_get_case_documents(
 
     client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
-    response = client.get(f"/api/user/cases/{target_case_id}/documents")
+    response = await client.get(f"/api/user/cases/{target_case_id}/documents")
 
     assert response.status_code == status.HTTP_200_OK
     assert sorted(response.json(), key=lambda document: document["presentationName"]) == [

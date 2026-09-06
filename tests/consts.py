@@ -1,8 +1,8 @@
 from uuid import UUID
 
-from app.domain.services.security import create_access_token
-from app.domain.value_objects.auth import AccessTokenClaims
-from app.shared.settings.application import app_settings
+from src.domain.services.security import create_access_token
+from src.domain.value_objects.auth import AccessTokenClaims
+from src.shared.settings.application import app_settings
 
 STRONG_PASSWORD = "StrongPassword12;"
 

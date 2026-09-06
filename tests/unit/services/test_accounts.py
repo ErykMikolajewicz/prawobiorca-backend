@@ -1,9 +1,9 @@
 from pydantic import SecretStr
 
-from app.application.dtos.account import LoginData
-from app.application.services.accounts import check_user_can_log
-from app.domain.entities.user import User
-from app.domain.services.security import hash_password
+from src.app.dtos.account import LoginData
+from src.app.services.accounts import check_user_can_log
+from src.domain.entities.user import User
+from src.domain.services.security import hash_password
 from tests.consts import STRONG_PASSWORD, VALID_USERNAME
 
 

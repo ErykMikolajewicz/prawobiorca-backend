@@ -22,15 +22,16 @@ You should divide imports into three types: from the standard library, from publ
 If necessary, these three sections can be split into even smaller ones.
 
 Example:
+
 ```python
 import json
 
 import sqlalchemy.orm as orm
 
-import app.database
+import src.database
 # ... further imports from app related to database/sql, then one blank line and more imports from app
 
-from app.services import do_something
+from src.services import do_something
 ```
 
 ---

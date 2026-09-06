@@ -1,8 +1,8 @@
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
-from app.domain.value_objects.documents import Document, DocumentsCollection
-from app.infrastructure.relational_db.repositories.documents import RegulationsDocumentsRepository
+from src.domain.value_objects.documents import Document, DocumentsCollection
+from src.infrastructure.relational_db.repositories.documents import RegulationsDocumentsRepository
 
 
 async def test_add_documents_saves_chunk_order():

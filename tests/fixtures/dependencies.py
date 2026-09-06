@@ -5,13 +5,13 @@ from unittest.mock import create_autospec
 import pytest
 from fastapi.requests import Request
 
-from app.application.interfaces.regulations import RegulationsStorage
-from app.application.ports.tasks import RegulationPreparationScheduler
-from app.domain.value_objects.users import UserPrivileges
-from app.framework.dependencies.authentication import authorize_user
-from app.framework.dependencies.regulations import get_regulations_preparation_scheduler, get_regulations_storage
-from app.shared.consts import ACCESS_COOKIE_NAME
 from main import prawobiorca
+from src.app.interfaces.regulations import RegulationsStorage
+from src.app.ports.tasks import RegulationPreparationScheduler
+from src.domain.value_objects.users import UserPrivileges
+from src.framework.dependencies.authentication import authorize_user
+from src.framework.dependencies.regulations import get_regulations_preparation_scheduler, get_regulations_storage
+from src.shared.consts import ACCESS_COOKIE_NAME
 from tests.consts import ACCESS_TOKEN, SESSION_ID, USER_ID
 
 

@@ -16,7 +16,7 @@ RUN uv sync --compile-bytecode --no-cache
 
 ENV PATH="/prawobiorca/.venv/bin:$PATH"
 
-COPY app app
+COPY src src
 COPY main.py main.py
 
 EXPOSE 8000

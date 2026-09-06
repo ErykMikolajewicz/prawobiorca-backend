@@ -3,8 +3,8 @@ from uuid import uuid4
 
 import pytest
 
-from app.domain.value_objects.regulations import RegulationPreparationStatus
-from app.infrastructure.relational_db.repositories.regulations import RegulationsManagerRepository
+from src.domain.value_objects.regulations import RegulationPreparationStatus
+from src.infrastructure.relational_db.repositories.regulations import RegulationsManagerRepository
 
 
 @pytest.mark.parametrize("status", list(RegulationPreparationStatus))

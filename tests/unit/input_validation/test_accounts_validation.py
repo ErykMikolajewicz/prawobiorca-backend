@@ -10,10 +10,10 @@ import pytest
         ("NoSpecial1", "Password must contain at least one special character."),
     ],
 )
-def test_create_account_weak_passwords(client, password, error_detail):
+async def test_create_account_weak_passwords(client, password, error_detail):
 
     payload = {"username": "example@example.com", "password": password}
 
-    response = client.post("/api/accounts/register", json=payload)
+    response = await client.post("/api/accounts/register", json=payload)
 
     assert error_detail in response.text

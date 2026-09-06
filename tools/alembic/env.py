@@ -8,7 +8,7 @@ from pgvector.sqlalchemy import Vector
 from sqlalchemy import Connection, pool
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
-from app.infrastructure.relational_db.connection import metadata
+from src.infrastructure.relational_db.connection import metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

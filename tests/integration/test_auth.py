@@ -3,10 +3,10 @@ from http.cookies import SimpleCookie
 from fastapi import status
 from sqlalchemy import select
 
-from app.domain.services.security import hash_refresh_token
-from app.infrastructure.relational_db.schemas.users import users_sessions_table
-from app.shared.consts import ACCESS_COOKIE_NAME, AUTH_COOKIE_PATH, REFRESH_COOKIE_NAME, REFRESH_COOKIE_PATH
-from app.shared.settings.application import app_settings
+from src.domain.services.security import hash_refresh_token
+from src.infrastructure.relational_db.schemas.users import users_sessions_table
+from src.shared.consts import ACCESS_COOKIE_NAME, AUTH_COOKIE_PATH, REFRESH_COOKIE_NAME, REFRESH_COOKIE_PATH
+from src.shared.settings.application import app_settings
 from tests.consts import STRONG_PASSWORD, VALID_USERNAME
 
 LOGIN_PAYLOAD = {"username": VALID_USERNAME, "password": STRONG_PASSWORD}
@@ -20,9 +20,9 @@ def read_auth_cookies(response) -> SimpleCookie:
     return cookies
 
 
-def log_in(client) -> SimpleCookie:
+async def log_in(client) -> SimpleCookie:
     client.cookies.clear()
-    response = client.post("/api/auth/login", data=LOGIN_PAYLOAD)
+    response = await client.post("/api/auth/login", data=LOGIN_PAYLOAD)
     assert response.status_code == status.HTTP_200_OK
 
     return read_auth_cookies(response)
@@ -35,7 +35,7 @@ async def count_user_sessions(session_maker) -> int:
 
 
 async def test_login_sets_both_cookies(client, override_session_maker, session_maker, set_user, clean_user):
-    cookies = log_in(client)
+    cookies = await log_in(client)
 
     access_cookie = cookies[ACCESS_COOKIE_NAME]
     refresh_cookie = cookies[REFRESH_COOKIE_NAME]
@@ -62,7 +62,7 @@ async def test_login_failure_wrong_password(client, override_session_maker, sess
     client.cookies.clear()
     payload = {"username": VALID_USERNAME, "password": "WrongPassword123!"}
 
-    response = client.post("/api/auth/login", data=payload)
+    response = await client.post("/api/auth/login", data=payload)
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     assert response.json() == {"detail": "incorrect logging data!"}
@@ -70,19 +70,19 @@ async def test_login_failure_wrong_password(client, override_session_maker, sess
 
 
 async def test_logged_user_is_recognized(client, override_session_maker, session_maker, set_user, clean_user):
-    log_in(client)
+    await log_in(client)
 
-    response = client.get("/api/auth/me")
+    response = await client.get("/api/auth/me")
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {"isAdmin": False}
 
 
 async def test_refresh_rotates_tokens(client, override_session_maker, session_maker, set_user, clean_user):
-    login_cookies = log_in(client)
+    login_cookies = await log_in(client)
     old_refresh_token = login_cookies[REFRESH_COOKIE_NAME].value
 
-    response = client.post("/api/auth/refresh")
+    response = await client.post("/api/auth/refresh")
 
     assert response.status_code == status.HTTP_200_OK
     refreshed_cookies = read_auth_cookies(response)
@@ -90,11 +90,12 @@ async def test_refresh_rotates_tokens(client, override_session_maker, session_ma
 
     assert new_refresh_token != old_refresh_token
     assert refreshed_cookies[ACCESS_COOKIE_NAME].value != login_cookies[ACCESS_COOKIE_NAME].value
-    assert client.get("/api/auth/me").status_code == status.HTTP_200_OK
+    auth_response = await client.get("/api/auth/me")
+    assert auth_response.status_code == status.HTTP_200_OK
     assert await count_user_sessions(session_maker) == 1
 
     client.cookies.set(REFRESH_COOKIE_NAME, old_refresh_token, path=REFRESH_COOKIE_PATH)
-    replayed_response = client.post("/api/auth/refresh")
+    replayed_response = await client.post("/api/auth/refresh")
 
     assert replayed_response.status_code == status.HTTP_401_UNAUTHORIZED
 
@@ -102,15 +103,15 @@ async def test_refresh_rotates_tokens(client, override_session_maker, session_ma
 async def test_refresh_without_cookie(client, override_session_maker, session_maker, set_user, clean_user):
     client.cookies.clear()
 
-    response = client.post("/api/auth/refresh")
+    response = await client.post("/api/auth/refresh")
 
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
 
 async def test_logout_deletes_session(client, override_session_maker, session_maker, set_user, clean_user):
-    log_in(client)
+    await log_in(client)
 
-    response = client.post("/api/auth/logout")
+    response = await client.post("/api/auth/logout")
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == {"ok": True}
@@ -120,5 +121,8 @@ async def test_logout_deletes_session(client, override_session_maker, session_ma
     assert cleared_cookies[ACCESS_COOKIE_NAME].value == ""
     assert cleared_cookies[REFRESH_COOKIE_NAME].value == ""
 
-    assert client.post("/api/auth/refresh").status_code == status.HTTP_401_UNAUTHORIZED
-    assert client.get("/api/auth/me").status_code == status.HTTP_401_UNAUTHORIZED
+    refresh_response = await client.post("/api/auth/refresh")
+    assert refresh_response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    auth_response = await client.get("/api/auth/me")
+    assert auth_response.status_code == status.HTTP_401_UNAUTHORIZED

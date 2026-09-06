@@ -3,10 +3,10 @@ from uuid import UUID
 from fastapi import status
 from sqlalchemy import insert, select
 
-from app.application.dtos.regulations import RegulationUploadTarget
-from app.domain.value_objects.regulations import RegulationPreparationStatus, RegulationType
-from app.infrastructure.relational_db.schemas.regulations import regulations_table
-from app.shared.consts import ACCESS_COOKIE_NAME
+from src.app.dtos.regulations import RegulationUploadTarget
+from src.domain.value_objects.regulations import RegulationPreparationStatus, RegulationType
+from src.infrastructure.relational_db.schemas.regulations import regulations_table
+from src.shared.consts import ACCESS_COOKIE_NAME
 from tests.consts import ACCESS_TOKEN, USER_ID
 
 
@@ -28,7 +28,7 @@ async def test_add_user_regulation(
 
     client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
-    response = client.post("/api/user/regulations", json=regulation_data)
+    response = await client.post("/api/user/regulations", json=regulation_data)
 
     assert response.status_code == status.HTTP_201_CREATED
 
@@ -73,7 +73,7 @@ async def test_delete_user_regulation(
 
     client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
-    response = client.delete(f"/api/user/regulations/{regulation_id}")
+    response = await client.delete(f"/api/user/regulations/{regulation_id}")
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
     mock_regulations_storage.delete_regulation.assert_awaited_once_with(regulation_id)
@@ -113,7 +113,7 @@ async def test_confirm_user_regulation_upload(
 
     client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
-    response = client.post(f"/api/user/regulations/{regulation_id}/confirm-upload")
+    response = await client.post(f"/api/user/regulations/{regulation_id}/confirm-upload")
 
     assert response.status_code == status.HTTP_202_ACCEPTED
     mock_regulations_storage.check_regulation_exists.assert_awaited_once_with(regulation_id)
@@ -154,7 +154,7 @@ async def test_confirm_user_regulation_upload_already_prepared(
 
     client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
-    response = client.post(f"/api/user/regulations/{regulation_id}/confirm-upload")
+    response = await client.post(f"/api/user/regulations/{regulation_id}/confirm-upload")
 
     assert response.status_code == status.HTTP_409_CONFLICT
     assert response.json()["detail"] == "Regulation is already prepared!"
@@ -194,7 +194,7 @@ async def test_confirm_user_regulation_upload_storage_missing(
 
     client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
-    response = client.post(f"/api/user/regulations/{regulation_id}/confirm-upload")
+    response = await client.post(f"/api/user/regulations/{regulation_id}/confirm-upload")
 
     assert response.status_code == status.HTTP_409_CONFLICT
     assert response.json()["detail"] == "Regulation content not found in storage!"
@@ -233,7 +233,7 @@ async def test_retry_user_regulation_preparation(
 
     client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
-    response = client.post(f"/api/user/regulations/{regulation_id}/preparation-retry")
+    response = await client.post(f"/api/user/regulations/{regulation_id}/preparation-retry")
 
     assert response.status_code == status.HTTP_202_ACCEPTED
     mock_regulation_preparation_scheduler.schedule_regulation_preparation.assert_awaited_once_with(
@@ -273,7 +273,7 @@ async def test_retry_user_regulation_preparation_already_prepared(
 
     client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
-    response = client.post(f"/api/user/regulations/{regulation_id}/preparation-retry")
+    response = await client.post(f"/api/user/regulations/{regulation_id}/preparation-retry")
 
     assert response.status_code == status.HTTP_409_CONFLICT
     mock_regulation_preparation_scheduler.schedule_regulation_preparation.assert_not_awaited()

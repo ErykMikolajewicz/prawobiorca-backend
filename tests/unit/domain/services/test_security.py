@@ -4,8 +4,8 @@ from uuid import UUID
 import pytest
 from pydantic import SecretStr
 
-from app.domain.exceptions.users import InvalidAccessToken
-from app.domain.services.security import (
+from src.domain.exceptions.users import InvalidAccessToken
+from src.domain.services.security import (
     create_access_token,
     decode_access_token,
     generate_authorization_token,
@@ -14,7 +14,7 @@ from app.domain.services.security import (
     url_safe_authorization_token_length,
     verify_password,
 )
-from app.domain.value_objects.auth import AccessTokenClaims
+from src.domain.value_objects.auth import AccessTokenClaims
 from tests.consts import SESSION_ID, STRONG_PASSWORD, USER_ID
 
 SECRET = SecretStr("a" * 32)

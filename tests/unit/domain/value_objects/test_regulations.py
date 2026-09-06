@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from app.domain.value_objects.regulations import RegulationAct, RegulationElement, UsefulLabels
+from src.domain.value_objects.regulations import RegulationAct, RegulationElement, UsefulLabels
 
 
 def test_regulation_act_assigns_chunk_order():

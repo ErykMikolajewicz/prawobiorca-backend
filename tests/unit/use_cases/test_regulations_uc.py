@@ -2,9 +2,9 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from app.application.dtos.regulations import RegulationData, RegulationRepresentation, RegulationUploadTarget
-from app.application.dtos.search import SearchParams
-from app.application.use_cases.regulations import (
+from src.app.dtos.regulations import RegulationData, RegulationRepresentation, RegulationUploadTarget
+from src.app.dtos.search import SearchParams
+from src.app.use_cases.regulations import (
     AddRegulation,
     ConfirmRegulationUpload,
     DeleteRegulation,
@@ -14,8 +14,8 @@ from app.application.use_cases.regulations import (
     RetryRegulationPreparation,
     SearchRegulation,
 )
-from app.domain.exceptions.documents import RegulationDocumentsNotFound
-from app.domain.exceptions.regulations import (
+from src.domain.exceptions.documents import RegulationDocumentsNotFound
+from src.domain.exceptions.regulations import (
     RegulationAlreadyInitialized,
     RegulationContentNotFound,
     RegulationInInvalidState,
@@ -24,7 +24,7 @@ from app.domain.exceptions.regulations import (
     RegulationServiceUnavailable,
     RegulationsNotPreparedToSearch,
 )
-from app.domain.value_objects.regulations import RegulationPreparationStatus, RegulationType
+from src.domain.value_objects.regulations import RegulationPreparationStatus, RegulationType
 
 
 def get_set_statuses(mock_regulations_repository):

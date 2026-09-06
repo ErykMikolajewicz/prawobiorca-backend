@@ -1,7 +1,7 @@
 import pytest
 
-from app.application.dtos.cases import CaseData, CaseDocument, NewCaseDocument
-from app.application.use_cases.cases import (
+from src.app.dtos.cases import CaseData, CaseDocument, NewCaseDocument
+from src.app.use_cases.cases import (
     AddCase,
     AddCaseDocument,
     DeleteCase,
@@ -9,7 +9,7 @@ from app.application.use_cases.cases import (
     ListCaseDocuments,
     ListCases,
 )
-from app.domain.exceptions.cases import CaseNotFound
+from src.domain.exceptions.cases import CaseNotFound
 
 
 async def test_list_cases_success(mock_session_maker, mock_opened_session, mock_cases_repo, uuid_generator):

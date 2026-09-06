@@ -4,13 +4,13 @@ import pytest
 from fastapi import status
 from sqlalchemy import delete, insert, select
 
-from app.application.dtos.regulations import RegulationUploadTarget
-from app.domain.value_objects.regulations import RegulationPreparationStatus, RegulationType
-from app.framework.dependencies.ai_services import get_texts_embedder
-from app.infrastructure.relational_db.schemas.documents import regulations_documents_table
-from app.infrastructure.relational_db.schemas.regulations import regulations_table
-from app.shared.consts import ACCESS_COOKIE_NAME, VECTOR_LENGTH
 from main import prawobiorca
+from src.app.dtos.regulations import RegulationUploadTarget
+from src.domain.value_objects.regulations import RegulationPreparationStatus, RegulationType
+from src.framework.dependencies.ai_services import get_texts_embedder
+from src.infrastructure.relational_db.schemas.documents import regulations_documents_table
+from src.infrastructure.relational_db.schemas.regulations import regulations_table
+from src.shared.consts import ACCESS_COOKIE_NAME, VECTOR_LENGTH
 from tests.consts import ACCESS_TOKEN, USER_ID
 
 
@@ -49,7 +49,7 @@ async def test_get_public_regulations(client, override_session_maker, session_ma
     public_act_id, public_decree_id, private_act_id = regulations_ids
 
     try:
-        response = client.get("/api/regulations", params={"documentType": RegulationType.ACT})
+        response = await client.get("/api/regulations", params={"documentType": RegulationType.ACT})
 
         assert response.status_code == status.HTTP_200_OK
         assert response.json() == [
@@ -141,7 +141,7 @@ async def test_search_regulations_documents(client, override_session_maker, sess
     public_document_id, hidden_user_document_id, other_public_document_id = document_ids
 
     try:
-        response = client.get(
+        response = await client.get(
             f"/api/regulations/{regulation_id}/documents",
             params={"threshold": 0.9, "limit": 10, "query": "public document query"},
         )
@@ -182,7 +182,7 @@ async def test_add_public_regulation_as_admin(
 
     client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
-    response = client.post("/api/regulations", json=regulation_data)
+    response = await client.post("/api/regulations", json=regulation_data)
 
     assert response.status_code == status.HTTP_201_CREATED
 
@@ -234,7 +234,7 @@ async def test_confirm_public_regulation_upload_as_admin(
     client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
     try:
-        response = client.post(f"/api/regulations/{regulation_id}/confirm-upload")
+        response = await client.post(f"/api/regulations/{regulation_id}/confirm-upload")
 
         assert response.status_code == status.HTTP_202_ACCEPTED
         mock_regulations_storage.check_regulation_exists.assert_awaited_once_with(regulation_id)

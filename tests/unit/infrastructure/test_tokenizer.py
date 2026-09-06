@@ -1,4 +1,4 @@
-from app.infrastructure.tokenizers.gemma import GemmaTokenizer
+from src.infrastructure.tokenizers.gemma import GemmaTokenizer
 
 
 def test_gemma_tokenizer_counts_tokens():

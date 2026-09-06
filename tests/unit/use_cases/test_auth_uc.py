@@ -4,14 +4,14 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from pydantic import SecretStr
 
-from app.application.dtos.account import LoginData
-from app.application.dtos.auth import AuthTokens
-from app.application.use_cases.auth import LogoutUser, LogUser, RefreshTokens
-from app.domain.exceptions.users import InvalidRefreshToken, UserCantLog
-from app.domain.services.security import decode_access_token, hash_refresh_token
-from app.domain.value_objects.auth import UserSession
-from app.domain.value_objects.users import UserPrivileges
-from app.shared.settings.application import app_settings
+from src.app.dtos.account import LoginData
+from src.app.dtos.auth import AuthTokens
+from src.app.use_cases.auth import LogoutUser, LogUser, RefreshTokens
+from src.domain.exceptions.users import InvalidRefreshToken, UserCantLog
+from src.domain.services.security import decode_access_token, hash_refresh_token
+from src.domain.value_objects.auth import UserSession
+from src.domain.value_objects.users import UserPrivileges
+from src.shared.settings.application import app_settings
 from tests.consts import REFRESH_TOKEN, SESSION_ID, UNKNOWN_REFRESH_TOKEN, VALID_USERNAME
 
 
@@ -32,9 +32,9 @@ async def test_log_user_success(
     mock_sessions_repo.create_session.return_value = SESSION_ID
 
     with (
-        patch("app.application.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as mock_check,
-        patch("app.application.use_cases.auth.generate_authorization_token") as mock_gen_token,
-        patch("app.application.use_cases.auth.prevent_timing_attack", new_callable=AsyncMock) as mock_prevent,
+        patch("src.app.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as mock_check,
+        patch("src.app.use_cases.auth.generate_authorization_token") as mock_gen_token,
+        patch("src.app.use_cases.auth.prevent_timing_attack", new_callable=AsyncMock) as mock_prevent,
     ):
         mock_check.return_value = user_id
         mock_gen_token.return_value = REFRESH_TOKEN
@@ -76,10 +76,10 @@ async def test_log_user_failure(
     login_data = LoginData(username=VALID_USERNAME, password=SecretStr("WrongPassword123!"))
 
     with (
-        patch("app.application.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as mock_check,
-        patch("app.application.use_cases.auth.generate_authorization_token") as mock_gen_token,
-        patch("app.application.use_cases.auth.prevent_timing_attack", new_callable=AsyncMock) as mock_prevent,
-        patch("app.application.use_cases.auth.asyncio.get_event_loop") as mock_loop,
+        patch("src.app.use_cases.auth.check_user_can_log", new_callable=AsyncMock) as mock_check,
+        patch("src.app.use_cases.auth.generate_authorization_token") as mock_gen_token,
+        patch("src.app.use_cases.auth.prevent_timing_attack", new_callable=AsyncMock) as mock_prevent,
+        patch("src.app.use_cases.auth.asyncio.get_event_loop") as mock_loop,
     ):
         mock_check.return_value = None
         fake_time = 12345.6

@@ -5,15 +5,15 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.framework.api.router import include_all_routers
-from app.framework.dependencies.file_storage import init_file_storage_client
-from app.infrastructure.ai_services.initialization import init_ai_services_client
-from app.infrastructure.relational_db.connection import check_relational_db_connection
-from app.infrastructure.tasks.connection import init_broker
-from app.shared.logging_config import setup_logging
+from src.framework.api.router import include_all_routers
+from src.framework.dependencies.file_storage import init_file_storage_client
+from src.infrastructure.ai_services.initialization import init_ai_services_client
+from src.infrastructure.relational_db.connection import check_relational_db_connection
+from src.infrastructure.tasks.connection import init_broker
+from src.shared.logging_config import setup_logging
 
 setup_logging()
-logger = logging.getLogger("app")
+logger = logging.getLogger("src")
 
 with open("pyproject.toml", "rb") as f:
     data = tomllib.load(f)

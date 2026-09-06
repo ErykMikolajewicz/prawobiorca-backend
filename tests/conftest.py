@@ -9,7 +9,7 @@ from collections.abc import Iterator
 from uuid import UUID
 
 import pytest
-from fastapi.testclient import TestClient
+from httpx2 import ASGITransport, AsyncClient
 
 from main import prawobiorca
 
@@ -34,19 +34,10 @@ def uuid_generator() -> Iterator[UUID]:
     return iter(uuids)
 
 
-@pytest.fixture(scope="session")
-def client() -> TestClient:
-    """
-    Provides a FastAPI test client.
-
-    The test client is initialized once per test session (`scope="session"`)
-    and allows making HTTP requests to the FastAPI application instance
-    without running a server.
-
-    Returns:
-        fastapi.testclient.TestClient: The FastAPI test client.
-    """
-    return TestClient(prawobiorca)
+@pytest.fixture(scope="function")
+async def client() -> AsyncClient:
+    async with AsyncClient(transport=ASGITransport(app=prawobiorca), base_url="http://test") as client:
+        yield client
 
 
 pytest_plugins = ["tests.fixtures.dependencies", "tests.integration.fixtures.users"]

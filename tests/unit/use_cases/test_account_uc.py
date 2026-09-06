@@ -3,16 +3,16 @@ from unittest.mock import patch
 import pytest
 from pydantic import SecretStr
 
-from app.application.dtos.user import CreateUserData
-from app.application.use_cases.account import CreateAccount, LoginData, ObjectExists
-from app.domain.exceptions.users import UserExists
+from src.app.dtos.user import CreateUserData
+from src.app.use_cases.account import CreateAccount, LoginData, ObjectExists
+from src.domain.exceptions.users import UserExists
 from tests.consts import STRONG_PASSWORD, VALID_USERNAME
 
 
 async def test_create_account_success(mock_session_maker, mock_opened_session, mock_users_repo):
     login_data = LoginData(username=VALID_USERNAME, password=SecretStr(STRONG_PASSWORD))
 
-    with patch("app.application.use_cases.account.hash_password") as mock_hash:
+    with patch("src.app.use_cases.account.hash_password") as mock_hash:
         hash_value = b"hashed_secret"
         mock_hash.return_value = hash_value
 
@@ -31,7 +31,7 @@ async def test_create_account_user_exists(mock_session_maker, mock_opened_sessio
 
     mock_users_repo.add.side_effect = ObjectExists("User exists")
 
-    with patch("app.application.use_cases.account.hash_password") as mock_hash:
+    with patch("src.app.use_cases.account.hash_password") as mock_hash:
         hash_value = b"hashed_secret"
         mock_hash.return_value = hash_value
 

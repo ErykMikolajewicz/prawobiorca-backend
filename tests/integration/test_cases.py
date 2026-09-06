@@ -4,8 +4,8 @@ from uuid import UUID
 from fastapi import status
 from sqlalchemy import insert, select
 
-from app.infrastructure.relational_db.schemas.cases import cases_table
-from app.shared.consts import ACCESS_COOKIE_NAME
+from src.infrastructure.relational_db.schemas.cases import cases_table
+from src.shared.consts import ACCESS_COOKIE_NAME
 from tests.consts import ACCESS_TOKEN, ADMIN_ID, USER_ID
 
 
@@ -40,7 +40,7 @@ async def test_get_cases_list(
 
     client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
-    response = client.get("/api/user/cases")
+    response = await client.get("/api/user/cases")
 
     assert response.status_code == status.HTTP_200_OK
     assert response.json() == [
@@ -54,7 +54,7 @@ async def test_add_case(
 ):
     client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
-    response = client.post("/api/user/cases", data={"caseName": "New case"})
+    response = await client.post("/api/user/cases", data={"caseName": "New case"})
 
     assert response.status_code == status.HTTP_200_OK
 
@@ -86,7 +86,7 @@ async def test_delete_case(
 
     client.cookies.set(ACCESS_COOKIE_NAME, ACCESS_TOKEN)
 
-    response = client.delete(f"/api/user/cases/{case_id}")
+    response = await client.delete(f"/api/user/cases/{case_id}")
 
     assert response.status_code == status.HTTP_204_NO_CONTENT
 

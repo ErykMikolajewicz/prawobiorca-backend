@@ -2,8 +2,8 @@ from pydantic import SecretStr
 from pytest import fixture
 from sqlalchemy import delete, insert
 
-from app.domain.services.security import hash_password
-from app.infrastructure.relational_db.schemas.users import users_table
+from src.domain.services.security import hash_password
+from src.infrastructure.relational_db.schemas.users import users_table
 from tests.consts import ADMIN_ID, ADMIN_USERNAME, STRONG_PASSWORD, USER_ID, VALID_USERNAME
 
 

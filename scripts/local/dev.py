@@ -37,7 +37,7 @@ def run_worker():
     print("Launching taskiq worker.")
     # Own session, so Ctrl+C in the terminal does not reach the worker - stop_worker owns its lifecycle.
     return subprocess.Popen(
-        ["taskiq", "worker", "app.framework.workers.regulations:broker", "--reload"],
+        ["taskiq", "worker", "src.framework.workers.regulations:broker", "--reload"],
         start_new_session=True,
     )
 

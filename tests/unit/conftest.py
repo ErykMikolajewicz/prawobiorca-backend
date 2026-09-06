@@ -2,12 +2,12 @@ from unittest.mock import create_autospec
 
 import pytest
 
-from app.application.interfaces.cases import CaseDocumentsRepository, CasesRepository
-from app.application.interfaces.documents import DocumentsRepository
-from app.application.interfaces.regulations import RegulationsRepository
-from app.application.interfaces.relational import AsyncSession, SessionMaker
-from app.application.interfaces.users import UsersRepository, UsersSessionsRepository
-from app.application.ports.texts import TextsEmbedder
+from src.app.interfaces.cases import CaseDocumentsRepository, CasesRepository
+from src.app.interfaces.documents import DocumentsRepository
+from src.app.interfaces.regulations import RegulationsRepository
+from src.app.interfaces.relational import AsyncSession, SessionMaker
+from src.app.interfaces.users import UsersRepository, UsersSessionsRepository
+from src.app.ports.texts import TextsEmbedder
 
 
 @pytest.fixture

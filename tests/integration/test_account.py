@@ -1,6 +1,6 @@
 from fastapi import status
 
-from app.infrastructure.relational_db.repositories.users import UsersRepository
+from src.infrastructure.relational_db.repositories.users import UsersRepository
 from tests.consts import STRONG_PASSWORD, VALID_USERNAME
 
 
@@ -11,7 +11,7 @@ async def test_create_account(client, override_session_maker, session_maker, cle
         assert user is None
 
     payload = {"username": VALID_USERNAME, "password": STRONG_PASSWORD}
-    response = client.post("/api/accounts/register", json=payload)
+    response = await client.post("/api/accounts/register", json=payload)
     assert response.status_code == status.HTTP_201_CREATED
 
     async with session_maker() as session:
