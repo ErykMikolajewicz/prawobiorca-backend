@@ -1,0 +1,14 @@
+line-length = 120
+target-version = "py314"
+
+exclude = [
+    "../../tools/alembic",
+]
+
+[lint]
+select = ["S", "I", "E", "F", "B"]
+ignore = ["B904", "B008"]
+
+[lint.per-file-ignores]
+"../../tests/*" = ["S"]
+"../../scripts/*" = ["S"]

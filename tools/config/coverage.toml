@@ -1,0 +1,5 @@
+[tool.coverage.report]
+omit = [
+    "app/framework/**",
+    "app/infrastructure/**"
+]

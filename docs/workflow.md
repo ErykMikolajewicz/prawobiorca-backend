@@ -4,7 +4,7 @@
 
 When additional team members join the project:
 
-- **Taiga** is introduced for task and story management.
+- **Jira** is introduced for task and story management.
 - **Definition of Done:**
     - A story is considered complete when its status is changed in Taiga by project manager, 
     - or after passing code review and integration tests (for backend-only features).
@@ -14,16 +14,16 @@ When additional team members join the project:
 The repository maintains the following branches:
 
 - `dev` – Main development branch where developers merge their changes.
-- `feature/*` – Per-story (feature/task) branches for implementing individual functionalities.
+- `<jira number>` – Per task/subtask branches for implementing individual functionalities.
 - `main` – Main production branch for production releases.
 
 ## 3. Workflow
 
-- **Task Creation in Taiga**  
-    Project Manager creates a new story (feature/task) in Taiga.
+- **Task Creation in Jira**  
+    Project Manager creates a new story (feature/task) in Jira.
 
 - **Working on the Task**  
-    A branch `feature/<story-name>` is created.  
+    A branch `<jira number>` is created e.g. 55, 78.  
     The developer implements the feature and prepares unit tests.
 
 - **Merging to dev**  
@@ -55,9 +55,8 @@ The repository maintains the following branches:
 
 **Format:**
 
-`<type>[scope]: <short description>`
+`<type>: <description>`
 
-[longer description]
 
 **Common commit types:**
 

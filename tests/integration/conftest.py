@@ -14,9 +14,9 @@ import alembic.config
 import pytest
 from sqlalchemy import NullPool
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from testcontainers.community.postgres import PostgresContainer
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.wait_strategies import HttpWaitStrategy
-from testcontainers.postgres import PostgresContainer
 
 from app.framework.dependencies.relational import get_session_maker
 from main import prawobiorca
@@ -48,7 +48,7 @@ def run_migrations(postgres_container: PostgresContainer) -> None:
     Args:
         postgres_container (PostgresContainer): Running PostgresSQL test container.
     """
-    alembic_cfg = alembic.config.Config("alembic.ini")
+    alembic_cfg = alembic.config.Config("tools/config/alembic.ini")
     db_url = postgres_container.get_connection_url()
     alembic_cfg.set_main_option("sqlalchemy.url", db_url)
     alembic.command.upgrade(alembic_cfg, "head")

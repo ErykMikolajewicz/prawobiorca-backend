@@ -33,6 +33,14 @@ class HeaderSection:
     _header_text: str = field(default="", init=False)
     _header_tokens: int = field(default=tokenizer_settings.MAX_TITLE_TOKENS_OVERHEAD, init=False)
 
+    @property
+    def header_elements(self):
+        return self._header_elements
+
+    @property
+    def other_elements(self):
+        return self._other_elements
+
     def add_header_element(self, header_element: RegulationElement):
         self._header_elements.append(header_element)
 
@@ -120,7 +128,7 @@ class RegulationAct:
 
             last_element_type = element.label
 
-        if current_section._header_elements or current_section._other_elements:
+        if current_section.header_elements or current_section.other_elements:
             header_sections.append(current_section)
 
         return header_sections

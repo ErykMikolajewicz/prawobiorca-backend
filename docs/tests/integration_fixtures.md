@@ -36,7 +36,3 @@ The currently used solution is satisfactory, although it has two major drawbacks
 - The adopted approach, despite some drawbacks, allows for asynchronous integration testing with acceptable inconveniences.
 
 - There is also a slight benefit in terms of increased consistency in the testers’ approach, as they must manually ensure the proper state of all databases, since key-value does not support transactions anyway.
-
-## Information about individual fixtures
-
-::: integration.conftest

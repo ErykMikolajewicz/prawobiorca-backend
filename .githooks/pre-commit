@@ -4,6 +4,6 @@ set -eu pipefail
 ruff check . --fix
 ruff format
 
-python -m pytest tests/unit
+uv run poe test
 
 git add -u

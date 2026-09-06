@@ -20,60 +20,34 @@ dependencies = [
     "sqlalchemy[asyncio]==2.0.*",
     "taskiq==0.12.*",
     "taskiq-redis==1.2.*",
-    "tokenizers>=0.23.1",
+    "tokenizers==0.23.*",
 ]
 
 [dependency-groups]
 dev = [
     "granian[reload]==2.8.*",
     "poethepoet==0.48.*",
-    "ruff==0.15.*",
+    "ruff==0.16.*",
     "taskiq[reload]==0.12.*",
 ]
 docs = [
     "mkdocstrings[python]==1.0.*",
-    "zensical==0.0.51",
+    "zensical==0.0.59",
 ]
 
 test = [
-    "alembic==1.18.*",
+    "alembic==1.19.*",
     "pytest==9.1.*",
     "pytest-asyncio==1.4.*",
     "pytest-cov==7.1.*",
-    "testcontainers[postgres]==4.14.*",
+    "testcontainers[postgres]==4.15.*",
 ]
 
 [tool.poe]
-include = "poe.toml"
+include = "tools/config/poe.toml"
 
-[tool.pytest.ini_options]
-pythonpath = ["."]
-asyncio_default_fixture_loop_scope = "function"
-asyncio_mode = "auto"
-addopts = '-m "not slow"'
-markers = [
-    "slow: marks tests as slow",
-]
-
-[tool.coverage.report]
-omit = [
-    "app/framework/**",
-    "app/infrastructure/**"
-]
+[tool.coverage]
+include = "tools/config/coverage.toml"
 
 [tool.ruff]
-line-length = 120
-target-version = "py314"
-
-exclude = [
-    "alembic",
-]
-
-[tool.ruff.lint]
-select = ["S", "I", "E", "F", "B"]
-ignore = ["B904", "B008"]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S"]
-"scripts/*" = ["S"]
-"cicd/*" = ["S"]
+extend = "tools/config/ruff.toml"

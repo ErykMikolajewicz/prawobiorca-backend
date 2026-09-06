@@ -80,13 +80,18 @@ or the walrus operator with caution.
 ### List comprehension
 Example of proper list comprehension:
 ```python
-tasks_to_execute = [task for task in tasks if task['status'] == 'ready']
+tasks_to_execute = [task for task in tasks if task["status"] == "ready"]
 ```
 
 Example of improper list comprehension:
 ```python
-tasks = [job['task'] for job in [job for job in jobs if jobs['status'] == True] if isinstance(job, GoodJob) or
-job['priority'] == 'high' and is_executors_available(executor, job_type='not_good_job')]
+tasks = [
+    job["task"]
+    for job in [job for job in jobs if jobs["status"] == True]
+    if isinstance(job, GoodJob)
+    or job["priority"] == "high"
+    and is_executors_available(executor, job_type="not_good_job")
+]
 ```
 In such cases, it's better to split it into for loops.
 
@@ -118,7 +123,7 @@ if (user_data := await get_current_user(execution_context, settings=settings)) i
 elif user_data.is_admin:
     do_something_other()
 else:
-    raise Exception('No user data')
+    raise Exception("No user data")
 ```
 
 When more complex conditions are required, do not combine variable declaration with returning it.
@@ -131,7 +136,7 @@ if user_data is not None:
     else:
         do_something()
 else:
-    raise Exception('No user data')
+    raise Exception("No user data")
 ```
 
 ---
