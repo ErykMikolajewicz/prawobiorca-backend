@@ -37,3 +37,11 @@ def extraction_service_container() -> Generator[DockerContainer, None, None]:
         .waiting_for(wait_strategy)
     ) as extraction_service:
         yield extraction_service
+
+
+@pytest.fixture(scope="session")
+def parse_regulation_url(extraction_service_container: DockerContainer) -> str:
+    host = extraction_service_container.get_container_host_ip()
+    port = extraction_service_container.get_exposed_port(EXTRACTION_SERVICE_PORT)
+
+    return f"http://{host}:{port}/parse-regulation"

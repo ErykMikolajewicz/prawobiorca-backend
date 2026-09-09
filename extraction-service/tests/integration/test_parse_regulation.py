@@ -3,36 +3,40 @@ from http import HTTPStatus
 from pathlib import Path
 
 import httpx2
+import pytest
 
-from tests.consts import EXTRACTION_SERVICE_PORT
+from tests.consts import PARSING_TIMEOUT
 
 DATA_DIR = Path(__file__).parents[1] / "data"
-PDF_PATH = DATA_DIR / "pwr-regulamin_2025_slice_7-9.pdf"
-EXPECTED_RESPONSE_PATH = DATA_DIR / "pwr-regulamin_2025_slice_7-9.json"
 
 
-def test_parse_regulation(extraction_service_container):
-    url = (
-        f"http://{extraction_service_container.get_container_host_ip()}:"
-        f"{extraction_service_container.get_exposed_port(EXTRACTION_SERVICE_PORT)}/parse-regulation"
-    )
+@pytest.mark.parametrize(
+    "regulation_name",
+    [
+        "pwr-regulamin_2025_slice_7-9",
+        "ustawa-nauka_slice_30-31",
+    ],
+)
+def test_parse_regulation(parse_regulation_url, regulation_name):
+    pdf_path = DATA_DIR / f"{regulation_name}.pdf"
+    expected_response_path = DATA_DIR / f"{regulation_name}.json"
 
-    with PDF_PATH.open("rb") as pdf_file:
+    with pdf_path.open("rb") as pdf_file:
         response = httpx2.post(
-            url,
+            parse_regulation_url,
             files={
                 "file": (
-                    PDF_PATH.name,
+                    pdf_path.name,
                     pdf_file,
                     "application/pdf",
                 )
             },
-            timeout=1500,
+            timeout=PARSING_TIMEOUT,
         )
 
     assert response.status_code == HTTPStatus.OK
 
     parsed_regulation = response.json()
-    expected_regulation = json.loads(EXPECTED_RESPONSE_PATH.read_text(encoding="utf-8"))
+    expected_regulation = json.loads(expected_response_path.read_text(encoding="utf-8"))
 
     assert parsed_regulation == expected_regulation
