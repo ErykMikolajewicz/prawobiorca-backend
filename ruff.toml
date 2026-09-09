@@ -6,7 +6,7 @@ exclude = [
 ]
 
 # Roots used to tell first-party imports (src.*, tests.*, manifests) from third-party ones.
-src = ["core-service", "scripts/local"]
+src = ["core-service", "extraction-service", "embedding-service", "scripts/local"]
 
 [lint]
 select = ["S", "I", "E", "F", "B"]

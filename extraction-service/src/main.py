@@ -8,6 +8,7 @@ from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options import PdfPipelineOptions
 from docling.document_converter import DocumentConverter, PdfFormatOption
 from fastapi import FastAPI, File, Request, UploadFile
+
 from src.models import DocumentItem
 from src.services import extract_document_items
 

@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request, status
+
 from src.consts import MAX_TOKENS
 from src.models import Embeddings, Texts
 from src.onnx_encoding import OnnxEncoder

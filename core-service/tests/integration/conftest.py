@@ -14,17 +14,11 @@ import alembic.config
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from testcontainers.community.postgres import PostgresContainer
-from testcontainers.core.container import DockerContainer
-from testcontainers.core.wait_strategies import HttpWaitStrategy
 
 from src.framework.dependencies.relational import get_session_maker
 from src.main import prawobiorca
-from tests.consts import EMBEDDING_SERVICE_PORT, EXTRACTION_SERVICE_PORT
 
 POSTGRES_IMAGE_VERSION = "pgvector/pgvector:0.8.4-pg18-trixie"
-EMBEDDING_SERVICE_IMAGE_TAG = "embedding-service"
-EXTRACTION_SERVICE_IMAGE_TAG = "extraction-service"
-AI_SERVICES_STARTUP_TIMEOUT = 180
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -64,36 +58,6 @@ def postgres_container() -> Generator[PostgresContainer, None]:
     """
     with PostgresContainer(POSTGRES_IMAGE_VERSION, driver="asyncpg") as postgres:
         yield postgres
-
-
-@pytest.fixture(scope="session")
-def embedding_service_container() -> Generator[DockerContainer, None, None]:
-    wait_strategy = HttpWaitStrategy(
-        EMBEDDING_SERVICE_PORT,
-        "/health",
-    ).with_startup_timeout(AI_SERVICES_STARTUP_TIMEOUT)
-
-    with (
-        DockerContainer(EMBEDDING_SERVICE_IMAGE_TAG)
-        .with_exposed_ports(EMBEDDING_SERVICE_PORT)
-        .waiting_for(wait_strategy)
-    ) as embedding_service:
-        yield embedding_service
-
-
-@pytest.fixture(scope="session")
-def extraction_service_container() -> Generator[DockerContainer, None, None]:
-    wait_strategy = HttpWaitStrategy(
-        EXTRACTION_SERVICE_PORT,
-        "/health",
-    ).with_startup_timeout(AI_SERVICES_STARTUP_TIMEOUT)
-
-    with (
-        DockerContainer(EXTRACTION_SERVICE_IMAGE_TAG)
-        .with_exposed_ports(EXTRACTION_SERVICE_PORT)
-        .waiting_for(wait_strategy)
-    ) as extraction_service:
-        yield extraction_service
 
 
 @pytest.fixture

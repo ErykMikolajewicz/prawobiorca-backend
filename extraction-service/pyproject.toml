@@ -9,3 +9,10 @@ dependencies = [
     "granian==2.7.*",
     "python-multipart==0.0.32",
 ]
+
+[dependency-groups]
+test = [
+    "httpx2==2.12.*",
+    "pytest==9.1.*",
+    "testcontainers==4.15.*",
+]

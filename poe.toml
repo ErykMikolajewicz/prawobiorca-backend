@@ -1,6 +1,3 @@
-# Poe inherits VIRTUAL_ENV from the shell that launched it (e.g. `uv run poe ...`), which makes
-# `uv run` warn that it does not match the core-service project environment. Every task resolves
-# its interpreter through `uv run` anyway, so clear it.
 [env]
 VIRTUAL_ENV = ""
 
@@ -11,7 +8,8 @@ run_locally_down = "uv run scripts/local/stop.py"
 
 test = { cmd = "uv run pytest tests/unit", cwd = "core-service" }
 test_integration = { cmd = "uv run pytest tests/integration", cwd = "core-service" }
-test_slow = { cmd = "uv run pytest -m slow tests/integration", cwd = "core-service" }
+test_extraction = { cmd = "uv run --group test pytest tests/integration", cwd = "extraction-service" }
+test_embedding = { cmd = "uv run --group test pytest tests/integration", cwd = "embedding-service" }
 
 build_app = "podman image build --tag=prawobiorca-backend core-service"
 build_embedding-service = "podman image build --tag=embedding-service embedding-service"

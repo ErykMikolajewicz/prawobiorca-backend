@@ -10,3 +10,9 @@ dependencies = [
     "transformers==5.16.*",
 ]
 
+[dependency-groups]
+test = [
+    "httpx2==2.12.*",
+    "pytest==9.1.*",
+    "testcontainers==4.15.*",
+]

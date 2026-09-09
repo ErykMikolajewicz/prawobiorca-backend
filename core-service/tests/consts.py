@@ -19,9 +19,6 @@ REFRESH_TOKEN = "O8KwTwMvXTSn3VdWl6iZlNqmw39UvFRvIbeHfo-mykY"
 
 UNKNOWN_REFRESH_TOKEN = "kGG09w8Igs09xBw7ki-oZ-F_kPQC0Hs9tbCyWaKm8fs"
 
-EMBEDDING_SERVICE_PORT = 8080
-EXTRACTION_SERVICE_PORT = 8080
-
 
 def build_access_token(user_id: UUID = USER_ID, session_id: UUID = SESSION_ID, is_admin: bool = False) -> str:
     claims = AccessTokenClaims(user_id=user_id, session_id=session_id, is_admin=is_admin)

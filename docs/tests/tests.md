@@ -6,6 +6,8 @@ Within the project, we maintain the following types of tests:
 
 - **Unit tests**
 - **Integration tests**
+- **Integration tests of the AI services** (`extraction-service`, `embedding-service`) — each service keeps them in its own
+`tests/` directory and they are run with `poe test_extraction` / `poe test_embedding` (the service image must be built first).
 - **E2E tests** are not currently implemented. Once GUI development starts, they will likely be written and placed in the GUI repository, probably using the `playwright` library.
 
 ## Technology Stack
@@ -27,13 +29,15 @@ Currently, there are **no plans to use plugins** for test parallelization or dat
 ### Key files include:
 - `../../core-service/tests/conftest.py`
 - `../../core-service/tests/integration/conftest.py`
+- `../../extraction-service/tests/conftest.py`
+- `../../embedding-service/tests/conftest.py`
 
 Detailed documentation for these files can be found on separate documentation pages.  
 Other `conftest.py` files are documented with docstrings inside the files themselves.
 
 ### Test Data File
 
-- The `../../core-service/tests/test_consts.py` file contains example test data, for example,
+- The `../../core-service/tests/consts.py` file contains example test data, for example,
 STRONG_PASSWORD = "StrongPassword12;"
 
 - Place recurring, valid data used for success scenarios there.

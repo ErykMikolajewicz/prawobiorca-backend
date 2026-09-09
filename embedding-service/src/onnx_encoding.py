@@ -2,8 +2,9 @@ from collections.abc import Iterable
 
 import numpy as np
 import onnxruntime as ort
-from src.consts import MAX_TOKENS
 from tokenizers import Tokenizer
+
+from src.consts import MAX_TOKENS
 
 
 class OnnxEncoder:
