@@ -54,8 +54,8 @@ The structure is therefore recovered from the **text itself**, using the numberi
 | Unit | Notation | Recognised as |
 |------|----------|---------------|
 | dział / rozdział / oddział / część / księga / tytuł | `Rozdział 4`, `DZIAŁ VII` | breadcrumb segment (`LegalUnit.path`) |
-| artykuł | `Art. 107.` | retrieval unit (`UnitType.ARTICLE`) |
-| paragraf | `§ 6 .` | retrieval unit (`UnitType.PARAGRAPH`) or content, see below |
+| artykuł | `Art. 107.` | presentation unit (`UnitType.ARTICLE`) |
+| paragraf | `§ 6 .` | presentation unit (`UnitType.PARAGRAPH`) or content, see below |
 | ustęp | `1.` | element boundary, kept in `LegalUnitElement.subsection` |
 | punkt | `1)` | element boundary, inherits the subsection above it |
 | litera | `a)` | element boundary, inherits the subsection above it |

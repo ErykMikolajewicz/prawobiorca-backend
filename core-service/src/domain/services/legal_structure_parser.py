@@ -34,10 +34,6 @@ DIVISION_RANKS = {
 
 GENERIC_HEADER_RANK = max(DIVISION_RANKS.values()) + 1
 
-DIVISION_HEADER = "division"
-DIVISION_TITLE_HEADER = "division_title"
-GENERIC_HEADER = "generic"
-
 UNIT_PATTERNS = {
     UnitType.ARTICLE: ARTICLE_PATTERN,
     UnitType.PARAGRAPH: PARAGRAPH_PATTERN,
@@ -47,6 +43,57 @@ UNIT_HEADER_PATTERNS = {
     UnitType.ARTICLE: ARTICLE_HEADER_PATTERN,
     UnitType.PARAGRAPH: PARAGRAPH_HEADER_PATTERN,
 }
+
+
+class _BreadcrumbTracker:
+    """Owns the division-path stack together with the one bit of lookahead state needed to tell,
+    one header later, whether a header was a breadcrumb segment or actually a unit's title.
+    """
+
+    def __init__(self) -> None:
+        self._stack: list[tuple[int, str]] = []
+        self._last_was_bare_division = False
+        self._pending_generic_title: str | None = None
+
+    def path(self) -> list[str]:
+        return [division for _, division in self._stack]
+
+    def push_header(self, text: str) -> None:
+        division_match = DIVISION_PATTERN.match(text)
+
+        if division_match is None and self._last_was_bare_division:
+            rank, division = self._stack[-1]
+            self._stack[-1] = (rank, f"{division} {text}")
+            self._last_was_bare_division = False
+            self._pending_generic_title = None
+            return
+
+        is_generic = division_match is None
+        rank = GENERIC_HEADER_RANK if is_generic else DIVISION_RANKS[division_match.group(1).upper()]
+
+        while self._stack and self._stack[-1][0] >= rank:
+            self._stack.pop()
+        self._stack.append((rank, text))
+
+        self._last_was_bare_division = not is_generic
+        self._pending_generic_title = text if is_generic else None
+
+    def resolve_unit_title(self, existing_title: str | None) -> str | None:
+        """If the unit still has no title, the last generic header was actually its title,
+        not a breadcrumb segment, so it is popped back off the path.
+        """
+        resolved = existing_title
+        if resolved is None and self._pending_generic_title is not None:
+            resolved = self._pending_generic_title
+            self._stack.pop()
+
+        self._last_was_bare_division = False
+        self._pending_generic_title = None
+        return resolved
+
+    def clear_pending(self) -> None:
+        self._last_was_bare_division = False
+        self._pending_generic_title = None
 
 
 class LegalStructureParser:
@@ -99,10 +146,8 @@ class LegalStructureParser:
 
     def _build_units(self, elements: Iterable[RegulationElement], unit_type: UnitType) -> list[LegalUnit]:
         units = []
-        division_stack = []
+        breadcrumbs = _BreadcrumbTracker()
         current_unit = None
-        previous_was_division = False
-        pending_title = None
 
         for element in elements:
             is_header = element.label == UsefulLabels.SECTION_HEADER
@@ -119,32 +164,21 @@ class LegalStructureParser:
                 elif text_after_number:
                     self._append_element(current_unit, text_after_number)
 
-                if current_unit.title is None and pending_title is not None:
-                    current_unit.title = pending_title
-                    division_stack.pop()
-
-                current_unit.path = [division for _, division in division_stack]
-                previous_was_division = False
-                pending_title = None
+                current_unit.title = breadcrumbs.resolve_unit_title(current_unit.title)
+                current_unit.path = breadcrumbs.path()
                 continue
 
             if is_header and not self._is_unit_like(element.text):
-                header_kind = self._push_header(division_stack, element.text, previous_was_division)
-                previous_was_division = header_kind == DIVISION_HEADER
-                pending_title = element.text if header_kind == GENERIC_HEADER else None
+                breadcrumbs.push_header(element.text)
                 current_unit = None
                 continue
 
             if current_unit is None:
-                current_unit = LegalUnit(
-                    unit_type=UnitType.UNNUMBERED,
-                    path=[division for _, division in division_stack],
-                )
+                current_unit = LegalUnit(unit_type=UnitType.UNNUMBERED, path=breadcrumbs.path())
                 units.append(current_unit)
 
             self._append_element(current_unit, element.text)
-            previous_was_division = False
-            pending_title = None
+            breadcrumbs.clear_pending()
 
         return [unit for unit in units if unit.elements or unit.title]
 
@@ -158,26 +192,10 @@ class LegalStructureParser:
 
     @staticmethod
     def _is_unit_like(text: str) -> bool:
-        return ARTICLE_PATTERN.match(text) is not None or PARAGRAPH_PATTERN.match(text) is not None
-
-    @staticmethod
-    def _push_header(division_stack: list[tuple[int, str]], text: str, previous_was_division: bool) -> str:
-        division_match = DIVISION_PATTERN.match(text)
-
-        if division_match is None:
-            if previous_was_division:
-                rank, division = division_stack[-1]
-                division_stack[-1] = (rank, f"{division} {text}")
-                return DIVISION_TITLE_HEADER
-            rank = GENERIC_HEADER_RANK
-        else:
-            rank = DIVISION_RANKS[division_match.group(1).upper()]
-
-        while division_stack and division_stack[-1][0] >= rank:
-            division_stack.pop()
-        division_stack.append((rank, text))
-
-        return DIVISION_HEADER if division_match is not None else GENERIC_HEADER
+        # ARTICLE_PATTERN is never needed here: any header starting with "Art." would already have been
+        # caught by _match_unit (ARTICLE_HEADER_PATTERN.search matches everything ARTICLE_PATTERN.match does,
+        # and more), so execution never reaches this point with such text.
+        return PARAGRAPH_PATTERN.match(text) is not None
 
     @staticmethod
     def _append_element(unit: LegalUnit, text: str) -> None:
