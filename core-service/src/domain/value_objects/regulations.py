@@ -1,93 +1,29 @@
+import re
 from collections.abc import Iterable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import Protocol
 
-from src.domain.exceptions.documents import ToLongDocument, ToLongHeaderSection
+from src.domain.services.legal_structure_parser import LegalStructureParser
 from src.domain.value_objects.documents import Document, DocumentsCollection
+from src.domain.value_objects.legal_units import (
+    BREADCRUMB_SEPARATOR,
+    LegalUnit,
+    LegalUnitElement,
+    RegulationElement,
+)
 from src.shared.settings.application import app_settings
 from src.shared.settings.tokenizer import tokenizer_settings
+
+SENTENCE_SPLIT_PATTERN = re.compile(r"(?<=[.;])\s+")
+
+MIN_CONTENT_TOKENS = 32
+
+MAX_TITLE_TOKENS_SHARE = 0.25
 
 
 class Tokenizer(Protocol):
     def count_tokens(self, text: str) -> int: ...
-
-
-@dataclass
-class RegulationElement:
-    label: str
-    text: str
-
-
-class UsefulLabels(StrEnum):
-    SECTION_HEADER = "section_header"
-    LIST_ITEM = "list_item"
-    TEXT = "text"
-
-
-@dataclass
-class HeaderSection:
-    _tokenizer: Tokenizer
-    _header_elements: list[RegulationElement] = field(default_factory=list, init=False)
-    _other_elements: list[RegulationElement] = field(default_factory=list, init=False)
-    _header_text: str = field(default="", init=False)
-    _header_tokens: int = field(default=tokenizer_settings.MAX_TITLE_TOKENS_OVERHEAD, init=False)
-
-    @property
-    def header_elements(self):
-        return self._header_elements
-
-    @property
-    def other_elements(self):
-        return self._other_elements
-
-    def add_header_element(self, header_element: RegulationElement):
-        self._header_elements.append(header_element)
-
-        self._header_tokens += self._tokenizer.count_tokens(header_element.text)
-        self._header_text += header_element.text
-
-        if self._header_tokens > tokenizer_settings.MAX_TOKENS:
-            raise ToLongHeaderSection()
-
-    def add_other_element(self, other_element: RegulationElement):
-        self._other_elements.append(other_element)
-
-    def create_section_documents(self) -> list[Document]:
-        documents = []
-        document_tokens = self._header_tokens
-        document_text = ""
-        elements_count = len(self._other_elements)
-        for index, element in enumerate(self._other_elements):
-            document_tokens += self._tokenizer.count_tokens(element.text)
-            if document_tokens > tokenizer_settings.MAX_TOKENS:
-                raise ToLongDocument
-
-            document_text += element.text
-
-            is_last_element = index == elements_count - 1
-            if is_last_element:
-                document = Document(self._header_text, document_text)
-                documents.append(document)
-                break
-
-            next_element = self._other_elements[index + 1]
-            tokens_with_next = document_tokens + self._tokenizer.count_tokens(next_element.text)
-            if tokens_with_next > app_settings.DOCUMENT_DESIRED_TOKENS_LENGTH:
-                document = Document(self._header_text, document_text)
-                documents.append(document)
-                document_text = ""
-                document_tokens = self._header_tokens
-
-        return documents
-
-    def filter_useful_elements(self):
-        useful_elements = []
-        for element in self._other_elements:
-            match element.label:
-                case UsefulLabels.TEXT | UsefulLabels.LIST_ITEM:
-                    useful_elements.append(element)
-        self._other_elements = useful_elements
 
 
 @dataclass
@@ -96,42 +32,152 @@ class RegulationAct:
     _tokenizer: Tokenizer
 
     def get_documents_to_embed(self) -> DocumentsCollection:
-
-        grouped_elements = self._group_elements_by_headers()
+        units = LegalStructureParser().parse(self._elements)
 
         documents = []
-        for header_section in grouped_elements:
-            header_section.filter_useful_elements()
-            section_documents = header_section.create_section_documents()
-            documents.extend(section_documents)
+        for unit in units:
+            documents.extend(self._create_unit_documents(unit))
 
         for index, document in enumerate(documents):
             document.chunk_order = index
 
         return DocumentsCollection(documents)
 
-    def _group_elements_by_headers(self) -> list[HeaderSection]:
-        header_sections = []
-        last_element_type = None
-        current_section = HeaderSection(self._tokenizer)
-        for element in self._elements:
-            match element.label:
-                case UsefulLabels.SECTION_HEADER:
-                    if last_element_type == UsefulLabels.SECTION_HEADER or last_element_type is None:
-                        current_section.add_header_element(element)
-                    else:
-                        header_sections.append(current_section)
-                        current_section = HeaderSection(self._tokenizer)
-                        current_section.add_header_element(element)
-                case _:
-                    current_section.add_other_element(element)
+    def _create_unit_documents(self, unit: LegalUnit) -> list[Document]:
+        if not unit.elements:
+            return []
 
-            last_element_type = element.label
+        title = self._fit_title(unit)
+        content_budget = self._count_content_budget(title)
+        parts = self._split_to_parts(unit.elements, content_budget)
+        parts_total = len(parts)
+        part_titles = self._create_part_titles(title, parts)
 
-        if current_section.header_elements or current_section.other_elements:
-            header_sections.append(current_section)
+        documents = []
+        for part_index, (part, part_title) in enumerate(zip(parts, part_titles, strict=True), start=1):
+            document = Document(
+                title=part_title,
+                text=" ".join(element.text for element in part),
+                unit_type=unit.unit_type,
+                unit_number=unit.number,
+                unit_path=list(unit.path),
+                part_index=part_index,
+                parts_total=parts_total,
+            )
+            documents.append(document)
 
-        return header_sections
+        return documents
+
+    def _fit_title(self, unit: LegalUnit) -> str | None:
+        segments = unit.breadcrumb_segments
+        if not segments:
+            return None
+
+        max_title_tokens = int(app_settings.DOCUMENT_DESIRED_TOKENS_LENGTH * MAX_TITLE_TOKENS_SHARE)
+        title = BREADCRUMB_SEPARATOR.join(segments)
+        while len(segments) > 1 and self._tokenizer.count_tokens(title) > max_title_tokens:
+            segments = segments[1:]
+            title = BREADCRUMB_SEPARATOR.join(segments)
+
+        return title
+
+    def _count_content_budget(self, title: str | None) -> int:
+        title_tokens = self._tokenizer.count_tokens(title) if title is not None else 0
+        tokens_limit = min(app_settings.DOCUMENT_DESIRED_TOKENS_LENGTH, tokenizer_settings.MAX_TOKENS)
+
+        content_budget = tokens_limit - title_tokens - tokenizer_settings.MAX_TITLE_TOKENS_OVERHEAD
+
+        return max(content_budget, MIN_CONTENT_TOKENS)
+
+    def _split_to_parts(self, elements: list[LegalUnitElement], content_budget: int) -> list[list[LegalUnitElement]]:
+        atoms = []
+        for element in elements:
+            atoms.extend(self._split_long_element(element, content_budget))
+
+        parts = []
+        current_part = []
+        current_tokens = 0
+        for atom in atoms:
+            atom_tokens = self._tokenizer.count_tokens(atom.text)
+
+            if current_part and current_tokens + atom_tokens > content_budget:
+                parts.append(current_part)
+                current_part = []
+                current_tokens = 0
+
+            current_part.append(atom)
+            current_tokens += atom_tokens
+
+        if current_part:
+            parts.append(current_part)
+
+        return parts
+
+    def _split_long_element(self, element: LegalUnitElement, content_budget: int) -> list[LegalUnitElement]:
+        if self._tokenizer.count_tokens(element.text) <= content_budget:
+            return [element]
+
+        fragments = []
+        for sentence in SENTENCE_SPLIT_PATTERN.split(element.text):
+            fragments.extend(self._split_by_tokens(sentence, content_budget))
+
+        return [LegalUnitElement(text=fragment, subsection=element.subsection) for fragment in fragments]
+
+    def _split_by_tokens(self, text: str, content_budget: int) -> list[str]:
+        if self._tokenizer.count_tokens(text) <= content_budget:
+            return [text]
+
+        fragments = []
+        current_words = []
+        current_tokens = 0
+        for word in text.split(" "):
+            word_tokens = self._tokenizer.count_tokens(word)
+
+            if current_words and current_tokens + word_tokens > content_budget:
+                fragments.append(" ".join(current_words))
+                current_words = []
+                current_tokens = 0
+
+            current_words.append(word)
+            current_tokens += word_tokens
+
+        if current_words:
+            fragments.append(" ".join(current_words))
+
+        return fragments
+
+    @staticmethod
+    def _create_part_titles(title: str | None, parts: list[list[LegalUnitElement]]) -> list[str | None]:
+        parts_total = len(parts)
+        if parts_total == 1:
+            return [title]
+
+        subsection_suffixes = [RegulationAct._create_subsection_suffix(part) for part in parts]
+        are_suffixes_unambiguous = None not in subsection_suffixes and len(set(subsection_suffixes)) == parts_total
+
+        part_titles = []
+        for part_index, subsection_suffix in enumerate(subsection_suffixes, start=1):
+            if are_suffixes_unambiguous:
+                part_suffix = subsection_suffix
+            elif subsection_suffix is None:
+                part_suffix = f"(część {part_index}/{parts_total})"
+            else:
+                part_suffix = f"{subsection_suffix} (część {part_index}/{parts_total})"
+
+            part_titles.append(part_suffix if title is None else f"{title} {part_suffix}")
+
+        return part_titles
+
+    @staticmethod
+    def _create_subsection_suffix(part: list[LegalUnitElement]) -> str | None:
+        subsections = [element.subsection for element in part if element.subsection is not None]
+        if not subsections:
+            return None
+
+        if subsections[0] == subsections[-1]:
+            return f"ust. {subsections[0]}"
+
+        return f"ust. {subsections[0]}-{subsections[-1]}"
 
 
 class RegulationType(StrEnum):

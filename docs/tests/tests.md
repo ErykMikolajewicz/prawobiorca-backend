@@ -42,6 +42,9 @@ STRONG_PASSWORD = "StrongPassword12;"
 
 - Place recurring, valid data used for success scenarios there.
 
+- The `../../core-service/tests/data` directory holds larger input fixtures — currently the real
+`extraction-service` output used to test the legal structure parser against unmodified Docling results.
+
 ## Unit Tests
 
 Unit tests are created by the developer responsible for implementing a given functionality (e.g., based on a Jira story).

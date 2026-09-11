@@ -23,6 +23,11 @@ class RegulationsDocumentsRepository:
                 "header": document.title,
                 "text": document.text,
                 "chunk_order": document.chunk_order,
+                "unit_type": document.unit_type,
+                "unit_number": document.unit_number,
+                "unit_path": document.unit_path,
+                "part_index": document.part_index,
+                "parts_total": document.parts_total,
                 "vector": document.vector,
                 "regulation_id": regulation_id,
                 "user_id": user_id,
@@ -65,6 +70,11 @@ class RegulationsDocumentsRepository:
                 regulations_documents_table.c.header,
                 regulations_documents_table.c.text,
                 regulations_documents_table.c.chunk_order,
+                regulations_documents_table.c.unit_type,
+                regulations_documents_table.c.unit_number,
+                regulations_documents_table.c.unit_path,
+                regulations_documents_table.c.part_index,
+                regulations_documents_table.c.parts_total,
                 distance.label("distance"),
             )
             .where(
@@ -90,6 +100,11 @@ class RegulationsDocumentsRepository:
                 id=row.id,
                 header=row.header,
                 text=row.text,
+                unit_type=row.unit_type,
+                unit_number=row.unit_number,
+                unit_path=row.unit_path,
+                part_index=row.part_index,
+                parts_total=row.parts_total,
                 score=1 - row.distance,
             )
             for row in rows

@@ -1,6 +1,6 @@
 import subprocess
 
-from scripts.local.manifests import MANIFESTS
+from manifests import MANIFESTS
 
 
 def main():

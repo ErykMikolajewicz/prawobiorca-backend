@@ -98,6 +98,11 @@ async def init_regulations():
                             "header": document.title,
                             "text": document.text,
                             "chunk_order": document.chunk_order,
+                            "unit_type": document.unit_type,
+                            "unit_number": document.unit_number,
+                            "unit_path": document.unit_path,
+                            "part_index": document.part_index,
+                            "parts_total": document.parts_total,
                             "vector": document.vector,
                             "regulation_id": regulation_id,
                         }

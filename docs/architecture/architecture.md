@@ -61,6 +61,7 @@ Hosts the core domain logic, user-facing endpoints, and background document inde
 * **File Preparator (Taskiq Worker)**:
   * Consumes document preparation jobs from the Taskiq broker.
   * Coordinates document processing pipeline: sends file to `extraction-service`, chunks structured text, requests batch embeddings from `embeddings-service`, and persists vector embeddings into PostgreSQL.
+  * Chunking follows the editorial structure of the act (article / paragraph, with its chapter breadcrumb) recovered from the text itself, not the layout labels returned by `extraction-service` — see [Legal documents parsing](legal_documents_parsing.md).
   * Updates document processing status in PostgreSQL directly without inter-service RPC overhead.
   * Retries a document up to 3 times when `extraction-service` or `embeddings-service` is unavailable; after the last attempt the document is marked as failed and can be retried on demand.
 

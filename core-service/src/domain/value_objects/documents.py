@@ -3,6 +3,7 @@ from itertools import batched
 from typing import Iterable
 from uuid import UUID, uuid4
 
+from src.domain.value_objects.legal_units import UnitType
 from src.shared.settings.application import app_settings
 
 
@@ -12,6 +13,11 @@ class Document:
     text: str
     chunk_order: int | None = None
     vector: list[float] | None = None
+    unit_type: UnitType | None = None
+    unit_number: str | None = None
+    unit_path: list[str] | None = None
+    part_index: int = 1
+    parts_total: int = 1
     id: UUID = field(default_factory=uuid4)
 
 

@@ -3,7 +3,7 @@ from collections.abc import Iterable
 from httpx2 import AsyncClient, HTTPError
 
 from src.domain.exceptions.regulations import RegulationServiceUnavailable
-from src.domain.value_objects.regulations import RegulationElement
+from src.domain.value_objects.legal_units import RegulationElement
 
 
 class RegulationSplitter:

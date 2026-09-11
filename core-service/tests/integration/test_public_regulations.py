@@ -5,6 +5,7 @@ from fastapi import status
 from sqlalchemy import delete, insert, select
 
 from src.app.dtos.regulations import RegulationUploadTarget
+from src.domain.value_objects.legal_units import UnitType
 from src.domain.value_objects.regulations import RegulationPreparationStatus, RegulationType
 from src.framework.dependencies.ai_services import get_texts_embedder
 from src.infrastructure.relational_db.schemas.documents import regulations_documents_table
@@ -109,9 +110,14 @@ async def test_search_regulations_documents(client, override_session_maker, sess
                 .values(
                     [
                         {
-                            "header": "Public document",
+                            "header": "Rozdział 5 Pracownicy uczelni > Art. 112",
                             "text": "Matching public regulation document",
                             "chunk_order": 0,
+                            "unit_type": UnitType.ARTICLE,
+                            "unit_number": "112",
+                            "unit_path": ["Rozdział 5 Pracownicy uczelni"],
+                            "part_index": 1,
+                            "parts_total": 1,
                             "vector": query_vector,
                             "regulation_id": regulation_id,
                             "user_id": None,
@@ -120,6 +126,11 @@ async def test_search_regulations_documents(client, override_session_maker, sess
                             "header": "Private document",
                             "text": "Matching user regulation document",
                             "chunk_order": 0,
+                            "unit_type": UnitType.ARTICLE,
+                            "unit_number": "113",
+                            "unit_path": None,
+                            "part_index": 1,
+                            "parts_total": 1,
                             "vector": query_vector,
                             "regulation_id": other_regulation_id,
                             "user_id": USER_ID,
@@ -128,6 +139,11 @@ async def test_search_regulations_documents(client, override_session_maker, sess
                             "header": "Other public document",
                             "text": "Unrelated public regulation document",
                             "chunk_order": 1,
+                            "unit_type": UnitType.ARTICLE,
+                            "unit_number": "114",
+                            "unit_path": None,
+                            "part_index": 1,
+                            "parts_total": 1,
                             "vector": other_vector,
                             "regulation_id": regulation_id,
                             "user_id": None,
@@ -151,8 +167,13 @@ async def test_search_regulations_documents(client, override_session_maker, sess
             {
                 "id": str(public_document_id),
                 "score": pytest.approx(1.0),
-                "header": "Public document",
+                "header": "Rozdział 5 Pracownicy uczelni > Art. 112",
                 "text": "Matching public regulation document",
+                "unit_type": UnitType.ARTICLE,
+                "unit_number": "112",
+                "unit_path": ["Rozdział 5 Pracownicy uczelni"],
+                "part_index": 1,
+                "parts_total": 1,
             }
         ]
     finally:

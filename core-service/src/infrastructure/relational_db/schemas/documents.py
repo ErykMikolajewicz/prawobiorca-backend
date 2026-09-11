@@ -2,7 +2,7 @@ import sqlalchemy as sqla
 from pgvector.sqlalchemy import Vector
 
 from src.infrastructure.relational_db.connection import mapper_registry, metadata
-from src.shared.consts import VECTOR_LENGTH
+from src.shared.consts import MAX_UNIT_NUMBER_LENGTH, MAX_UNIT_TYPE_LENGTH, VECTOR_LENGTH
 
 regulations_documents_table = sqla.Table(
     "regulations_documents",
@@ -12,6 +12,11 @@ regulations_documents_table = sqla.Table(
     sqla.Column("header", sqla.Text, nullable=True),
     sqla.Column("text", sqla.Text, nullable=False),
     sqla.Column("chunk_order", sqla.Integer, nullable=False),
+    sqla.Column("unit_type", sqla.String(MAX_UNIT_TYPE_LENGTH), nullable=True),
+    sqla.Column("unit_number", sqla.String(MAX_UNIT_NUMBER_LENGTH), nullable=True),
+    sqla.Column("unit_path", sqla.ARRAY(sqla.Text), nullable=True),
+    sqla.Column("part_index", sqla.Integer, nullable=False),
+    sqla.Column("parts_total", sqla.Integer, nullable=False),
     sqla.Column("vector", Vector(VECTOR_LENGTH), nullable=False),
     sqla.Column("regulation_id", sqla.UUID, nullable=False),
     sqla.Column("user_id", sqla.UUID, nullable=True),
