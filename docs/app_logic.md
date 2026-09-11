@@ -51,7 +51,7 @@ This view opens after selecting a specific document (both public and private).
 **Common Functions (Guest and Logged):**
 - **Semantic Search**: Search bar supporting natural language (e.g., *"Regulations regarding student rights"*).
 - **Search Scope**: Only the **current, open document** is searched.
-- **Search Results**: List of most matching articles/text fragments obtained through vector search. A result is a single editorial unit (an article, or a `§` in university regulations) together with its breadcrumb, for example *"Rozdział 4 Samorząd studencki i organizacje studenckie > Art. 110"*. Long units are returned in parts, marked with the range of subsections they cover.
+- **Search Results**: List of most matching articles/text fragments obtained through vector search. A result is always a whole editorial unit (an article, or a `§` in university regulations) together with its breadcrumb, for example *"Rozdział 4 Samorząd studencki i organizacje studenckie > Art. 110"*. Long units are chunked for retrieval only — the chunks are never shown, and the unit's score combines its two best-matching chunks.
 
 **Additional Functions (Only Logged):**
 - **Case Management Panel**:
@@ -70,7 +70,7 @@ View available exclusively for **Logged Users**, serving to finalize work on a l
 **Functionalities:**
 1. **List of Pinned Articles**:
     - Displays all fragments the user pinned to this case in the Search View.
-    - Each item contains the content of the article and information about the source document (e.g., *"Art. 5, Civil Code"*), built from the structural metadata stored with every chunk.
+    - Each item contains the content of the article and information about the source document (e.g., *"Art. 5, Civil Code"*), built from the structural metadata stored with every section.
     - Ability to unpin (remove) an article from the case.
 
 2. **Context / Application Description**:

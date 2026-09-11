@@ -1,3 +1,4 @@
+import math
 from uuid import UUID
 
 import pytest
@@ -8,10 +9,14 @@ from src.app.dtos.regulations import RegulationUploadTarget
 from src.domain.value_objects.legal_units import UnitType
 from src.domain.value_objects.regulations import RegulationPreparationStatus, RegulationType
 from src.framework.dependencies.ai_services import get_texts_embedder
-from src.infrastructure.relational_db.schemas.documents import regulations_documents_table
 from src.infrastructure.relational_db.schemas.regulations import regulations_table
+from src.infrastructure.relational_db.schemas.sections import (
+    regulations_chunks_table,
+    regulations_sections_table,
+)
 from src.main import prawobiorca
 from src.shared.consts import ACCESS_COOKIE_NAME, VECTOR_LENGTH
+from src.shared.settings.application import app_settings
 from tests.consts import ACCESS_TOKEN, USER_ID
 
 
@@ -70,91 +75,80 @@ async def test_get_public_regulations(client, override_session_maker, session_ma
 class StubTextsEmbedder:
     @staticmethod
     async def embed_queries(queries):
-        assert queries == ["public document query"]
         return [[1.0] * VECTOR_LENGTH]
 
 
-async def test_search_regulations_documents(client, override_session_maker, session_maker, set_user, clean_user):
-    query_vector = [1.0] * VECTOR_LENGTH
-    other_vector = [1.0, *[0.0] * (VECTOR_LENGTH - 1)]
+QUERY_VECTOR = [1.0] * VECTOR_LENGTH
+UNRELATED_VECTOR = [1.0, *[0.0] * (VECTOR_LENGTH - 1)]
+UNRELATED_SIMILARITY = 1 / math.sqrt(VECTOR_LENGTH)
 
+
+async def insert_regulation(session, user_id, presentation_name):
+    return await session.scalar(
+        insert(regulations_table)
+        .values(
+            {
+                "user_id": user_id,
+                "presentation_name": presentation_name,
+                "preparation_status": RegulationPreparationStatus.PREPARED,
+                "regulation_type": RegulationType.ACT,
+            }
+        )
+        .returning(regulations_table.c.id)
+    )
+
+
+async def insert_section(session, regulation_id, user_id, unit_number, text, section_order, chunk_vectors):
+    section_id = await session.scalar(
+        insert(regulations_sections_table)
+        .values(
+            {
+                "header": f"Rozdział 5 Pracownicy uczelni > Art. {unit_number}",
+                "text": text,
+                "section_order": section_order,
+                "unit_type": UnitType.ARTICLE,
+                "unit_number": unit_number,
+                "unit_path": ["Rozdział 5 Pracownicy uczelni"],
+                "regulation_id": regulation_id,
+                "user_id": user_id,
+            }
+        )
+        .returning(regulations_sections_table.c.id)
+    )
+
+    await session.execute(
+        insert(regulations_chunks_table).values(
+            [
+                {
+                    "section_id": section_id,
+                    "chunk_index": chunk_index,
+                    "text": f"{text} chunk {chunk_index}",
+                    "vector": vector,
+                }
+                for chunk_index, vector in enumerate(chunk_vectors)
+            ]
+        )
+    )
+
+    return section_id
+
+
+async def test_search_regulations_documents(client, override_session_maker, session_maker, set_user, clean_user):
     prawobiorca.dependency_overrides[get_texts_embedder] = lambda: StubTextsEmbedder()
 
     async with session_maker.begin() as session:
-        regulation_ids = await session.scalars(
-            insert(regulations_table)
-            .values(
-                [
-                    {
-                        "user_id": None,
-                        "presentation_name": "Public searchable regulation.pdf",
-                        "preparation_status": RegulationPreparationStatus.PREPARED,
-                        "regulation_type": RegulationType.ACT,
-                    },
-                    {
-                        "user_id": USER_ID,
-                        "presentation_name": "User searchable regulation.pdf",
-                        "preparation_status": RegulationPreparationStatus.PREPARED,
-                        "regulation_type": RegulationType.ACT,
-                    },
-                ]
-            )
-            .returning(regulations_table.c.id)
+        regulation_id = await insert_regulation(session, None, "Public searchable regulation.pdf")
+        other_regulation_id = await insert_regulation(session, USER_ID, "User searchable regulation.pdf")
+
+        matching_section_id = await insert_section(
+            session, regulation_id, None, "112", "Matching public regulation section", 0, [QUERY_VECTOR]
         )
-
-        regulation_id, other_regulation_id = regulation_ids
-
-        document_ids = (
-            await session.scalars(
-                insert(regulations_documents_table)
-                .values(
-                    [
-                        {
-                            "header": "Rozdział 5 Pracownicy uczelni > Art. 112",
-                            "text": "Matching public regulation document",
-                            "chunk_order": 0,
-                            "unit_type": UnitType.ARTICLE,
-                            "unit_number": "112",
-                            "unit_path": ["Rozdział 5 Pracownicy uczelni"],
-                            "part_index": 1,
-                            "parts_total": 1,
-                            "vector": query_vector,
-                            "regulation_id": regulation_id,
-                            "user_id": None,
-                        },
-                        {
-                            "header": "Private document",
-                            "text": "Matching user regulation document",
-                            "chunk_order": 0,
-                            "unit_type": UnitType.ARTICLE,
-                            "unit_number": "113",
-                            "unit_path": None,
-                            "part_index": 1,
-                            "parts_total": 1,
-                            "vector": query_vector,
-                            "regulation_id": other_regulation_id,
-                            "user_id": USER_ID,
-                        },
-                        {
-                            "header": "Other public document",
-                            "text": "Unrelated public regulation document",
-                            "chunk_order": 1,
-                            "unit_type": UnitType.ARTICLE,
-                            "unit_number": "114",
-                            "unit_path": None,
-                            "part_index": 1,
-                            "parts_total": 1,
-                            "vector": other_vector,
-                            "regulation_id": regulation_id,
-                            "user_id": None,
-                        },
-                    ]
-                )
-                .returning(regulations_documents_table.c.id)
-            )
-        ).all()
-
-    public_document_id, hidden_user_document_id, other_public_document_id = document_ids
+        await insert_section(
+            session, regulation_id, None, "114", "Unrelated public regulation section", 1, [UNRELATED_VECTOR]
+        )
+        await insert_section(
+            session, other_regulation_id, USER_ID, "113", "Matching user regulation section", 0, [QUERY_VECTOR]
+        )
 
     try:
         response = await client.get(
@@ -165,25 +159,63 @@ async def test_search_regulations_documents(client, override_session_maker, sess
         assert response.status_code == status.HTTP_200_OK
         assert response.json() == [
             {
-                "id": str(public_document_id),
+                "id": str(matching_section_id),
                 "score": pytest.approx(1.0),
                 "header": "Rozdział 5 Pracownicy uczelni > Art. 112",
-                "text": "Matching public regulation document",
+                "text": "Matching public regulation section",
                 "unit_type": UnitType.ARTICLE,
                 "unit_number": "112",
                 "unit_path": ["Rozdział 5 Pracownicy uczelni"],
-                "part_index": 1,
-                "parts_total": 1,
             }
         ]
     finally:
         prawobiorca.dependency_overrides.pop(get_texts_embedder, None)
         async with session_maker.begin() as session:
             await session.execute(
-                delete(regulations_documents_table).where(
-                    regulations_documents_table.c.id.in_([public_document_id, other_public_document_id])
-                )
+                delete(regulations_table).where(regulations_table.c.id.in_([regulation_id, other_regulation_id]))
             )
+
+
+async def test_search_scores_section_by_its_two_best_chunks(
+    client, override_session_maker, session_maker, set_user, clean_user
+):
+    prawobiorca.dependency_overrides[get_texts_embedder] = lambda: StubTextsEmbedder()
+
+    async with session_maker.begin() as session:
+        regulation_id = await insert_regulation(session, None, "Public multi chunk regulation.pdf")
+
+        single_chunk_section_id = await insert_section(
+            session, regulation_id, None, "112", "Single chunk section", 0, [QUERY_VECTOR]
+        )
+        multi_chunk_section_id = await insert_section(
+            session,
+            regulation_id,
+            None,
+            "113",
+            "Multi chunk section",
+            1,
+            [QUERY_VECTOR, UNRELATED_VECTOR, UNRELATED_VECTOR],
+        )
+
+    expected_score = (
+        app_settings.PRIMARY_CHUNK_SCORE_WEIGHT * 1.0
+        + (1 - app_settings.PRIMARY_CHUNK_SCORE_WEIGHT) * UNRELATED_SIMILARITY
+    )
+
+    try:
+        response = await client.get(
+            f"/api/regulations/{regulation_id}/documents",
+            params={"threshold": 0.5, "limit": 10, "query": "public document query"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        results_by_id = {result["id"]: result["score"] for result in response.json()}
+
+        assert results_by_id[str(single_chunk_section_id)] == pytest.approx(1.0)
+        assert results_by_id[str(multi_chunk_section_id)] == pytest.approx(expected_score)
+    finally:
+        prawobiorca.dependency_overrides.pop(get_texts_embedder, None)
+        async with session_maker.begin() as session:
             await session.execute(delete(regulations_table).where(regulations_table.c.id == regulation_id))
 
 

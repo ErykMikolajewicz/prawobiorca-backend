@@ -3,9 +3,9 @@ from unittest.mock import create_autospec
 import pytest
 
 from src.app.interfaces.cases import CaseDocumentsRepository, CasesRepository
-from src.app.interfaces.documents import DocumentsRepository
 from src.app.interfaces.regulations import RegulationsRepository
 from src.app.interfaces.relational import AsyncSession, SessionMaker
+from src.app.interfaces.sections import SectionsRepository
 from src.app.interfaces.users import UsersRepository, UsersSessionsRepository
 from src.app.ports.texts import TextsEmbedder
 
@@ -56,8 +56,8 @@ def mock_embedding_port():
 
 
 @pytest.fixture
-def mock_documents_repo():
-    repo = create_autospec(DocumentsRepository)
+def mock_sections_repo():
+    repo = create_autospec(SectionsRepository)
     return repo
 
 

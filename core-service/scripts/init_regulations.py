@@ -11,14 +11,14 @@ from aiobotocore.session import get_session
 from botocore.exceptions import ClientError
 from sqlalchemy import insert
 
-from src.app.services.embedding import DocumentEmbedder
+from src.app.services.embedding import SectionsEmbedder
 from src.app.services.regulations import RegulationPreparator
 from src.domain.value_objects.regulations import RegulationPreparationStatus, RegulationType
 from src.infrastructure.ai_services.regulation_splitter import RegulationSplitter
 from src.infrastructure.ai_services.text_embedder import TextsEmbedder
 from src.infrastructure.object_storage.repository import S3RegulationsStorage
 from src.infrastructure.relational_db.connection import async_session_maker
-from src.infrastructure.relational_db.schemas.documents import RegulationsDocuments
+from src.infrastructure.relational_db.repositories.sections import RegulationsSectionsRepository
 from src.infrastructure.relational_db.schemas.regulations import regulations_table
 
 # Unused import necessary for sqlalchemy
@@ -66,11 +66,11 @@ async def init_regulations():
             client=client,
             extraction_service_url=extraction_service_settings.URL,
         )
-        document_embedder = DocumentEmbedder(texts_embedder)
+        sections_embedder = SectionsEmbedder(texts_embedder)
         tokenizer = GemmaTokenizer()
         regulation_preparator = RegulationPreparator(
             regulation_splitter,
-            document_embedder,
+            sections_embedder,
             tokenizer,
         )
 
@@ -84,29 +84,8 @@ async def init_regulations():
             regulation_id = uuid.uuid4()
             regulation_type = REGULATION_TYPES_BY_FILE_NAME.get(file_name)
 
-            documents_to_embed = await regulation_preparator.prepare_regulation(file_content)
+            sections_to_embed = await regulation_preparator.prepare_regulation(file_content)
             print(f"Embedded regulation: {file_name}")
-
-            regulation_documents = []
-
-            for documents_batch in documents_to_embed.get_batch_iterator():
-                for document in documents_batch:
-                    regulation_documents.append(
-                        {
-                            "id": document.id,
-                            "user_id": None,
-                            "header": document.title,
-                            "text": document.text,
-                            "chunk_order": document.chunk_order,
-                            "unit_type": document.unit_type,
-                            "unit_number": document.unit_number,
-                            "unit_path": document.unit_path,
-                            "part_index": document.part_index,
-                            "parts_total": document.parts_total,
-                            "vector": document.vector,
-                            "regulation_id": regulation_id,
-                        }
-                    )
 
             async with async_session_maker.begin() as session:
                 await session.execute(
@@ -122,10 +101,7 @@ async def init_regulations():
                     ],
                 )
 
-                await session.execute(
-                    insert(RegulationsDocuments),
-                    regulation_documents,
-                )
+                await RegulationsSectionsRepository.add_sections(session, None, regulation_id, sections_to_embed)
 
                 await regulations_storage.upload_regulation(id_=regulation_id, file_data=file_content)
 

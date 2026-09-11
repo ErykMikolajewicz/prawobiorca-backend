@@ -1,10 +1,10 @@
 from collections.abc import Iterable
 from typing import Protocol
 
-from src.domain.value_objects.documents import Document
+from src.domain.value_objects.sections import SectionChunk
 
 
 class TextsEmbedder(Protocol):
-    async def embed_documents(self, documents: Iterable[Document]) -> list[list[float]]: ...
+    async def embed_chunks(self, chunks: Iterable[SectionChunk]) -> list[list[float]]: ...
 
     async def embed_queries(self, queries: Iterable[str]) -> list[list[float]]: ...

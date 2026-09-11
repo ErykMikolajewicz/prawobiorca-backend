@@ -5,13 +5,13 @@ from enum import StrEnum
 from typing import Protocol
 
 from src.domain.services.legal_structure_parser import LegalStructureParser
-from src.domain.value_objects.documents import Document, DocumentsCollection
 from src.domain.value_objects.legal_units import (
     BREADCRUMB_SEPARATOR,
     LegalUnit,
     LegalUnitElement,
     RegulationElement,
 )
+from src.domain.value_objects.sections import RegulationSection, SectionChunk, SectionsCollection
 from src.shared.settings.application import app_settings
 from src.shared.settings.tokenizer import tokenizer_settings
 
@@ -31,49 +31,53 @@ class RegulationAct:
     _elements: Iterable[RegulationElement]
     _tokenizer: Tokenizer
 
-    def get_documents_to_embed(self) -> DocumentsCollection:
+    def get_sections_to_embed(self) -> SectionsCollection:
         units = LegalStructureParser().parse(self._elements)
 
-        documents = []
+        sections = []
         for unit in units:
-            documents.extend(self._create_unit_documents(unit))
+            section = self._create_section(unit)
+            if section is not None:
+                sections.append(section)
 
-        for index, document in enumerate(documents):
-            document.chunk_order = index
+        for index, section in enumerate(sections):
+            section.section_order = index
 
-        return DocumentsCollection(documents)
+        return SectionsCollection(sections)
 
-    def _create_unit_documents(self, unit: LegalUnit) -> list[Document]:
+    def _create_section(self, unit: LegalUnit) -> RegulationSection | None:
         if not unit.elements:
-            return []
+            return None
 
-        title = self._fit_title(unit)
-        content_budget = self._count_content_budget(title)
+        embed_title = self._fit_title(unit)
+        content_budget = self._count_content_budget(embed_title)
         parts = self._split_to_parts(unit.elements, content_budget)
-        parts_total = len(parts)
-        part_titles = self._create_part_titles(title, parts)
+        part_titles = self._create_part_titles(embed_title, parts)
 
-        documents = []
-        for part_index, (part, part_title) in enumerate(zip(parts, part_titles, strict=True), start=1):
-            document = Document(
-                title=part_title,
+        chunks = [
+            SectionChunk(
                 text=" ".join(element.text for element in part),
-                unit_type=unit.unit_type,
-                unit_number=unit.number,
-                unit_path=list(unit.path),
-                part_index=part_index,
-                parts_total=parts_total,
+                embed_title=part_title,
+                chunk_index=chunk_index,
             )
-            documents.append(document)
+            for chunk_index, (part, part_title) in enumerate(zip(parts, part_titles, strict=True))
+        ]
 
-        return documents
+        return RegulationSection(
+            header=unit.breadcrumb,
+            text=" ".join(element.text for element in unit.elements),
+            chunks=chunks,
+            unit_type=unit.unit_type,
+            unit_number=unit.number,
+            unit_path=list(unit.path),
+        )
 
     def _fit_title(self, unit: LegalUnit) -> str | None:
         segments = unit.breadcrumb_segments
         if not segments:
             return None
 
-        max_title_tokens = int(app_settings.DOCUMENT_DESIRED_TOKENS_LENGTH * MAX_TITLE_TOKENS_SHARE)
+        max_title_tokens = int(app_settings.CHUNK_MAX_TOKENS * MAX_TITLE_TOKENS_SHARE)
         title = BREADCRUMB_SEPARATOR.join(segments)
         while len(segments) > 1 and self._tokenizer.count_tokens(title) > max_title_tokens:
             segments = segments[1:]
@@ -83,7 +87,7 @@ class RegulationAct:
 
     def _count_content_budget(self, title: str | None) -> int:
         title_tokens = self._tokenizer.count_tokens(title) if title is not None else 0
-        tokens_limit = min(app_settings.DOCUMENT_DESIRED_TOKENS_LENGTH, tokenizer_settings.MAX_TOKENS)
+        tokens_limit = min(app_settings.CHUNK_MAX_TOKENS, tokenizer_settings.MAX_TOKENS)
 
         content_budget = tokens_limit - title_tokens - tokenizer_settings.MAX_TITLE_TOKENS_OVERHEAD
 

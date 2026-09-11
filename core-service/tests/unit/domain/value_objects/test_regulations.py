@@ -13,7 +13,7 @@ DATA_DIR = Path(__file__).parents[3] / "data"
 
 ACT_FIXTURE = "ustawa-nauka_slice_30-31"
 
-DESIRED_TOKENS_LENGTH = 60
+CHUNK_MAX_TOKENS = 60
 TITLE_TOKENS_OVERHEAD = 4
 
 
@@ -28,7 +28,7 @@ def token_settings():
         patch.object(
             regulations_module,
             "app_settings",
-            SimpleNamespace(DOCUMENT_DESIRED_TOKENS_LENGTH=DESIRED_TOKENS_LENGTH),
+            SimpleNamespace(CHUNK_MAX_TOKENS=CHUNK_MAX_TOKENS),
         ),
         patch.object(
             regulations_module,
@@ -45,10 +45,10 @@ def load_regulation_elements(regulation_name: str) -> list[RegulationElement]:
     return [RegulationElement(label=element["label"], text=element["text"]) for element in raw_elements]
 
 
-def create_documents(elements: list[RegulationElement]) -> list:
-    collection = RegulationAct(elements, WordTokenizer()).get_documents_to_embed()
+def create_sections(elements: list[RegulationElement]) -> list:
+    collection = RegulationAct(elements, WordTokenizer()).get_sections_to_embed()
 
-    return sorted(collection, key=lambda document: document.chunk_order)
+    return sorted(collection, key=lambda section: section.section_order)
 
 
 def create_subsections(subsections_count: int, words_per_subsection: int) -> list[RegulationElement]:
@@ -60,10 +60,10 @@ def create_subsections(subsections_count: int, words_per_subsection: int) -> lis
     return elements
 
 
-def test_each_article_becomes_separate_document():
-    documents = create_documents(load_regulation_elements(ACT_FIXTURE))
+def test_each_article_becomes_separate_section():
+    sections = create_sections(load_regulation_elements(ACT_FIXTURE))
 
-    article_numbers = [document.unit_number for document in documents if document.unit_type == UnitType.ARTICLE]
+    article_numbers = [section.unit_number for section in sections if section.unit_type == UnitType.ARTICLE]
 
     assert sorted(set(article_numbers), key=int) == [
         "107",
@@ -80,59 +80,72 @@ def test_each_article_becomes_separate_document():
 
 
 def test_short_articles_are_not_merged_together():
-    documents = create_documents(load_regulation_elements(ACT_FIXTURE))
+    sections = create_sections(load_regulation_elements(ACT_FIXTURE))
 
-    short_article = next(document for document in documents if document.unit_number == "112")
+    short_article = next(section for section in sections if section.unit_number == "112")
 
-    assert short_article.parts_total == 1
+    assert len(short_article.chunks) == 1
     assert "Art. 113" not in short_article.text
     assert "Nauczycielem akademickim" not in short_article.text
 
 
-def test_documents_carry_unit_metadata():
-    documents = create_documents(load_regulation_elements(ACT_FIXTURE))
+def test_sections_carry_unit_metadata():
+    sections = create_sections(load_regulation_elements(ACT_FIXTURE))
 
-    document = next(document for document in documents if document.unit_number == "112")
+    section = next(section for section in sections if section.unit_number == "112")
 
-    assert document.unit_type == UnitType.ARTICLE
-    assert document.unit_path == ["Rozdział 5 Pracownicy uczelni"]
-    assert document.title == "Rozdział 5 Pracownicy uczelni > Art. 112"
-    assert document.part_index == 1
+    assert section.unit_type == UnitType.ARTICLE
+    assert section.unit_path == ["Rozdział 5 Pracownicy uczelni"]
+    assert section.header == "Rozdział 5 Pracownicy uczelni > Art. 112"
 
 
-def test_long_unit_is_split_on_subsection_boundaries():
+def test_long_section_stays_one_section_split_into_chunks():
     elements = create_subsections(subsections_count=6, words_per_subsection=25)
 
-    documents = create_documents(elements)
+    sections = create_sections(elements)
 
-    assert len(documents) > 1
-    for document in documents:
-        assert document.text.split(" ")[0].endswith(".")
-        assert document.parts_total == len(documents)
+    assert len(sections) == 1
+    assert len(sections[0].chunks) > 1
 
 
-def test_split_unit_keeps_whole_content():
+def test_section_text_keeps_whole_unit():
     elements = create_subsections(subsections_count=6, words_per_subsection=25)
 
-    documents = create_documents(elements)
+    section = create_sections(elements)[0]
 
-    joined_text = " ".join(document.text for document in documents)
-    assert joined_text.startswith("1. Studenci tworzą samorząd studencki.")
-    assert joined_text.count("2.") == 1
-    assert joined_text.count("6.") == 1
+    assert section.text.startswith("1. Studenci tworzą samorząd studencki.")
+    assert section.text.count("2.") == 1
+    assert section.text.count("6.") == 1
 
 
-def test_part_titles_are_unique_within_unit():
+def test_chunks_are_split_on_subsection_boundaries():
     elements = create_subsections(subsections_count=6, words_per_subsection=25)
 
-    documents = create_documents(elements)
+    section = create_sections(elements)[0]
 
-    titles = [document.title for document in documents]
-    assert len(set(titles)) == len(titles)
-    assert titles[0].startswith("Art. 110 ust.")
+    for chunk in section.chunks:
+        assert chunk.text.split(" ")[0].endswith(".")
 
 
-def test_part_titles_use_part_numbers_when_subsections_repeat():
+def test_chunks_keep_whole_section_content():
+    elements = create_subsections(subsections_count=6, words_per_subsection=25)
+
+    section = create_sections(elements)[0]
+
+    assert " ".join(chunk.text for chunk in section.chunks) == section.text
+
+
+def test_chunk_titles_are_unique_within_section():
+    elements = create_subsections(subsections_count=6, words_per_subsection=25)
+
+    section = create_sections(elements)[0]
+
+    embed_titles = [chunk.embed_title for chunk in section.chunks]
+    assert len(set(embed_titles)) == len(embed_titles)
+    assert embed_titles[0].startswith("Art. 110 ust.")
+
+
+def test_chunk_titles_use_part_numbers_when_subsections_repeat():
     long_point = " ".join(["słowo"] * 25)
     elements = [
         RegulationElement(label=UsefulLabels.TEXT, text="Art. 110. 1. Studenci tworzą samorząd w zakresie:"),
@@ -141,34 +154,42 @@ def test_part_titles_use_part_numbers_when_subsections_repeat():
         RegulationElement(label=UsefulLabels.LIST_ITEM, text=f"3) {long_point}."),
     ]
 
-    documents = create_documents(elements)
+    section = create_sections(elements)[0]
 
-    assert len(documents) > 1
-    assert all("(część" in document.title for document in documents)
+    assert len(section.chunks) > 1
+    assert all("(część" in chunk.embed_title for chunk in section.chunks)
+
+
+def test_section_header_has_no_part_suffix():
+    elements = create_subsections(subsections_count=6, words_per_subsection=25)
+
+    section = create_sections(elements)[0]
+
+    assert section.header == "Art. 110"
 
 
 def test_element_longer_than_budget_is_split_by_sentences():
     sentence = " ".join(["słowo"] * 30)
     elements = [RegulationElement(label=UsefulLabels.TEXT, text=f"Art. 110. {sentence}. {sentence}. {sentence}.")]
 
-    documents = create_documents(elements)
+    section = create_sections(elements)[0]
 
-    assert len(documents) == 3
-    for document in documents:
-        assert len(document.text.split(" ")) <= DESIRED_TOKENS_LENGTH
+    assert len(section.chunks) == 3
+    for chunk in section.chunks:
+        assert len(chunk.text.split(" ")) <= CHUNK_MAX_TOKENS
 
 
 def test_element_without_sentence_boundaries_is_split_by_tokens():
     elements = [RegulationElement(label=UsefulLabels.TEXT, text="Art. 110. " + " ".join(["słowo"] * 200))]
 
-    documents = create_documents(elements)
+    section = create_sections(elements)[0]
 
-    assert len(documents) > 1
-    for document in documents:
-        assert len(document.text.split(" ")) <= DESIRED_TOKENS_LENGTH
+    assert len(section.chunks) > 1
+    for chunk in section.chunks:
+        assert len(chunk.text.split(" ")) <= CHUNK_MAX_TOKENS
 
 
-def test_too_long_breadcrumb_is_trimmed_from_the_top():
+def test_too_long_breadcrumb_is_trimmed_only_in_chunk_title():
     elements = [
         RegulationElement(label=UsefulLabels.SECTION_HEADER, text="DZIAŁ VII"),
         RegulationElement(
@@ -182,43 +203,53 @@ def test_too_long_breadcrumb_is_trimmed_from_the_top():
         RegulationElement(label=UsefulLabels.TEXT, text="Art. 110. Studenci tworzą samorząd."),
     ]
 
-    documents = create_documents(elements)
+    section = create_sections(elements)[0]
 
-    assert "DZIAŁ VII" not in documents[0].title
-    assert documents[0].title.endswith("Art. 110")
-    assert documents[0].unit_path == [
+    assert section.header.startswith("DZIAŁ VII")
+    assert section.header.endswith("Art. 110")
+    assert "DZIAŁ VII" not in section.chunks[0].embed_title
+    assert section.chunks[0].embed_title.endswith("Art. 110")
+    assert section.unit_path == [
         "DZIAŁ VII Bardzo długi tytuł działu o studiach i studentach oraz sprawach im podobnych",
         "Rozdział 4 Samorząd studencki i organizacje studenckie w uczelni",
     ]
 
 
 def test_elements_are_joined_with_separator():
-    documents = create_documents(load_regulation_elements(ACT_FIXTURE))
+    sections = create_sections(load_regulation_elements(ACT_FIXTURE))
 
-    article = next(document for document in documents if document.unit_number == "108")
+    article = next(section for section in sections if section.unit_number == "108")
 
     assert "studiów; 2) rezygnacji" in article.text
     assert "studiów;2)" not in article.text
 
 
-def test_unnumbered_content_has_no_title():
+def test_unnumbered_content_has_no_header():
     elements = [RegulationElement(label=UsefulLabels.TEXT, text="7. Podmiot zapewnia przebieg akcji protestacyjnej.")]
 
-    documents = create_documents(elements)
+    sections = create_sections(elements)
 
-    assert documents[0].title is None
-    assert documents[0].unit_type == UnitType.UNNUMBERED
-
-
-def test_chunk_order_is_continuous():
-    documents = create_documents(load_regulation_elements(ACT_FIXTURE))
-
-    assert [document.chunk_order for document in documents] == list(range(len(documents)))
+    assert sections[0].header is None
+    assert sections[0].unit_type == UnitType.UNNUMBERED
 
 
-def test_unit_with_title_but_without_content_produces_no_documents():
+def test_section_order_is_continuous():
+    sections = create_sections(load_regulation_elements(ACT_FIXTURE))
+
+    assert [section.section_order for section in sections] == list(range(len(sections)))
+
+
+def test_chunk_index_is_continuous_within_section():
+    elements = create_subsections(subsections_count=6, words_per_subsection=25)
+
+    section = create_sections(elements)[0]
+
+    assert [chunk.chunk_index for chunk in section.chunks] == list(range(len(section.chunks)))
+
+
+def test_unit_with_title_but_without_content_produces_no_sections():
     elements = [RegulationElement(label=UsefulLabels.SECTION_HEADER, text="§ 5 . Systemy komunikacji")]
 
-    documents = create_documents(elements)
+    sections = create_sections(elements)
 
-    assert documents == []
+    assert sections == []

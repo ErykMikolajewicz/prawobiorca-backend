@@ -1,7 +1,7 @@
 # Legal Documents Parsing
 
-This page explains how a PDF regulation becomes a set of embedded documents, and why the chunking logic
-does not rely on the layout labels produced by the extraction service.
+This page explains how a PDF regulation becomes a set of sections with embedded chunks, and why the
+chunking logic does not rely on the layout labels produced by the extraction service.
 
 ---
 
@@ -12,7 +12,7 @@ PDF ──► extraction-service (Docling) ──► [{label, text}, ...] ──
                                                                                               │
                                                                            RegulationAct chunking
                                                                                               ▼
-                                                                                  [Document, ...] ──► embeddings
+                                                                     [RegulationSection, ...] ──► chunk embeddings
 ```
 
 `extraction-service` stays deliberately dumb: it runs layout analysis and returns a flat list of text
@@ -79,23 +79,41 @@ a breadcrumb segment of the lowest rank, which keeps unstructured documents work
 
 ---
 
-## Chunking Rules
+## Sections and Chunks
 
-`RegulationAct` turns units into `Document` objects:
+`RegulationAct` turns every unit into one `RegulationSection` — the unit of **presentation** — holding
+1..N `SectionChunk` objects, the units of **retrieval**. The user always sees a whole editorial unit;
+chunking exists only so that a long article still embeds well.
 
-- A unit that fits the token budget becomes **one** document. Short articles are never merged with their
-  neighbours — this is what later allows returning a whole article for a hit inside it.
-- A longer unit is packed greedily, and a boundary may only fall **between** elements (subsections, points).
+- Every unit with content becomes exactly **one** section, carrying the full unit text and the full
+  breadcrumb as its `header`. Short articles are never merged with their neighbours.
+- The section is split into chunks of at most `APP_CHUNK_MAX_TOKENS` tokens (200 by default). A boundary
+  may only fall **between** elements (subsections, points).
 - An element longer than the budget is split on sentence boundaries, and — as a last resort — on token counts.
   Nothing raises: a single oversized paragraph must not fail the whole regulation.
-- The document title is the breadcrumb, e.g.
-  `Rozdział 4 Samorząd studencki i organizacje studenckie > Art. 110 ust. 6-8`. When it grows too long,
-  the topmost divisions are dropped first.
-- Parts of a split unit get a subsection range suffix (`ust. 6-8`), extended with `(część 2/4)` when the ranges
-  alone would not be unique.
+- Each chunk carries an `embed_title` used only for the embedding prefix: the breadcrumb, trimmed from the
+  top when it grows too long, plus a subsection range suffix (`ust. 6-8`), extended with `(część 2/4)` when
+  the ranges alone would not be unique. The suffixes never reach the user — `section.header` has none.
 
-Every document also stores its structural metadata (`unit_type`, `unit_number`, `unit_path`, `part_index`,
-`parts_total`), which is what search results use for citations such as *"Art. 108, Prawo o szkolnictwie wyższym"*.
+Every section also stores its structural metadata (`unit_type`, `unit_number`, `unit_path`), which is what
+search results use for citations such as *"Art. 108, Prawo o szkolnictwie wyższym"*.
+
+---
+
+## Scoring
+
+A query hits chunks, but the score is reported per section. Chunks of one section are ranked by cosine
+similarity and the two best ones are combined:
+
+```text
+score = 0.8 * best_chunk + 0.2 * second_best_chunk       (section with 2+ chunks)
+score = 1.0 * best_chunk                                 (section with exactly 1 chunk)
+```
+
+The weights come from `APP_PRIMARY_CHUNK_SCORE_WEIGHT` (the secondary weight is its complement), so they
+always sum to 1 and the score stays on the cosine scale — it is shown to the user as-is. `threshold` and
+`limit` of a search apply to this combined section score. The whole computation is one SQL statement in
+`RegulationsSectionsRepository.search`.
 
 ---
 

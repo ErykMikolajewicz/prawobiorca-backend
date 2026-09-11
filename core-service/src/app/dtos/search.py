@@ -14,8 +14,6 @@ class SearchResult(BaseModel):
     unit_type: UnitType | None = None
     unit_number: str | None = None
     unit_path: list[str] | None = None
-    part_index: int = 1
-    parts_total: int = 1
 
 
 class SearchParams(BaseModel):

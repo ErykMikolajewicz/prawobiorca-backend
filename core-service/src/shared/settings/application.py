@@ -29,7 +29,9 @@ class ApplicationSettings(BaseSettings):
 
     EMBED_DOCS_CHUNK_SIZE: int = 10
 
-    DOCUMENT_DESIRED_TOKENS_LENGTH: int = Field(default_factory=int, gt=0)
+    CHUNK_MAX_TOKENS: int = Field(default=200, gt=0)
+
+    PRIMARY_CHUNK_SCORE_WEIGHT: float = Field(default=0.8, ge=0, le=1)
 
     model_config = SettingsConfigDict(
         env_file=Path(".env"), extra="ignore", case_sensitive=True, frozen=True, env_prefix="APP_"

@@ -2,7 +2,7 @@ from uuid import UUID
 
 from taskiq import Context, TaskiqDepends, TaskiqEvents
 
-from src.app.services.embedding import DocumentEmbedder
+from src.app.services.embedding import SectionsEmbedder
 from src.app.services.regulations import RegulationPreparator
 from src.app.use_cases.regulations import PrepareRegulation
 from src.framework.dependencies.file_storage import init_file_storage_client
@@ -12,8 +12,8 @@ from src.infrastructure.ai_services.regulation_splitter import RegulationSplitte
 from src.infrastructure.ai_services.text_embedder import TextsEmbedder
 from src.infrastructure.object_storage.repository import S3RegulationsStorage
 from src.infrastructure.relational_db.connection import async_session_maker
-from src.infrastructure.relational_db.repositories.documents import RegulationsDocumentsRepository
 from src.infrastructure.relational_db.repositories.regulations import RegulationsManagerRepository
+from src.infrastructure.relational_db.repositories.sections import RegulationsSectionsRepository
 from src.infrastructure.tasks.connection import broker
 from src.shared.consts import REGULATION_PREPARATION_TASK_NAME
 from src.shared.settings.ai_services import embedding_service_settings, extraction_service_settings
@@ -57,10 +57,10 @@ async def prepare_regulation_task(
     prepare_regulation = PrepareRegulation(
         session_maker=async_session_maker,
         regulations_storage=S3RegulationsStorage(file_storage_client, file_storage_presign_client),
-        documents_repository=RegulationsDocumentsRepository(),
+        sections_repository=RegulationsSectionsRepository(),
         regulations_repository=RegulationsManagerRepository(),
         regulation_preparator=RegulationPreparator(
-            regulations_splitter, DocumentEmbedder(texts_embedder), get_tokenizer()
+            regulations_splitter, SectionsEmbedder(texts_embedder), get_tokenizer()
         ),
     )
 

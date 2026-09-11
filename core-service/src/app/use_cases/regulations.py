@@ -4,9 +4,9 @@ from uuid import UUID
 
 from src.app.dtos.regulations import RegulationData, RegulationRepresentation, RegulationUploadTarget
 from src.app.dtos.search import SearchParams, SearchResult
-from src.app.interfaces.documents import DocumentsRepository
 from src.app.interfaces.regulations import RegulationsRepository, RegulationsStorage
 from src.app.interfaces.relational import SessionMaker
+from src.app.interfaces.sections import SectionsRepository
 from src.app.ports.tasks import RegulationPreparationScheduler
 from src.app.ports.texts import TextsEmbedder
 from src.app.services.regulations import RegulationPreparator
@@ -33,7 +33,7 @@ logger = logging.getLogger(__name__)
 class PrepareRegulation:
     session_maker: SessionMaker
     regulations_storage: RegulationsStorage
-    documents_repository: DocumentsRepository
+    sections_repository: SectionsRepository
     regulations_repository: RegulationsRepository
     regulation_preparator: RegulationPreparator
 
@@ -65,7 +65,7 @@ class PrepareRegulation:
             raise
 
         try:
-            documents_collection = await self.regulation_preparator.prepare_regulation(regulation_content)
+            sections_collection = await self.regulation_preparator.prepare_regulation(regulation_content)
         except RegulationServiceUnavailable:
             logger.error("Service to prepare regulation not working!")
             async with self.session_maker.begin() as session:
@@ -82,7 +82,7 @@ class PrepareRegulation:
             raise
 
         async with self.session_maker.begin() as session:
-            await self.documents_repository.add_documents(session, user_id, regulation_id, documents_collection)
+            await self.sections_repository.add_sections(session, user_id, regulation_id, sections_collection)
             await self.regulations_repository.set_preparation_status(
                 session, user_id, regulation_id, RegulationPreparationStatus.PREPARED
             )
@@ -235,7 +235,7 @@ class ListRegulations:
 class DeleteRegulation:
     session_maker: SessionMaker
     regulations_repository: RegulationsRepository
-    documents_repository: DocumentsRepository
+    sections_repository: SectionsRepository
     regulations_storage: RegulationsStorage
 
     async def execute(self, user_id: UUID | None, regulation_id: UUID):
@@ -248,7 +248,7 @@ class DeleteRegulation:
                 raise RegulationNotFound
 
             if regulation_representation.preparation_status == RegulationPreparationStatus.PREPARED:
-                await self.documents_repository.remove_documents(session, user_id, regulation_id)
+                await self.sections_repository.remove_sections(session, user_id, regulation_id)
             await self.regulations_repository.unregister_regulation(session, user_id, regulation_id)
 
         try:
@@ -262,7 +262,7 @@ class DeleteRegulation:
 class SearchRegulation:
     session_maker: SessionMaker
     embedding_port: TextsEmbedder
-    documents_repository: DocumentsRepository
+    sections_repository: SectionsRepository
     regulations_repository: RegulationsRepository
 
     async def execute(self, user_id: UUID | None, regulation_id, search_params: SearchParams) -> list[SearchResult]:
@@ -272,7 +272,7 @@ class SearchRegulation:
 
         async with self.session_maker() as session:
             try:
-                results = await self.documents_repository.search(
+                results = await self.sections_repository.search(
                     session, user_id, regulation_id, query_vector, search_params
                 )
             except RegulationDocumentsNotFound:

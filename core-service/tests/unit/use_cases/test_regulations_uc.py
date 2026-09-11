@@ -35,7 +35,7 @@ async def test_prepare_regulation_success(
     mock_session_maker,
     mock_regulations_repository,
     mock_regulations_storage,
-    mock_documents_repo,
+    mock_sections_repo,
     uuid_generator,
 ):
     user_id = next(uuid_generator)
@@ -53,7 +53,7 @@ async def test_prepare_regulation_success(
     use_case = PrepareRegulation(
         session_maker=mock_session_maker,
         regulations_storage=mock_regulations_storage,
-        documents_repository=mock_documents_repo,
+        sections_repository=mock_sections_repo,
         regulations_repository=mock_regulations_repository,
         regulation_preparator=mock_regulation_preparator,
     )
@@ -63,7 +63,7 @@ async def test_prepare_regulation_success(
     mock_regulations_repository.get_regulation_representation.assert_awaited_once()
     mock_regulations_storage.get_regulation.assert_awaited_once_with(regulation_id)
     mock_regulation_preparator.prepare_regulation.assert_awaited_once_with(b"content")
-    mock_documents_repo.add_documents.assert_awaited_once()
+    mock_sections_repo.add_sections.assert_awaited_once()
     assert get_set_statuses(mock_regulations_repository) == [
         RegulationPreparationStatus.IN_PROGRESS,
         RegulationPreparationStatus.PREPARED,
@@ -74,7 +74,7 @@ async def test_prepare_regulation_not_found(
     mock_session_maker,
     mock_regulations_repository,
     mock_regulations_storage,
-    mock_documents_repo,
+    mock_sections_repo,
     uuid_generator,
 ):
     user_id = next(uuid_generator)
@@ -87,7 +87,7 @@ async def test_prepare_regulation_not_found(
     use_case = PrepareRegulation(
         session_maker=mock_session_maker,
         regulations_storage=mock_regulations_storage,
-        documents_repository=mock_documents_repo,
+        sections_repository=mock_sections_repo,
         regulations_repository=mock_regulations_repository,
         regulation_preparator=mock_regulation_preparator,
     )
@@ -100,7 +100,7 @@ async def test_prepare_regulation_already_initialized(
     mock_session_maker,
     mock_regulations_repository,
     mock_regulations_storage,
-    mock_documents_repo,
+    mock_sections_repo,
     uuid_generator,
 ):
     user_id = next(uuid_generator)
@@ -115,7 +115,7 @@ async def test_prepare_regulation_already_initialized(
     use_case = PrepareRegulation(
         session_maker=mock_session_maker,
         regulations_storage=mock_regulations_storage,
-        documents_repository=mock_documents_repo,
+        sections_repository=mock_sections_repo,
         regulations_repository=mock_regulations_repository,
         regulation_preparator=mock_regulation_preparator,
     )
@@ -128,7 +128,7 @@ async def test_prepare_regulation_content_not_found(
     mock_session_maker,
     mock_regulations_repository,
     mock_regulations_storage,
-    mock_documents_repo,
+    mock_sections_repo,
     uuid_generator,
 ):
     user_id = next(uuid_generator)
@@ -145,7 +145,7 @@ async def test_prepare_regulation_content_not_found(
     use_case = PrepareRegulation(
         session_maker=mock_session_maker,
         regulations_storage=mock_regulations_storage,
-        documents_repository=mock_documents_repo,
+        sections_repository=mock_sections_repo,
         regulations_repository=mock_regulations_repository,
         regulation_preparator=mock_regulation_preparator,
     )
@@ -163,7 +163,7 @@ async def test_prepare_regulation_service_unavailable(
     mock_session_maker,
     mock_regulations_repository,
     mock_regulations_storage,
-    mock_documents_repo,
+    mock_sections_repo,
     uuid_generator,
 ):
     user_id = next(uuid_generator)
@@ -181,7 +181,7 @@ async def test_prepare_regulation_service_unavailable(
     use_case = PrepareRegulation(
         session_maker=mock_session_maker,
         regulations_storage=mock_regulations_storage,
-        documents_repository=mock_documents_repo,
+        sections_repository=mock_sections_repo,
         regulations_repository=mock_regulations_repository,
         regulation_preparator=mock_regulation_preparator,
     )
@@ -199,7 +199,7 @@ async def test_prepare_regulation_unexpected_exception(
     mock_session_maker,
     mock_regulations_repository,
     mock_regulations_storage,
-    mock_documents_repo,
+    mock_sections_repo,
     uuid_generator,
 ):
     user_id = next(uuid_generator)
@@ -217,7 +217,7 @@ async def test_prepare_regulation_unexpected_exception(
     use_case = PrepareRegulation(
         session_maker=mock_session_maker,
         regulations_storage=mock_regulations_storage,
-        documents_repository=mock_documents_repo,
+        sections_repository=mock_sections_repo,
         regulations_repository=mock_regulations_repository,
         regulation_preparator=mock_regulation_preparator,
     )
@@ -683,7 +683,7 @@ async def test_list_regulations_success(uuid_generator, mock_regulations_reposit
 async def test_delete_regulation_prepared_success(
     mock_session_maker,
     mock_regulations_repository,
-    mock_documents_repo,
+    mock_sections_repo,
     mock_regulations_storage,
     uuid_generator,
 ):
@@ -697,13 +697,13 @@ async def test_delete_regulation_prepared_success(
     use_case = DeleteRegulation(
         session_maker=mock_session_maker,
         regulations_repository=mock_regulations_repository,
-        documents_repository=mock_documents_repo,
+        sections_repository=mock_sections_repo,
         regulations_storage=mock_regulations_storage,
     )
 
     await use_case.execute(user_id, regulation_id)
 
-    mock_documents_repo.remove_documents.assert_awaited_once()
+    mock_sections_repo.remove_sections.assert_awaited_once()
     mock_regulations_repository.unregister_regulation.assert_awaited_once()
     mock_regulations_storage.delete_regulation.assert_awaited_once_with(regulation_id)
 
@@ -711,7 +711,7 @@ async def test_delete_regulation_prepared_success(
 async def test_delete_regulation_not_prepared_success(
     mock_session_maker,
     mock_regulations_repository,
-    mock_documents_repo,
+    mock_sections_repo,
     mock_regulations_storage,
     uuid_generator,
 ):
@@ -725,13 +725,13 @@ async def test_delete_regulation_not_prepared_success(
     use_case = DeleteRegulation(
         session_maker=mock_session_maker,
         regulations_repository=mock_regulations_repository,
-        documents_repository=mock_documents_repo,
+        sections_repository=mock_sections_repo,
         regulations_storage=mock_regulations_storage,
     )
 
     await use_case.execute(user_id, regulation_id)
 
-    mock_documents_repo.remove_documents.assert_not_awaited()
+    mock_sections_repo.remove_sections.assert_not_awaited()
     mock_regulations_repository.unregister_regulation.assert_awaited_once()
     mock_regulations_storage.delete_regulation.assert_awaited_once_with(regulation_id)
 
@@ -739,7 +739,7 @@ async def test_delete_regulation_not_prepared_success(
 async def test_delete_regulation_not_found(
     mock_session_maker,
     mock_regulations_repository,
-    mock_documents_repo,
+    mock_sections_repo,
     mock_regulations_storage,
     uuid_generator,
 ):
@@ -751,7 +751,7 @@ async def test_delete_regulation_not_found(
     use_case = DeleteRegulation(
         session_maker=mock_session_maker,
         regulations_repository=mock_regulations_repository,
-        documents_repository=mock_documents_repo,
+        sections_repository=mock_sections_repo,
         regulations_storage=mock_regulations_storage,
     )
 
@@ -762,7 +762,7 @@ async def test_delete_regulation_not_found(
 async def test_delete_regulation_storage_error(
     mock_session_maker,
     mock_regulations_repository,
-    mock_documents_repo,
+    mock_sections_repo,
     mock_regulations_storage,
     uuid_generator,
 ):
@@ -778,20 +778,20 @@ async def test_delete_regulation_storage_error(
     use_case = DeleteRegulation(
         session_maker=mock_session_maker,
         regulations_repository=mock_regulations_repository,
-        documents_repository=mock_documents_repo,
+        sections_repository=mock_sections_repo,
         regulations_storage=mock_regulations_storage,
     )
 
     # Should not raise exception
     await use_case.execute(user_id, regulation_id)
 
-    mock_documents_repo.remove_documents.assert_awaited_once()
+    mock_sections_repo.remove_sections.assert_awaited_once()
     mock_regulations_repository.unregister_regulation.assert_awaited_once()
 
 
 async def test_search_file_success(
     mock_embedding_port,
-    mock_documents_repo,
+    mock_sections_repo,
     mock_session_maker,
     uuid_generator,
     mock_opened_session,
@@ -808,14 +808,14 @@ async def test_search_file_success(
     regulation_id = next(uuid_generator)
 
     mock_embedding_port.embed_queries.return_value = [embedding_vector]
-    mock_documents_repo.search.return_value = search_results
+    mock_sections_repo.search.return_value = search_results
 
     search_params = SearchParams(threshold=0, limit=None, query=query)
 
     use_case = SearchRegulation(
         session_maker=mock_session_maker,
         embedding_port=mock_embedding_port,
-        documents_repository=mock_documents_repo,
+        sections_repository=mock_sections_repo,
         regulations_repository=mock_regulations_repository,
     )
 
@@ -823,14 +823,14 @@ async def test_search_file_success(
 
     assert result == search_results
     mock_embedding_port.embed_queries.assert_awaited_once_with([query])
-    mock_documents_repo.search.assert_awaited_once_with(
+    mock_sections_repo.search.assert_awaited_once_with(
         mock_opened_session, user_id, regulation_id, embedding_vector, search_params
     )
 
 
 async def test_search_file_no_results(
     mock_embedding_port,
-    mock_documents_repo,
+    mock_sections_repo,
     mock_session_maker,
     uuid_generator,
     mock_opened_session,
@@ -844,14 +844,14 @@ async def test_search_file_no_results(
     regulation_id = next(uuid_generator)
 
     mock_embedding_port.embed_queries.return_value = [embedding_vector]
-    mock_documents_repo.search.return_value = search_results
+    mock_sections_repo.search.return_value = search_results
 
     search_params = SearchParams(threshold=0, limit=None, query=query)
 
     use_case = SearchRegulation(
         session_maker=mock_session_maker,
         embedding_port=mock_embedding_port,
-        documents_repository=mock_documents_repo,
+        sections_repository=mock_sections_repo,
         regulations_repository=mock_regulations_repository,
     )
 
@@ -859,13 +859,13 @@ async def test_search_file_no_results(
 
     assert result == []
     mock_embedding_port.embed_queries.assert_awaited_once_with([query])
-    mock_documents_repo.search.assert_awaited_once_with(
+    mock_sections_repo.search.assert_awaited_once_with(
         mock_opened_session, user_id, regulation_id, embedding_vector, search_params
     )
 
 
 async def test_search_file_embedding_error(
-    mock_embedding_port, mock_session_maker, mock_documents_repo, uuid_generator, mock_regulations_repository
+    mock_embedding_port, mock_session_maker, mock_sections_repo, uuid_generator, mock_regulations_repository
 ):
     query = "error query"
     mock_embedding_port.embed_queries.side_effect = Exception("Embedding service down")
@@ -878,7 +878,7 @@ async def test_search_file_embedding_error(
     use_case = SearchRegulation(
         session_maker=mock_session_maker,
         embedding_port=mock_embedding_port,
-        documents_repository=mock_documents_repo,
+        sections_repository=mock_sections_repo,
         regulations_repository=mock_regulations_repository,
     )
 
@@ -886,12 +886,12 @@ async def test_search_file_embedding_error(
         await use_case.execute(user_id, regulation_id, search_params)
 
     mock_embedding_port.embed_queries.assert_awaited_once_with([query])
-    mock_documents_repo.search.assert_not_awaited()
+    mock_sections_repo.search.assert_not_awaited()
 
 
 async def test_search_file_repository_error(
     mock_embedding_port,
-    mock_documents_repo,
+    mock_sections_repo,
     mock_session_maker,
     uuid_generator,
     mock_opened_session,
@@ -906,12 +906,12 @@ async def test_search_file_repository_error(
     search_params = SearchParams(threshold=0, limit=None, query=query)
 
     mock_embedding_port.embed_queries.return_value = [embedding_vector]
-    mock_documents_repo.search.side_effect = Exception("Database error")
+    mock_sections_repo.search.side_effect = Exception("Database error")
 
     use_case = SearchRegulation(
         session_maker=mock_session_maker,
         embedding_port=mock_embedding_port,
-        documents_repository=mock_documents_repo,
+        sections_repository=mock_sections_repo,
         regulations_repository=mock_regulations_repository,
     )
 
@@ -921,7 +921,7 @@ async def test_search_file_repository_error(
 
 async def test_search_file_documents_not_found_but_regulation_not_found(
     mock_embedding_port,
-    mock_documents_repo,
+    mock_sections_repo,
     mock_session_maker,
     uuid_generator,
     mock_regulations_repository,
@@ -932,7 +932,7 @@ async def test_search_file_documents_not_found_but_regulation_not_found(
     regulation_id = next(uuid_generator)
 
     mock_embedding_port.embed_queries.return_value = [embedding_vector]
-    mock_documents_repo.search.side_effect = RegulationDocumentsNotFound
+    mock_sections_repo.search.side_effect = RegulationDocumentsNotFound
     mock_regulations_repository.get_regulation_representation.return_value = None
 
     search_params = SearchParams(threshold=0, limit=None, query=query)
@@ -940,7 +940,7 @@ async def test_search_file_documents_not_found_but_regulation_not_found(
     use_case = SearchRegulation(
         session_maker=mock_session_maker,
         embedding_port=mock_embedding_port,
-        documents_repository=mock_documents_repo,
+        sections_repository=mock_sections_repo,
         regulations_repository=mock_regulations_repository,
     )
 
@@ -950,7 +950,7 @@ async def test_search_file_documents_not_found_but_regulation_not_found(
 
 async def test_search_file_documents_not_found_not_prepared(
     mock_embedding_port,
-    mock_documents_repo,
+    mock_sections_repo,
     mock_session_maker,
     uuid_generator,
     mock_regulations_repository,
@@ -961,7 +961,7 @@ async def test_search_file_documents_not_found_not_prepared(
     regulation_id = next(uuid_generator)
 
     mock_embedding_port.embed_queries.return_value = [embedding_vector]
-    mock_documents_repo.search.side_effect = RegulationDocumentsNotFound
+    mock_sections_repo.search.side_effect = RegulationDocumentsNotFound
 
     regulation_rep = MagicMock()
     regulation_rep.preparation_status = RegulationPreparationStatus.NOT_STARTED
@@ -973,7 +973,7 @@ async def test_search_file_documents_not_found_not_prepared(
     use_case = SearchRegulation(
         session_maker=mock_session_maker,
         embedding_port=mock_embedding_port,
-        documents_repository=mock_documents_repo,
+        sections_repository=mock_sections_repo,
         regulations_repository=mock_regulations_repository,
     )
 
@@ -983,7 +983,7 @@ async def test_search_file_documents_not_found_not_prepared(
 
 async def test_search_file_documents_not_found_invalid_state(
     mock_embedding_port,
-    mock_documents_repo,
+    mock_sections_repo,
     mock_session_maker,
     uuid_generator,
     mock_regulations_repository,
@@ -994,7 +994,7 @@ async def test_search_file_documents_not_found_invalid_state(
     regulation_id = next(uuid_generator)
 
     mock_embedding_port.embed_queries.return_value = [embedding_vector]
-    mock_documents_repo.search.side_effect = RegulationDocumentsNotFound
+    mock_sections_repo.search.side_effect = RegulationDocumentsNotFound
 
     regulation_rep = MagicMock()
     regulation_rep.preparation_status = RegulationPreparationStatus.PREPARED
@@ -1005,7 +1005,7 @@ async def test_search_file_documents_not_found_invalid_state(
     use_case = SearchRegulation(
         session_maker=mock_session_maker,
         embedding_port=mock_embedding_port,
-        documents_repository=mock_documents_repo,
+        sections_repository=mock_sections_repo,
         regulations_repository=mock_regulations_repository,
     )
 

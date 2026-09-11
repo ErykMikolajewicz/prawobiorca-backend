@@ -1,33 +1,40 @@
 import sqlalchemy as sqla
 from pgvector.sqlalchemy import Vector
 
-from src.infrastructure.relational_db.connection import mapper_registry, metadata
+from src.infrastructure.relational_db.connection import metadata
 from src.shared.consts import MAX_UNIT_NUMBER_LENGTH, MAX_UNIT_TYPE_LENGTH, VECTOR_LENGTH
 
-regulations_documents_table = sqla.Table(
-    "regulations_documents",
+regulations_sections_table = sqla.Table(
+    "regulations_sections",
     metadata,
     sqla.Column("id", sqla.UUID, primary_key=True, server_default=sqla.text("gen_random_uuid()")),
     sqla.Column("create_date", sqla.DateTime, server_default=sqla.text("now()"), nullable=False),
     sqla.Column("header", sqla.Text, nullable=True),
     sqla.Column("text", sqla.Text, nullable=False),
-    sqla.Column("chunk_order", sqla.Integer, nullable=False),
+    sqla.Column("section_order", sqla.Integer, nullable=False),
     sqla.Column("unit_type", sqla.String(MAX_UNIT_TYPE_LENGTH), nullable=True),
     sqla.Column("unit_number", sqla.String(MAX_UNIT_NUMBER_LENGTH), nullable=True),
     sqla.Column("unit_path", sqla.ARRAY(sqla.Text), nullable=True),
-    sqla.Column("part_index", sqla.Integer, nullable=False),
-    sqla.Column("parts_total", sqla.Integer, nullable=False),
-    sqla.Column("vector", Vector(VECTOR_LENGTH), nullable=False),
     sqla.Column("regulation_id", sqla.UUID, nullable=False),
     sqla.Column("user_id", sqla.UUID, nullable=True),
     sqla.ForeignKeyConstraint(
         ["regulation_id", "user_id"], ["regulations.id", "regulations.user_id"], ondelete="CASCADE"
     ),
+    sqla.Index("ix_regulations_sections_regulation_id_user_id", "regulation_id", "user_id"),
 )
 
-
-class RegulationsDocuments:
-    pass
-
-
-mapper_registry.map_imperatively(RegulationsDocuments, regulations_documents_table)
+regulations_chunks_table = sqla.Table(
+    "regulations_chunks",
+    metadata,
+    sqla.Column("id", sqla.UUID, primary_key=True, server_default=sqla.text("gen_random_uuid()")),
+    sqla.Column(
+        "section_id",
+        sqla.UUID,
+        sqla.ForeignKey("regulations_sections.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    ),
+    sqla.Column("chunk_index", sqla.Integer, nullable=False),
+    sqla.Column("text", sqla.Text, nullable=False),
+    sqla.Column("vector", Vector(VECTOR_LENGTH), nullable=False),
+)

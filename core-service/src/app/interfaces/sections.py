@@ -3,12 +3,12 @@ from uuid import UUID
 
 from src.app.dtos.search import SearchParams, SearchResult
 from src.app.interfaces.relational import AsyncSession
-from src.domain.value_objects.documents import DocumentsCollection
+from src.domain.value_objects.sections import SectionsCollection
 
 
-class DocumentsRepository(Protocol):
-    async def add_documents(
-        self, session: AsyncSession, user_id: UUID | None, regulation_id: UUID, documents: DocumentsCollection
+class SectionsRepository(Protocol):
+    async def add_sections(
+        self, session: AsyncSession, user_id: UUID | None, regulation_id: UUID, sections: SectionsCollection
     ) -> None: ...
 
     async def search(
@@ -20,4 +20,4 @@ class DocumentsRepository(Protocol):
         search_params: SearchParams,
     ) -> list[SearchResult]: ...
 
-    async def remove_documents(self, session: AsyncSession, user_id: UUID | None, regulation_id: UUID) -> None: ...
+    async def remove_sections(self, session: AsyncSession, user_id: UUID | None, regulation_id: UUID) -> None: ...
