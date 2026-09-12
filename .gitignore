@@ -12,8 +12,7 @@ __pycache__/
 
 .cache
 
-/cicd/kubectl
-/cicd/secrets
+/deploy/gcp/secrets
 
 postman/
 .postman

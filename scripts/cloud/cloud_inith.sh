@@ -34,7 +34,7 @@ gcloud services enable container.googleapis.com secretmanager.googleapis.com
 
 
 gcloud secrets create postgres-password \
-  --data-file=./cicd/secrets/postgres-password.txt \
+  --data-file=./deploy/gcp/secrets/postgres-password.txt \
   --replication-policy=automatic
 
 gcloud container clusters update prawobiorca \
@@ -65,11 +65,11 @@ gcloud storage hmac create prawobiorca-runner@prawobiorca.iam.gserviceaccount.co
   --project=prawobiorca
 
 gcloud secrets create object-storage-access-key \
-  --data-file=./cicd/secrets/object-storage-access-key.txt \
+  --data-file=./deploy/gcp/secrets/object-storage-access-key.txt \
   --replication-policy=automatic
 
 gcloud secrets create object-storage-secret-key \
-  --data-file=./cicd/secrets/object-storage-secret-key.txt \
+  --data-file=./deploy/gcp/secrets/object-storage-secret-key.txt \
   --replication-policy=automatic
 
 gcloud secrets add-iam-policy-binding object-storage-access-key \
