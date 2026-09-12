@@ -14,40 +14,23 @@ The system is designed to run in two primary environments:
 
 The architecture follows a **Monolith** pattern for core business logic, paired with **specialized microservices** for compute-heavy tasks:
 
-```text
-                            [Client / Vue]
-                                  │
-                                  │ (HTTP REST)
-                                  ▼
-       ┌────────────────────────────────────────────────────────┐
-       │                     core-service                       │
-       │           (Auth, Cases, Files, Search Engine)          │
-       └────┬─────────────────────────────┬─────────────────┬───┘
-            │                             │                 │
-      (Dispatches Task)                   │ (Generates      │ (Vector &
-            |                             │  Query Embed)   │  Relational DB)
-            │                             │                 │
-            ▼                             ▼                 │
-       ┌──────────┐              ┌──────────────┐           │
-       │  Broker  │              │ embeddings-  │           │
-       │          │              │   service    │           │
-       │          │              │ (ONNX/Scale) │           │
-       └────┬─────┘              └──────────────┘           │
-            │                            ▲                  │
-            │ (Consumes Task)            │ (Batch Embed)    │
-            ▼                            │                  │
-       ┌────────────────────────┐        │                  │
-       │     Taskiq Worker      ├────────┘                  │
-       │ (File Preparator /     │                           │
-       │  Chunking / Indexing)  │                           │
-       └────┬───────────────────┘                           │
-            │                                               │
- (extract)  │                                               │
-   text)    ▼                                               │
- ┌──────────────────────┐                       ┌───────────▼────────────┐
- │                      │                       │ PostgreSQL + pgvector  │
- │  extraction-service  │                       │(Metadata, Chunks, DB)  │
- └──────────────────────┘                       └────────────────────────┘
+```mermaid
+flowchart TD
+    Client["Client / Vue"]
+    Core["core-service<br/>(Auth, Cases, Files, Search Engine)"]
+    Broker(["Broker"])
+    Worker["Taskiq Worker<br/>(File Preparator / Chunking / Indexing)"]
+    Embeddings["embeddings-service<br/>(ONNX/Scale)"]
+    Extraction["extraction-service"]
+    DB[("PostgreSQL + pgvector<br/>(Metadata, Chunks, DB)")]
+
+    Client -->|HTTP REST| Core
+    Core -->|Dispatches Task| Broker
+    Core -->|Generates Query Embed| Embeddings
+    Core -->|Vector & Relational DB| DB
+    Broker -->|Consumes Task| Worker
+    Worker -->|Batch Embed| Embeddings
+    Worker -->|extract text| Extraction
 ```
 
 ### 2.1. `core-service` (Main API & Taskiq Worker)
@@ -104,19 +87,15 @@ Hosts the core domain logic, user-facing endpoints, and background document inde
 
 Each microservice in the repository follows **Clean Architecture** principles, enforcing strict inward-pointing dependency rules.
 
-```
-                    ┌────────────────────────┐
-                    │       Framework        │ (FastAPI, Taskiq Workers)
-                    │  ┌──────────────────┐  │
-                    │  │  Infrastructure  │  │ (DB Repos, HTTP Clients, Storage)
-                    │  │  ┌────────────┐  │  │
-                    │  │  │Application │  │  │ (Use Cases, DTOs, Ports)
-                    │  │  │  ┌──────┐  │  │  │
-                    │  │  │  │Domain│  │  │  │ (Entities, Value Objects)
-                    │  │  │  └──────┘  │  │  │
-                    │  │  └────────────┘  │  │
-                    │  └──────────────────┘  │
-                    └────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Framework["Framework (FastAPI, Taskiq Workers)"]
+        subgraph Infrastructure["Infrastructure (DB Repos, HTTP Clients, Storage)"]
+            subgraph Application["Application (Use Cases, DTOs, Ports)"]
+                Domain["Domain (Entities, Value Objects)"]
+            end
+        end
+    end
 ```
 
 ### 4.1. Layers

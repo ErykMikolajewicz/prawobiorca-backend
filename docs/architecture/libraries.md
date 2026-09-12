@@ -17,7 +17,7 @@ Below are the dependencies essential for the application to run, which should be
 ### asyncpg
 
 Chosen as an asynchronous Postgres client, consistent with the philosophy of the [FastAPI](#fastapi) framework, which encourages asynchronous code.  
-The downside is connection sharing issues during tests — see the [integration tests](/docs/tests/integration_fixtures.md) section for more details.
+The downside is connection sharing issues during tests — see the [integration tests](../tests/integration_fixtures.md) section for more details.
 
 `asyncpg` was selected due to its top performance in benchmarks. `psycopg3` was also considered, as its support for both synchronous and asynchronous APIs could simplify certain operations (e.g., `alembic` migrations, which are already used as an optional dependency). However, performance was deemed more critical due to frequent database reads.
 
