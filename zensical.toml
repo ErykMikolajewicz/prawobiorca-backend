@@ -8,6 +8,7 @@ nav = [
     {"Workflow" = "workflow.md"},
     {"Application architecture" = [
         {"General information" = "architecture/architecture.md"},
+        {"Frontend" = "architecture/frontend.md"},
         {"Coding Rules" = "architecture/coding_rules.md"},
         {"Library Overview" = "architecture/libraries.md"},
         {"External services" = "architecture/external_services.md"},

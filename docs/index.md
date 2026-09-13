@@ -4,6 +4,7 @@ Welcome to the Prawobiorca developer documentation.
 
 ## What is Prawobiorca?
 Prawobiorca is a web application for searching law acts, and courts judgments, by classical, and AI supported methods.
+Both the backend services and the Vue frontend are kept in a single repository.
 
 ---
 
@@ -11,7 +12,8 @@ Prawobiorca is a web application for searching law acts, and courts judgments, b
 
 * **[Application logic explanation](app_logic.md)**: What is the purpose of the app and how should it behave.
 * **[Workflow](workflow.md)**: General information about team workflow and CI/CD.
-* **[Application architecture](architecture/architecture.md)**: Reference for backend developers.
+* **[Application architecture](architecture/architecture.md)**: Reference for developers.
+* **[Frontend](architecture/frontend.md)**: Stack, structure and development commands of the Vue application.
 * **[Tests](tests/tests.md)**: Information about testing conventions in the application.
 
 ---

@@ -11,6 +11,18 @@ Plans include:
 - **Court Judgments Summarizer** - easily extract important facts from a sea of legal jargon!
 - **Dean's Office Simulator** - practice in front of a computer to avoid stress at the counter.
 
+## Repository Layout
+
+The whole application lives in this repository:
+
+- `core-service/` - main API (FastAPI) and the Taskiq worker handling document processing.
+- `embedding-service/` - generates vector embeddings for text chunks and search queries.
+- `extraction-service/` - extracts structured text from PDFs.
+- `prawobiorca-frontend/` - Vue 3 frontend application.
+- `deploy/` - Kubernetes manifests for the local (Podman) and GCP environments.
+- `scripts/` - helper scripts for running the app locally and deploying it to the cloud.
+- `docs/` - developer documentation.
+
 ## How to Contribute
 
 1. **Clone the project and install dependencies**, preferably with [uv](https://docs.astral.sh/uv/):
@@ -18,22 +30,29 @@ Plans include:
     uv sync --all-groups
     ```
 
-2. **Set up the commit hook**:
+2. **Install the frontend dependencies** (requires Node `^24.15.0` and pnpm `11.24.0`, easiest through `corepack enable`):
+    ```sh
+    cd prawobiorca-frontend
+    pnpm install
+    ```
+    - See [prawobiorca-frontend/README.md](prawobiorca-frontend/README.md) for the frontend development commands.
+
+3. **Set up the commit hook**:
     ```sh
     git config core.hooksPath .githooks
     ```
 
-3. **Open the documentation**:
+4. **Open the documentation**:
     ```sh
     zensical serve
     ```
     - Read the section about **Workflow**, especially regarding the commit format.
     - Read about **Project Architecture**, especially the coding rules.
 
-4. **Develop your code**:
+5. **Develop your code**:
     - Write your code on a feature branch.
 
-5. **Submit**:
+6. **Submit**:
     - If everything works, push your code to the repository (remember to do it on a feature branch) and contact **Eryk Mikołajewicz** for a code review.
 
 ## Running the Application
@@ -52,6 +71,7 @@ Start with building images with:
 ```sh
 poe build_images
 ```
+This builds the images of all services, including the frontend.
 
 Then run:
 ```sh
@@ -60,12 +80,16 @@ poe run_locally
 
 ## Initialize databases
 ```sh
-poe init_databases
+poe init_db
 ```
 This command may take a while, it is making some hard extraction from PDFs.
 
-Then visit the main application page:
-[http://127.0.0.1:8000/](https://127.0.0.1:8000/)
+Everything is served by the nginx ingress on [http://localhost:8080](http://localhost:8080):
 
-Or view the Swagger documentation:
-[http://127.0.0.1:8000/docs](https://127.0.0.1:8000/docs)
+- [http://localhost:8080/](http://localhost:8080/) - the frontend application
+- [http://localhost:8080/api](http://localhost:8080/api) - the API
+- [http://localhost:8080/docs](http://localhost:8080/docs) - the Swagger documentation
+- [http://localhost:8080/openapi.json](http://localhost:8080/openapi.json) - the OpenAPI schema
+- [http://localhost:8080/storage/](http://localhost:8080/storage/) - the object storage
+
+To stop the deployment run `poe run_locally_down`.

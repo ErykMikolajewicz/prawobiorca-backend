@@ -1,14 +1,9 @@
 # Prawobiorca Frontend
 
-Frontend application for **Prawobiorca** --- a project developed within
-the **WMS_DEV** science club at the **Wrocław University of Science and
-Technology**.
+The frontend layer of **Prawobiorca** --- a Vue 3 single-page application.
 
-Prawobiorca aims to help students defend and assert their rights by
-making legal and university regulations easier to search, understand,
-and use.
-
-This repository contains the **frontend layer** of the application
+It is part of the main Prawobiorca repository; see the root [README](../README.md) for the project overview and
+[Frontend documentation](../docs/architecture/frontend.md) for the stack, project structure and API integration.
 
 ## Recommended IDE
 It is recommended to use a JetBrains IDE, preferably PyCharm, with frontend plugins.
@@ -18,11 +13,9 @@ For students, PyCharm Professional is free for non-commercial use.
 
 TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
 
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
 ## Project Setup
+
+All commands below are run from this directory (`prawobiorca-frontend/`).
 
 ```sh
 pnpm install

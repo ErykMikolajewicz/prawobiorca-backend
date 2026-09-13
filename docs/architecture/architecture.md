@@ -2,7 +2,9 @@
 
 ## 1. Introduction and System Overview
 
-**Prawobiorca** is a modern backend platform providing intelligent legal search and document management capabilities. The system supports AI-assisted (semantic vector search) retrieval of legal acts, as well as case management and document drafting for authenticated users.
+**Prawobiorca** is a modern web application providing intelligent legal search and document management capabilities. The system supports AI-assisted (semantic vector search) retrieval of legal acts, as well as case management and document drafting for authenticated users.
+
+The whole application lives in a single repository: the Python backend services described below, and the Vue frontend (`prawobiorca-frontend`) documented in [Frontend](frontend.md).
 
 The system is designed to run in two primary environments:
 - **Cloud (GCP / Google Cloud Platform)**: Utilizing containerized workloads with scale-to-zero capabilities for resource-heavy operations to optimize cost and resource allocation.
@@ -16,7 +18,9 @@ The architecture follows a **Monolith** pattern for core business logic, paired 
 
 ```mermaid
 flowchart TD
-    Client["Client / Vue"]
+    Browser["Browser"]
+    Ingress["nginx / Ingress"]
+    Frontend["prawobiorca-frontend<br/>(Vue SPA served by nginx)"]
     Core["core-service<br/>(Auth, Cases, Files, Search Engine)"]
     Broker(["Broker"])
     Worker["Taskiq Worker<br/>(File Preparator / Chunking / Indexing)"]
@@ -24,7 +28,9 @@ flowchart TD
     Extraction["extraction-service"]
     DB[("PostgreSQL + pgvector<br/>(Metadata, Chunks, DB)")]
 
-    Client -->|HTTP REST| Core
+    Browser --> Ingress
+    Ingress -->|"/"| Frontend
+    Ingress -->|"/api"| Core
     Core -->|Dispatches Task| Broker
     Core -->|Generates Query Embed| Embeddings
     Core -->|Vector & Relational DB| DB
@@ -73,6 +79,15 @@ Hosts the core domain logic, user-facing endpoints, and background document inde
   * On-Premise uses `--target_device=AUTO` with `/dev/dri` passed through, so it runs on the Intel iGPU when the host exposes one and transparently falls back to CPU otherwise. GCP stays on CPU (GKE Autopilot only supports NVIDIA GPU passthrough). This model has no continuous-batching support yet, so there's no throughput benefit from OVMS's usual batching path either way.
   * **Scale-to-0 on GCP**: a KEDA `HTTPScaledObject` (HTTP add-on) scales the Deployment between 0 and 1 replicas based on incoming request volume, since the model's RAM footprint is too large to keep idle. Requires KEDA and its HTTP add-on installed on the cluster. Once scaled to 0, traffic must reach it through the add-on's interceptor proxy rather than the `llm-service` Service directly — relevant for the future `core-service` integration.
 
+### 2.5. `prawobiorca-frontend`
+* **Responsibilities**:
+  * Single-page application (Vue 3 + TypeScript) delivering the whole user interface: search, authentication, case and document management.
+* **Characteristics**:
+  * Built with Vite into static assets and served by **nginx** from its own container; no server-side rendering and no application server.
+  * Communicates only with `core-service` over the HTTP REST API, under the `/api` prefix of the shared ingress — it never reaches the database or the compute services directly.
+  * Stateless from the deployment point of view: the session lives in cookies issued by `core-service`.
+  * See [Frontend](frontend.md) for the stack, project structure and development commands.
+
 ---
 
 ## 3. Key Architectural Decisions & Patterns
@@ -94,7 +109,7 @@ Hosts the core domain logic, user-facing endpoints, and background document inde
 
 ## 4. More about core-service architecture
 
-Each microservice in the repository follows **Clean Architecture** principles, enforcing strict inward-pointing dependency rules.
+Each Python service in the repository follows **Clean Architecture** principles, enforcing strict inward-pointing dependency rules. The frontend is not bound by these rules — its structure is described in [Frontend](frontend.md).
 
 ```mermaid
 flowchart TB

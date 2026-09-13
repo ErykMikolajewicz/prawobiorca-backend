@@ -14,6 +14,7 @@ test_embedding = { cmd = "uv run --group test pytest tests/integration", cwd = "
 build_app = "podman image build --tag=prawobiorca-backend core-service"
 build_embedding-service = "podman image build --tag=embedding-service embedding-service"
 build_extraction-service = "podman image build --tag=extraction-service extraction-service"
+build_frontend = "podman image build --tag=prawobiorca-frontend prawobiorca-frontend"
 
 upgrade_db = { cmd = "uv run alembic upgrade head", cwd = "core-service" }
 seed = { cmd = "uv run scripts/seed_relational_db.py", cwd = "core-service" }
@@ -28,7 +29,7 @@ sequence = [
 ]
 
 [tasks.build_images]
-sequence = ["build_app", "build_embedding-service", "build_extraction-service"]
+sequence = ["build_app", "build_embedding-service", "build_extraction-service", "build_frontend"]
 
 [tasks.init_db]
 sequence = ["upgrade_db", "seed", "init_regulations"]
