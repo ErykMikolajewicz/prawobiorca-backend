@@ -132,7 +132,7 @@ def test_chunks_keep_whole_section_content():
 
     section = create_sections(elements)[0]
 
-    assert " ".join(chunk.text for chunk in section.chunks) == section.text
+    assert " ".join(chunk.text for chunk in section.chunks) == " ".join(section.text.split("\n"))
 
 
 def test_chunk_titles_are_unique_within_section():
@@ -220,7 +220,7 @@ def test_elements_are_joined_with_separator():
 
     article = next(section for section in sections if section.unit_number == "108")
 
-    assert "studiów; 2) rezygnacji" in article.text
+    assert "studiów;\n2) rezygnacji" in article.text
     assert "studiów;2)" not in article.text
 
 

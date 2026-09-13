@@ -18,6 +18,16 @@ IMAGES = (
     ),
     ("embedding-service", "embedding-service", ("embedding-service",)),
     ("extraction-service", "extraction-service", ("extraction-service",)),
+    (
+        "prawobiorca-frontend",
+        "prawobiorca-frontend",
+        (
+            "prawobiorca-frontend/Containerfile",
+            "prawobiorca-frontend/package.json",
+            "prawobiorca-frontend/pnpm-lock.yaml",
+            "prawobiorca-frontend/src",
+        ),
+    ),
 )
 
 
@@ -56,9 +66,6 @@ def build_images():
         else:
             continue
         subprocess.run(["podman", "image", "build", f"--tag={name}", context], check=True)
-
-    if image_created_at("localhost/prawobiorca-frontend:latest") is None:
-        print("Warning: prawobiorca-frontend:latest image not found. Frontend may not respond until built.")
 
 
 def main():

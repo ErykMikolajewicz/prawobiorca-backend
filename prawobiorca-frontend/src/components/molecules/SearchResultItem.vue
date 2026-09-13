@@ -61,6 +61,7 @@ const handleAddToCase = () => {
 
 .result-text {
   flex: 1;
+  white-space: pre-line;
 }
 
 .score-column {

@@ -65,7 +65,7 @@ class RegulationAct:
 
         return RegulationSection(
             header=unit.breadcrumb,
-            text=" ".join(element.text for element in unit.elements),
+            text="\n".join(element.text for element in unit.elements),
             chunks=chunks,
             unit_type=unit.unit_type,
             unit_number=unit.number,
