@@ -27,6 +27,7 @@ flowchart TD
     Embeddings["embeddings-service<br/>(ONNX/Scale)"]
     Extraction["extraction-service"]
     DB[("PostgreSQL + pgvector<br/>(Metadata, Chunks, DB)")]
+    Storage[("Object Storage<br/>RustFS (on-premise) / GCS (cloud)")]
 
     Browser --> Ingress
     Ingress -->|"/"| Frontend
@@ -34,9 +35,12 @@ flowchart TD
     Core -->|Dispatches Task| Broker
     Core -->|Generates Query Embed| Embeddings
     Core -->|Vector & Relational DB| DB
+    Core -->|"Generates presigned upload/download URL"| Storage
+    Browser -->|"Uploads/downloads file directly<br/>(presigned URL, bypasses Core)"| Storage
     Broker -->|Consumes Task| Worker
     Worker -->|Batch Embed| Embeddings
     Worker -->|extract text| Extraction
+    Worker -->|Reads file bytes| Storage
 ```
 
 ### 2.1. `core-service` (Main API & Taskiq Worker)
@@ -44,7 +48,7 @@ Hosts the core domain logic, user-facing endpoints, and background document inde
 * **Core API (FastAPI)**:
   * User authentication, authorization, and profile management.
   * Case (*Sprawy*) management and document metadata handling (filenames, upload status, permissions).
-  * Storage orchestration: uploading and retrieving raw documents to/from Google Cloud Storage / S3 / local storage.
+  * Storage orchestration: generates presigned upload/download URLs (S3 presigned POST/GET) so the browser transfers file bytes directly with object storage — `core-service` never proxies the bytes itself. The Taskiq worker separately reads the raw bytes back from storage for processing.
   * Fast synchronous search execution: requests single query embeddings from `embeddings-service` and performs vector similarity search against PostgreSQL (`pgvector`).
   * Dispatches asynchronous file processing tasks to the broker using **Taskiq**, automatically upon upload confirmation — no separate request is needed to start indexing.
 * **File Preparator (Taskiq Worker)**:
@@ -141,7 +145,7 @@ Contains **Application Business Rules** and use case orchestrations.
 Acts as adapters for external systems and technical tools, implementing ports defined in domain/application.
 - **Relational DB**: SQLAlchemy repositories, connection pools, and database schemas.
 - **External Clients**: HTTP/gRPC clients communicating with external services (`embeddings-service`, `extraction-service`).
-- **Object Storage**: S3 / Google Cloud Storage / local filesystem adapters.
+- **Object Storage**: a single S3-protocol adapter (`aiobotocore`), reused unchanged against RustFS on-premise and against Google Cloud Storage's S3-interoperability endpoint in the cloud. A separate "presign" client, pointed at a public endpoint URL, keeps presigned URLs handed to the browser reachable even when the internal endpoint isn't.
 
 #### `../../core-service/src/framework`
 The outermost delivery mechanism and dependency injection root.

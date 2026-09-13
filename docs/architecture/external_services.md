@@ -40,22 +40,21 @@ Planned follow-ups: wiring a client into `core-service` (port/adapter/use case, 
 
 ---
 
-## Cloud Storage
-Currently not used, replaced by just local file hierarchy.
+## Object Storage
 
 ### Technology Choice and Justification
-Google Cloud Storage was chosen as the file storage solution. This decision was made for performance reasons — storing files in the relational database would likely negatively impact the overall database performance, and serving them via the web application would be a heavy load on the network. To maintain consistency in the technology stack, Google Cloud Storage was selected because the Google Cloud platform is also used in other areas of the project.
+Files are kept in an S3-compatible object storage rather than the relational database — storing files in Postgres would hurt database performance, and serving them through the web application would put a heavy load on `core-service`. The application talks to storage exclusively through the S3 protocol, which lets the same client code run against different backends depending on the deployment mode: **RustFS** on-premise (run as a container via Podman) and **Google Cloud Storage** in the cloud, accessed through its S3 interoperability API. No environment-specific storage code is needed.
 
 ### Scope of Use
-Google Cloud Storage is used to store both public and private files:
+Object storage holds both public and private files:
 
-- **Public files** (e.g., laws, court rulings) are accessible via a standard URL.
-- **Private user files** are available only through signed URLs with a limited validity period.
+- **Public files** (e.g., laws, court rulings) are accessible via a presigned/standard URL.
+- **Private user files** are available only through presigned URLs with a limited validity period.
 
-Files are written via the web application, but their reading will often be done directly from the URL by the frontend client.
+Files never transit through `core-service`. The browser writes a file directly to storage using a presigned POST target (URL + form fields) that `core-service` generates and hands back after registering the file's metadata; it then calls back a confirmation endpoint so `core-service` can schedule background processing. Reading works the same way in reverse: `core-service` returns a presigned GET URL, and the browser fetches the file directly from storage. The Taskiq worker is the one component that reads raw file bytes itself, for text extraction/chunking/embedding.
 
 ### Abstraction Layer and Integration
-Functions using Google Cloud Storage are designed in an abstract way to allow for the potential use of another platform in the future. The default Google Cloud Storage client is synchronous, so an asynchronous wrapper has been prepared in the project to ensure proper integration with the rest of the application, which uses asynchronous calls.
+The storage port is a small `Protocol` in the application layer, backed by a single S3-protocol adapter (`aiobotocore`) in infrastructure — the same adapter class is used unchanged for both RustFS and GCS. Two clients are configured: the main client, used for internal calls, and a "presign" client pointed at a public endpoint URL (`OBJECT_STORAGE_PUBLIC_ENDPOINT_URL`), used only to generate presigned URLs so they stay reachable from the browser even when the internal endpoint (`OBJECT_STORAGE_ENDPOINT_URL`) is not (e.g. an internal cluster hostname in local/on-premise deployments).
 
 ### Capabilities and Future Plans
-An alternative considered in the design phase was storing files in a file system and serving them via Nginx, but this was deemed less scalable and more difficult for access management. The decision was made to keep an abstraction layer that would allow switching to another cloud environment in case, for example, of unfavorable data storage conditions on the Google Cloud platform.
+An alternative considered in the design phase was storing files in a file system and serving them via Nginx, but this was deemed less scalable and more difficult for access management. Because integration goes through the S3 protocol rather than a cloud-specific SDK, switching to another S3-compatible backend in the future would not require any application code changes.

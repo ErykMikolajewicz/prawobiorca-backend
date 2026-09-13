@@ -141,18 +141,13 @@ Redis broker/result-backend implementation for [taskiq](#taskiq). Redis was chos
 
 Alternative: **RabbitMQ** — more feature-rich broker, but heavier to operate for a single-queue use case like this one.
 
-## Storage Dependencies - choose one option
+## Storage Dependencies
 
-Actually works only local storage with aiofiles, due to developing app in scientific club; perhaps in the future Google Cloud will be implemented again.
+### aiobotocore
 
-### aiofiles
+Native-async S3-compatible client, used as the single adapter for object storage in both deployment modes: **RustFS** on-premise and **Google Cloud Storage** in the cloud via its S3 interoperability API. Chosen over `google-cloud-storage` because it is asynchronous natively (no sync-wrapper needed) and because one S3-protocol client covers both backends, avoiding a second, environment-specific adapter.
 
-Use to access local files without blocking the main thread.
-
-### google-cloud-storage
-
-The official Google Cloud client for file handling, chosen because the application uses GCP for file storage.  
-The downside is that it is synchronous — currently, asynchronous wrappers must be created. If an async version becomes available, implementing it would be a significant improvement.
+Pulls in `botocore` transitively for the underlying S3 request signing (including presigned URL generation).
 
 
 

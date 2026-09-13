@@ -48,8 +48,6 @@ All application code lives in `prawobiorca-frontend/src`:
 * A response interceptor retries a request once after refreshing the tokens when `core-service` answers `401`. Concurrent refreshes share a single in-flight request, and the auth endpoints themselves are excluded from this path.
 * When the refresh fails, the session-expiry handler resets the auth store and redirects to the login page.
 
-`prawobiorca-frontend/api.json` is a dump of the `core-service` OpenAPI schema, kept for reference when writing the API modules and their types.
-
 ---
 
 ## 5. Build and Deployment
