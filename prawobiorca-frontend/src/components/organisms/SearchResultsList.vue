@@ -48,9 +48,10 @@ const groupedResults = computed<Array<ResultGroup>>(() => {
       <div v-for="(group, groupIndex) in groupedResults" :key="groupIndex" class="result-group">
         <h3 class="result-group-header">{{ group.header }}</h3>
         <SearchResultItem
-          v-for="{ id, text, score } in group.items"
+          v-for="{ id, text, score, elements } in group.items"
           :key="id"
           :result="text"
+          :elements="elements"
           :score="score"
           :selected-case-id="selectedCaseId"
           @add-to-case="onAddToCase"

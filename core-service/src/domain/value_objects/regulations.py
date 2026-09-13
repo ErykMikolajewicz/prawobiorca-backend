@@ -70,6 +70,7 @@ class RegulationAct:
             unit_type=unit.unit_type,
             unit_number=unit.number,
             unit_path=list(unit.path),
+            elements=list(unit.elements),
         )
 
     def _fit_title(self, unit: LegalUnit) -> str | None:

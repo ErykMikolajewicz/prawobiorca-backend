@@ -1,5 +1,6 @@
 import sqlalchemy as sqla
 from pgvector.sqlalchemy import Vector
+from sqlalchemy.dialects import postgresql
 
 from src.infrastructure.relational_db.connection import metadata
 from src.shared.consts import MAX_UNIT_NUMBER_LENGTH, MAX_UNIT_TYPE_LENGTH, VECTOR_LENGTH
@@ -15,6 +16,7 @@ regulations_sections_table = sqla.Table(
     sqla.Column("unit_type", sqla.String(MAX_UNIT_TYPE_LENGTH), nullable=True),
     sqla.Column("unit_number", sqla.String(MAX_UNIT_NUMBER_LENGTH), nullable=True),
     sqla.Column("unit_path", sqla.ARRAY(sqla.Text), nullable=True),
+    sqla.Column("elements", postgresql.JSONB(astext_type=sqla.Text()), nullable=True),
     sqla.Column("regulation_id", sqla.UUID, nullable=False),
     sqla.Column("user_id", sqla.UUID, nullable=True),
     sqla.ForeignKeyConstraint(

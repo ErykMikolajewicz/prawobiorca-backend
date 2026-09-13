@@ -6,6 +6,11 @@ from pydantic import BaseModel, Field
 from src.domain.value_objects.legal_units import UnitType
 
 
+class SearchResultElement(BaseModel):
+    text: str
+    subsection: str | None = None
+
+
 class SearchResult(BaseModel):
     id: UUID
     score: float = Field(ge=-1, le=1)
@@ -14,6 +19,7 @@ class SearchResult(BaseModel):
     unit_type: UnitType | None = None
     unit_number: str | None = None
     unit_path: list[str] | None = None
+    elements: list[SearchResultElement] | None = None
 
 
 class SearchParams(BaseModel):

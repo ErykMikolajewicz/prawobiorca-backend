@@ -1,4 +1,12 @@
-export type searchResult = { id: string; score: number; text: string; header: string }
+export type searchResultElement = { text: string; subsection: string | null }
+
+export type searchResult = {
+  id: string
+  score: number
+  text: string
+  header: string
+  elements: Array<searchResultElement> | null
+}
 
 export type searchParams = {
   query: string

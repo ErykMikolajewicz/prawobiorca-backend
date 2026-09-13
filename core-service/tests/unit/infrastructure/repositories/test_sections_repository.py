@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
+from src.domain.value_objects.legal_units import LegalUnitElement
 from src.domain.value_objects.sections import RegulationSection, SectionChunk, SectionsCollection
 from src.infrastructure.relational_db.repositories.sections import RegulationsSectionsRepository
 
@@ -16,6 +17,10 @@ def create_sections_collection() -> SectionsCollection:
                     SectionChunk(text="Content 2", embed_title="Art. 1 ust. 2", chunk_index=1, vector=[0.2]),
                 ],
                 section_order=0,
+                elements=[
+                    LegalUnitElement(text="Content 1", subsection="1"),
+                    LegalUnitElement(text="Content 2", subsection="2"),
+                ],
             ),
             RegulationSection(
                 header="Art. 2",
@@ -55,3 +60,19 @@ async def test_add_sections_saves_chunks_with_their_section():
     first_section, second_section = sections
     assert section_ids == [first_section.id, first_section.id, second_section.id]
     assert chunk_indexes == [0, 1, 0]
+
+
+async def test_add_sections_saves_elements_as_dicts():
+    session = AsyncMock()
+
+    await RegulationsSectionsRepository.add_sections(session, uuid4(), uuid4(), create_sections_collection())
+
+    sections_stmt = session.execute.await_args_list[0].args[0]
+    inserted_values = sections_stmt.compile().params
+
+    elements = [value for key, value in inserted_values.items() if key.startswith("elements")]
+
+    assert elements == [
+        [{"text": "Content 1", "subsection": "1"}, {"text": "Content 2", "subsection": "2"}],
+        [],
+    ]

@@ -166,6 +166,7 @@ async def test_search_regulations_documents(client, override_session_maker, sess
                 "unit_type": UnitType.ARTICLE,
                 "unit_number": "112",
                 "unit_path": ["Rozdział 5 Pracownicy uczelni"],
+                "elements": None,
             }
         ]
     finally:

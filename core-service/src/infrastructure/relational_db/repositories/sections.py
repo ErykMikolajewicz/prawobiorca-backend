@@ -1,9 +1,10 @@
+from dataclasses import asdict
 from uuid import UUID
 
 from sqlalchemy import case, delete, func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.app.dtos.search import SearchParams, SearchResult
+from src.app.dtos.search import SearchParams, SearchResult, SearchResultElement
 from src.domain.exceptions.documents import RegulationDocumentsNotFound
 from src.domain.value_objects.sections import SectionsCollection
 from src.infrastructure.relational_db.schemas.sections import regulations_chunks_table, regulations_sections_table
@@ -30,6 +31,7 @@ class RegulationsSectionsRepository:
                     "unit_type": section.unit_type,
                     "unit_number": section.unit_number,
                     "unit_path": section.unit_path,
+                    "elements": [asdict(element) for element in section.elements],
                     "regulation_id": regulation_id,
                     "user_id": user_id,
                 }
@@ -123,6 +125,7 @@ class RegulationsSectionsRepository:
                 regulations_sections_table.c.unit_type,
                 regulations_sections_table.c.unit_number,
                 regulations_sections_table.c.unit_path,
+                regulations_sections_table.c.elements,
                 scored_sections.c.score,
             )
             .select_from(
@@ -144,6 +147,7 @@ class RegulationsSectionsRepository:
                 unit_type=row.unit_type,
                 unit_number=row.unit_number,
                 unit_path=row.unit_path,
+                elements=[SearchResultElement(**element) for element in row.elements] if row.elements else None,
                 score=row.score,
             )
             for row in rows
