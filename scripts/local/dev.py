@@ -69,6 +69,15 @@ def main():
 
     run_container_if_not_running("embedding-service", "-p 127.0.0.1:8081:8080 embedding-service")
     run_container_if_not_running("extraction-service", "-p 127.0.0.1:8082:8080 extraction-service")
+    run_container_if_not_running(
+        "llm-service",
+        "-p 127.0.0.1:8083:8080 --device /dev/dri"
+        " --group-add $(stat -c '%g' /dev/dri/render* | head -n1) -v llm-model:/models"
+        " docker.io/openvino/model_server:2026.3-gpu"
+        " --source_model=OpenVINO/gemma-4-E4B-it-int8-ov --model_name=gemma-4-e4b-it"
+        " --model_repository_path=/models --task=text_generation --pipeline_type=VLM"
+        " --target_device=AUTO --rest_port=8080",
+    )
     run_container_if_not_running("redis", "-p 127.0.0.1:6379:6379 redis:8-alpine")
 
     worker = run_worker()

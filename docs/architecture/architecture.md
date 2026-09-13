@@ -64,6 +64,15 @@ Hosts the core domain logic, user-facing endpoints, and background document inde
   * **Scale-to-0 on GCP**: Instances spin up on incoming HTTP processing requests and scale down to 0 during idle periods, significantly reducing RAM and compute costs.
   * Runs as a dedicated container in On-Premise deployments.
 
+### 2.4. `llm-service`
+* **Responsibilities**:
+  * Conversational LLM inference (Gemma-4 E4B, int8-quantized), served directly by **OpenVINO Model Server (OVMS)** — no custom application code — exposing an OpenAI-compatible `/v3/chat/completions` HTTP endpoint.
+* **Characteristics**:
+  * Not yet wired into `core-service` — this is a first, isolated deployment step; a future iteration will add the client/use-case integration needed to expose a conversational feature to end users.
+  * OVMS pulls the model from Hugging Face straight into a persistent volume on first start (cached across restarts after that), so no image build/model-baking step is needed for this service.
+  * On-Premise uses `--target_device=AUTO` with `/dev/dri` passed through, so it runs on the Intel iGPU when the host exposes one and transparently falls back to CPU otherwise. GCP stays on CPU (GKE Autopilot only supports NVIDIA GPU passthrough). This model has no continuous-batching support yet, so there's no throughput benefit from OVMS's usual batching path either way.
+  * **Scale-to-0 on GCP**: a KEDA `HTTPScaledObject` (HTTP add-on) scales the Deployment between 0 and 1 replicas based on incoming request volume, since the model's RAM footprint is too large to keep idle. Requires KEDA and its HTTP add-on installed on the cluster. Once scaled to 0, traffic must reach it through the add-on's interceptor proxy rather than the `llm-service` Service directly — relevant for the future `core-service` integration.
+
 ---
 
 ## 3. Key Architectural Decisions & Patterns

@@ -24,6 +24,22 @@ Api with an option to embed document and split PDF files for elements.
 
 ---
 
+## LLM Service
+
+### Technology Choice and Justification
+**OpenVINO Model Server (OVMS)** serves the conversational LLM directly — no custom application code — using a pre-quantized int8 OpenVINO IR build of Gemma-4 E4B (`OpenVINO/gemma-4-E4B-it-int8-ov` on Hugging Face). An earlier iteration wrapped **OpenVINO GenAI** in a custom FastAPI app; OVMS replaced it once Gemma-4 VLM support landed there (OVMS 2026.3), since it removes that app entirely in favor of a maintained server with an OpenAI-compatible API, at the cost of continuous batching, which isn't available for this model yet (no PagedAttention support — see [openvinotoolkit/model_server#4178](https://github.com/openvinotoolkit/model_server/issues/4178)). This keeps the service consistent with the rest of the stack's preference for Intel-hardware-friendly, CPU-first inference (as in `embedding-service`'s ONNX Runtime usage).
+
+### Scope of Use
+Standalone service exposing an OpenAI-compatible `/v3/chat/completions` endpoint (model name `gemma-4-e4b-it`). It has no consumers yet — `core-service` integration (a chat feature usable by application users) is planned future work, not part of this iteration.
+
+### Abstraction Layer and Integration
+OVMS pulls the model repository from Hugging Face on first start (`--source_model`) into a mounted persistent volume, so restarts reuse the cached model instead of re-downloading it. No custom image build or model-baking step is needed.
+
+### Capabilities and Future Plans
+Planned follow-ups: wiring a client into `core-service` (port/adapter/use case, mirroring the existing `TextsEmbedder`/`RegulationSplitter` pattern), streaming responses, and revisiting continuous batching once OVMS/OpenVINO GenAI add PagedAttention support for Gemma-4.
+
+---
+
 ## Cloud Storage
 Currently not used, replaced by just local file hierarchy.
 

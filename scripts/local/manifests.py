@@ -12,6 +12,7 @@ MANIFESTS: tuple[tuple[Path, tuple[Path, ...]], ...] = (
     (LOCAL_K8S_DIR / "rustfs.yaml", ()),
     (LOCAL_K8S_DIR / "embedding-service.yaml", ()),
     (LOCAL_K8S_DIR / "extraction-service.yaml", ()),
+    (LOCAL_K8S_DIR / "llm-service.yaml", ()),
     (LOCAL_K8S_DIR / "prawobiorca-backend.yaml", (BACKEND_CONFIG,)),
     (LOCAL_K8S_DIR / "prawobiorca-worker.yaml", (BACKEND_CONFIG,)),
     (LOCAL_K8S_DIR / "prawobiorca-frontend.yaml", ()),

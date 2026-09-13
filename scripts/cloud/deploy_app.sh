@@ -19,6 +19,9 @@ kubectl apply -f deploy/gcp/embedding-service.yaml
 echo "Applying extraction-service..."
 kubectl apply -f deploy/gcp/extraction-service.yaml
 
+echo "Applying llm-service..."
+kubectl apply -f deploy/gcp/llm-service.yaml
+
 echo "Waiting for database..."
 kubectl rollout status deployment/postgres --timeout=180s
 
@@ -30,6 +33,9 @@ kubectl rollout status deployment/embedding-service --timeout=180s
 
 echo "Waiting for extraction-service..."
 kubectl rollout status deployment/extraction-service --timeout=180s
+
+echo "Waiting for llm-service..."
+kubectl rollout status deployment/llm-service --timeout=1200s
 
 echo "Applying backend..."
 kubectl apply -f deploy/gcp/prawobiorca-backend.yaml
