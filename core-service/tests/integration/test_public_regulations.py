@@ -9,6 +9,7 @@ from src.app.dtos.regulations import RegulationUploadTarget
 from src.domain.value_objects.legal_units import UnitType
 from src.domain.value_objects.regulations import RegulationPreparationStatus, RegulationType
 from src.framework.dependencies.ai_services import get_texts_embedder
+from src.infrastructure.relational_db.repositories.sections import PRIMARY_CHUNK_SCORE_WEIGHT
 from src.infrastructure.relational_db.schemas.regulations import regulations_table
 from src.infrastructure.relational_db.schemas.sections import (
     regulations_chunks_table,
@@ -16,7 +17,6 @@ from src.infrastructure.relational_db.schemas.sections import (
 )
 from src.main import prawobiorca
 from src.shared.consts import ACCESS_COOKIE_NAME, VECTOR_LENGTH
-from src.shared.settings.application import app_settings
 from tests.consts import ACCESS_TOKEN, USER_ID
 
 
@@ -198,10 +198,7 @@ async def test_search_scores_section_by_its_two_best_chunks(
             [QUERY_VECTOR, UNRELATED_VECTOR, UNRELATED_VECTOR],
         )
 
-    expected_score = (
-        app_settings.PRIMARY_CHUNK_SCORE_WEIGHT * 1.0
-        + (1 - app_settings.PRIMARY_CHUNK_SCORE_WEIGHT) * UNRELATED_SIMILARITY
-    )
+    expected_score = PRIMARY_CHUNK_SCORE_WEIGHT * 1.0 + (1 - PRIMARY_CHUNK_SCORE_WEIGHT) * UNRELATED_SIMILARITY
 
     try:
         response = await client.get(

@@ -4,12 +4,17 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class HttpxClientSettings(BaseSettings):
-    TIMEOUT: int = 10
-    MAX_CONNECTIONS: int = 100
-    MAX_KEEP_ALIVE_CONNECTIONS: int = 20
+    TIMEOUT: int = 30
+    MAX_CONNECTIONS: int = 20
+    MAX_KEEP_ALIVE_CONNECTIONS: int = 5
 
     model_config = SettingsConfigDict(
-        env_file=Path(".env"), extra="ignore", case_sensitive=True, frozen=True, env_prefix="HTTPX_"
+        env_file=Path(".env"),
+        extra="forbid",
+        dotenv_filtering="match_prefix",
+        case_sensitive=True,
+        frozen=True,
+        env_prefix="HTTPX_",
     )
 
 

@@ -11,12 +11,13 @@ from src.domain.exceptions.users import InvalidRefreshToken, UserCantLog
 from src.domain.services.security import decode_access_token, hash_refresh_token
 from src.domain.value_objects.auth import UserSession
 from src.domain.value_objects.users import UserPrivileges
+from src.shared.consts import JWT_ALGORITHM
 from src.shared.settings.application import app_settings
 from tests.consts import REFRESH_TOKEN, SESSION_ID, UNKNOWN_REFRESH_TOKEN, VALID_USERNAME
 
 
 def decode(access_token: str):
-    return decode_access_token(access_token, app_settings.JWT_SECRET_KEY, app_settings.JWT_ALGORITHM)
+    return decode_access_token(access_token, app_settings.JWT_SECRET_KEY, JWT_ALGORITHM)
 
 
 async def test_log_user_success(

@@ -8,7 +8,8 @@ from src.app.dtos.search import SearchParams, SearchResult, SearchResultElement
 from src.domain.exceptions.documents import RegulationDocumentsNotFound
 from src.domain.value_objects.sections import SectionsCollection
 from src.infrastructure.relational_db.schemas.sections import regulations_chunks_table, regulations_sections_table
-from src.shared.settings.application import app_settings
+
+PRIMARY_CHUNK_SCORE_WEIGHT = 0.8
 
 
 class RegulationsSectionsRepository:
@@ -97,7 +98,7 @@ class RegulationsSectionsRepository:
             .subquery()
         )
 
-        primary_weight = app_settings.PRIMARY_CHUNK_SCORE_WEIGHT
+        primary_weight = PRIMARY_CHUNK_SCORE_WEIGHT
         secondary_weight = 1 - primary_weight
 
         best_similarity = func.max(case((ranked_chunks.c.chunk_rank == 1, ranked_chunks.c.similarity)))

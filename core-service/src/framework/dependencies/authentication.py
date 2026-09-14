@@ -12,13 +12,12 @@ from src.domain.services.security import decode_access_token
 from src.domain.value_objects.users import UserPrivileges
 from src.framework.dependencies.relational import get_session_maker
 from src.framework.dependencies.users import get_users_repository, get_users_sessions_repository
-from src.shared.consts import ACCESS_COOKIE_NAME
+from src.shared.consts import ACCESS_COOKIE_NAME, JWT_ALGORITHM
 from src.shared.settings.application import app_settings
 
 logger = logging.getLogger(__name__)
 
 jwt_secret_key = app_settings.JWT_SECRET_KEY
-jwt_algorithm = app_settings.JWT_ALGORITHM
 
 
 async def authorize_user(request: Request):
@@ -27,7 +26,7 @@ async def authorize_user(request: Request):
     claims = None
     if access_token is not None:
         try:
-            claims = decode_access_token(access_token, jwt_secret_key, jwt_algorithm)
+            claims = decode_access_token(access_token, jwt_secret_key, JWT_ALGORITHM)
         except InvalidAccessToken:
             logger.warning("Request with invalid or expired access token!")
 

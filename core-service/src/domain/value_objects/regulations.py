@@ -12,10 +12,10 @@ from src.domain.value_objects.legal_units import (
     RegulationElement,
 )
 from src.domain.value_objects.sections import RegulationSection, SectionChunk, SectionsCollection
-from src.shared.settings.application import app_settings
-from src.shared.settings.tokenizer import tokenizer_settings
 
 SENTENCE_SPLIT_PATTERN = re.compile(r"(?<=[.;])\s+")
+
+CHUNK_MAX_TOKENS = 200
 
 MIN_CONTENT_TOKENS = 32
 
@@ -23,6 +23,9 @@ MAX_TITLE_TOKENS_SHARE = 0.25
 
 
 class Tokenizer(Protocol):
+    max_tokens: int
+    title_tokens_overhead: int
+
     def count_tokens(self, text: str) -> int: ...
 
 
@@ -78,7 +81,7 @@ class RegulationAct:
         if not segments:
             return None
 
-        max_title_tokens = int(app_settings.CHUNK_MAX_TOKENS * MAX_TITLE_TOKENS_SHARE)
+        max_title_tokens = int(CHUNK_MAX_TOKENS * MAX_TITLE_TOKENS_SHARE)
         title = BREADCRUMB_SEPARATOR.join(segments)
         while len(segments) > 1 and self._tokenizer.count_tokens(title) > max_title_tokens:
             segments = segments[1:]
@@ -88,9 +91,9 @@ class RegulationAct:
 
     def _count_content_budget(self, title: str | None) -> int:
         title_tokens = self._tokenizer.count_tokens(title) if title is not None else 0
-        tokens_limit = min(app_settings.CHUNK_MAX_TOKENS, tokenizer_settings.MAX_TOKENS)
+        tokens_limit = min(CHUNK_MAX_TOKENS, self._tokenizer.max_tokens)
 
-        content_budget = tokens_limit - title_tokens - tokenizer_settings.MAX_TITLE_TOKENS_OVERHEAD
+        content_budget = tokens_limit - title_tokens - self._tokenizer.title_tokens_overhead
 
         return max(content_budget, MIN_CONTENT_TOKENS)
 

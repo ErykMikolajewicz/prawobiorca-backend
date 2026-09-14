@@ -1,6 +1,5 @@
 import json
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -18,24 +17,16 @@ TITLE_TOKENS_OVERHEAD = 4
 
 
 class WordTokenizer:
+    max_tokens = 2048
+    title_tokens_overhead = TITLE_TOKENS_OVERHEAD
+
     def count_tokens(self, text: str) -> int:
         return len(text.split())
 
 
 @pytest.fixture(autouse=True)
-def token_settings():
-    with (
-        patch.object(
-            regulations_module,
-            "app_settings",
-            SimpleNamespace(CHUNK_MAX_TOKENS=CHUNK_MAX_TOKENS),
-        ),
-        patch.object(
-            regulations_module,
-            "tokenizer_settings",
-            SimpleNamespace(MAX_TOKENS=2048, MAX_TITLE_TOKENS_OVERHEAD=TITLE_TOKENS_OVERHEAD),
-        ),
-    ):
+def chunk_max_tokens():
+    with patch.object(regulations_module, "CHUNK_MAX_TOKENS", CHUNK_MAX_TOKENS):
         yield
 
 

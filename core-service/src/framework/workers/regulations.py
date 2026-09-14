@@ -60,7 +60,9 @@ async def prepare_regulation_task(
         sections_repository=RegulationsSectionsRepository(),
         regulations_repository=RegulationsManagerRepository(),
         regulation_preparator=RegulationPreparator(
-            regulations_splitter, SectionsEmbedder(texts_embedder), get_tokenizer()
+            regulations_splitter,
+            SectionsEmbedder(texts_embedder, embedding_service_settings.BATCH_SIZE),
+            get_tokenizer(),
         ),
     )
 

@@ -66,7 +66,7 @@ async def init_regulations():
             client=client,
             extraction_service_url=extraction_service_settings.URL,
         )
-        sections_embedder = SectionsEmbedder(texts_embedder)
+        sections_embedder = SectionsEmbedder(texts_embedder, embedding_service_settings.BATCH_SIZE)
         tokenizer = GemmaTokenizer()
         regulation_preparator = RegulationPreparator(
             regulation_splitter,

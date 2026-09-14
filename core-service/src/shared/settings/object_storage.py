@@ -10,11 +10,16 @@ class ObjectStorageSettings(BaseSettings):
     ACCESS_KEY: str = ...
     SECRET_KEY: str = ...
     BUCKET: str = ...
-    SIGNED_URL_EXPIRATION_SECONDS: int = ...
-    MAX_FILE_SIZE_BYTES: int = ...
+    SIGNED_URL_EXPIRATION_SECONDS: int = 3600
+    MAX_FILE_SIZE_BYTES: int = 10485760
 
     model_config = SettingsConfigDict(
-        env_file=Path(".env"), extra="ignore", case_sensitive=True, frozen=True, env_prefix="OBJECT_STORAGE_"
+        env_file=Path(".env"),
+        extra="forbid",
+        dotenv_filtering="match_prefix",
+        case_sensitive=True,
+        frozen=True,
+        env_prefix="OBJECT_STORAGE_",
     )
 
 

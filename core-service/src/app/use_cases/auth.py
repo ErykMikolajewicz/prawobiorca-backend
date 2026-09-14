@@ -17,18 +17,18 @@ from src.domain.services.security import (
     prevent_timing_attack,
 )
 from src.domain.value_objects.auth import AccessTokenClaims
+from src.shared.consts import JWT_ALGORITHM
 from src.shared.settings.application import app_settings
 
 logger = logging.getLogger(__name__)
 
 jwt_secret_key = app_settings.JWT_SECRET_KEY
-jwt_algorithm = app_settings.JWT_ALGORITHM
 access_token_expiration_seconds = app_settings.ACCESS_TOKEN_EXPIRATION_SECONDS
 refresh_token_expiration_seconds = app_settings.REFRESH_TOKEN_EXPIRATION_SECONDS
 
 
 def build_auth_tokens(claims: AccessTokenClaims, refresh_token: str) -> AuthTokens:
-    access_token = create_access_token(claims, jwt_secret_key, jwt_algorithm, access_token_expiration_seconds)
+    access_token = create_access_token(claims, jwt_secret_key, JWT_ALGORITHM, access_token_expiration_seconds)
 
     return AuthTokens(
         access_token=access_token,

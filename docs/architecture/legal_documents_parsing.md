@@ -87,7 +87,7 @@ chunking exists only so that a long article still embeds well.
 
 - Every unit with content becomes exactly **one** section, carrying the full unit text and the full
   breadcrumb as its `header`. Short articles are never merged with their neighbours.
-- The section is split into chunks of at most `APP_CHUNK_MAX_TOKENS` tokens (200 by default). A boundary
+- The section is split into chunks of at most `CHUNK_MAX_TOKENS` tokens (200). A boundary
   may only fall **between** elements (subsections, points).
 - An element longer than the budget is split on sentence boundaries, and — as a last resort — on token counts.
   Nothing raises: a single oversized paragraph must not fail the whole regulation.
@@ -110,7 +110,7 @@ score = 0.8 * best_chunk + 0.2 * second_best_chunk       (section with 2+ chunks
 score = 1.0 * best_chunk                                 (section with exactly 1 chunk)
 ```
 
-The weights come from `APP_PRIMARY_CHUNK_SCORE_WEIGHT` (the secondary weight is its complement), so they
+The weights come from the `PRIMARY_CHUNK_SCORE_WEIGHT` constant (the secondary weight is its complement), so they
 always sum to 1 and the score stays on the cosine scale — it is shown to the user as-is. `threshold` and
 `limit` of a search apply to this combined section score. The whole computation is one SQL statement in
 `RegulationsSectionsRepository.search`.

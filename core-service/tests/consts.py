@@ -2,6 +2,7 @@ from uuid import UUID
 
 from src.domain.services.security import create_access_token
 from src.domain.value_objects.auth import AccessTokenClaims
+from src.shared.consts import JWT_ALGORITHM
 from src.shared.settings.application import app_settings
 
 STRONG_PASSWORD = "StrongPassword12;"
@@ -24,7 +25,7 @@ def build_access_token(user_id: UUID = USER_ID, session_id: UUID = SESSION_ID, i
     claims = AccessTokenClaims(user_id=user_id, session_id=session_id, is_admin=is_admin)
 
     return create_access_token(
-        claims, app_settings.JWT_SECRET_KEY, app_settings.JWT_ALGORITHM, app_settings.ACCESS_TOKEN_EXPIRATION_SECONDS
+        claims, app_settings.JWT_SECRET_KEY, JWT_ALGORITHM, app_settings.ACCESS_TOKEN_EXPIRATION_SECONDS
     )
 
 
