@@ -14,12 +14,18 @@ Information about the currently used library versions can be found in the `pypro
 
 Below are the dependencies essential for the application to run, which should be included in the production release.
 
+### Alembic
+A tool for performing database migrations. Works in tandem with [SQLAlchemy](#sqlalchemyasyncio) and is essentially irreplaceable when using this ORM.
+Shipped in the application image, so migrations run from the same image as the application, only with the `alembic upgrade head` command. Also used in tests to initialize tables and schemas in the database.
+
+---
+
 ### asyncpg
 
 Chosen as an asynchronous Postgres client, consistent with the philosophy of the [FastAPI](#fastapi) framework, which encourages asynchronous code.  
 The downside is connection sharing issues during tests — see the [integration tests](../tests/integration_fixtures.md) section for more details.
 
-`asyncpg` was selected due to its top performance in benchmarks. `psycopg3` was also considered, as its support for both synchronous and asynchronous APIs could simplify certain operations (e.g., `alembic` migrations, which are already used as an optional dependency). However, performance was deemed more critical due to frequent database reads.
+`asyncpg` was selected due to its top performance in benchmarks. `psycopg3` was also considered, as its support for both synchronous and asynchronous APIs could simplify certain operations (e.g., `alembic` migrations). However, performance was deemed more critical due to frequent database reads.
 
 Switching the driver later should be relatively easy thanks to the use of the [SQLAlchemy](#sqlalchemyasyncio) ORM.
 
@@ -154,11 +160,6 @@ Pulls in `botocore` transitively for the underlying S3 request signing (includin
 ## Dev/Test Dependencies
 
 Dependencies are required during the development process, writing tests, or debugging. Unlike the main dependencies section, they are not required to run the application in a production environment.
-
----
-
-### Alembic
-A tool for performing database migrations. Especially useful in tests, as it allows initializing tables and schemas in the database. Works in tandem with [SQLAlchemy](#sqlalchemyasyncio) and is essentially irreplaceable when using this ORM.
 
 ---
 

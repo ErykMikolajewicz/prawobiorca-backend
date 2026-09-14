@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: prawobiorca-migrations
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      labels:
+        app: prawobiorca
+        component: prawobiorca-migrations
+    spec:
+      serviceAccountName: prawobiorca-runner
+      restartPolicy: Never
+      containers:
+        - name: prawobiorca-migrations
+          image: europe-central2-docker.pkg.dev/prawobiorca/prawobiorca-repo/prawobiorca-backend:latest
+          command: ["alembic", "upgrade", "head"]
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          volumeMounts:
+            - name: secrets-store
+              mountPath: "/mnt/secrets-store"
+              readOnly: true
+          envFrom:
+            - configMapRef:
+                name: prawobiorca-backend-config
+          env:
+            - name: RELATIONAL_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: prawobiorca-secrets
+                  key: POSTGRES_PASSWORD
+      volumes:
+        - name: secrets-store
+          csi:
+            driver: secrets-store-gke.csi.k8s.io
+            readOnly: true
+            volumeAttributes:
+              secretProviderClass: prawobiorca-secrets

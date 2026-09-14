@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: prawobiorca-migrations
+  labels:
+    app: prawobiorca
+    component: prawobiorca-migrations
+spec:
+  restartPolicy: Never
+  containers:
+    - name: prawobiorca-migrations
+      image: localhost/prawobiorca-backend:latest
+      command: ["alembic", "upgrade", "head"]
+      envFrom:
+        - configMapRef:
+            name: prawobiorca-backend-config
+      env:
+        - name: RELATIONAL_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: prawobiorca-secrets
+              key: POSTGRES_PASSWORD

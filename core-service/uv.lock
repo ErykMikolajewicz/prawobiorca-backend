@@ -346,6 +346,7 @@ version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
     { name = "aiobotocore" },
+    { name = "alembic" },
     { name = "asyncpg" },
     { name = "bcrypt" },
     { name = "email-validator" },
@@ -375,7 +376,6 @@ docs = [
     { name = "zensical" },
 ]
 test = [
-    { name = "alembic" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -385,6 +385,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "aiobotocore", specifier = "==3.9.*" },
+    { name = "alembic", specifier = "==1.19.*" },
     { name = "asyncpg", specifier = "==0.31.*" },
     { name = "bcrypt", specifier = "==5.0.*" },
     { name = "email-validator", specifier = "==2.3.*" },
@@ -414,7 +415,6 @@ docs = [
     { name = "zensical", specifier = "==0.0.59" },
 ]
 test = [
-    { name = "alembic", specifier = "==1.19.*" },
     { name = "pytest", specifier = "==9.1.*" },
     { name = "pytest-asyncio", specifier = "==1.4.*" },
     { name = "pytest-cov", specifier = "==7.1.*" },

@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = "==3.14.*"
 dependencies = [
     "aiobotocore==3.9.*",
+    "alembic==1.19.*",
     "asyncpg==0.31.*",
     "bcrypt==5.0.*",
     "email-validator==2.3.*",
@@ -36,7 +37,6 @@ docs = [
 ]
 
 test = [
-    "alembic==1.19.*",
     "pytest==9.1.*",
     "pytest-asyncio==1.4.*",
     "pytest-cov==7.1.*",

@@ -16,6 +16,8 @@ RUN uv sync --compile-bytecode --no-cache --no-default-groups
 ENV PATH="/prawobiorca/.venv/bin:$PATH"
 
 COPY src src
+COPY alembic.ini alembic.ini
+COPY alembic alembic
 
 EXPOSE 8000
 

@@ -1,9 +1,11 @@
 import os
 import signal
 import subprocess
+import time
 
 RUSTFS_CORS_ALLOWED_ORIGINS = "http://localhost:4173,http://localhost:5173,http://localhost:8080"
 WORKER_SHUTDOWN_TIMEOUT = 3
+POSTGRES_READY_TIMEOUT = 60
 
 
 def run_command(cmd):
@@ -33,6 +35,23 @@ def run_container_if_not_running(name, args):
         subprocess.run(cmd, shell=True, check=True)
 
 
+def wait_for_postgres(name):
+    for _ in range(POSTGRES_READY_TIMEOUT):
+        result = subprocess.run(
+            ["podman", "exec", name, "pg_isready", "-h", "localhost", "-U", "postgres"],
+            capture_output=True,
+        )
+        if result.returncode == 0:
+            return
+        time.sleep(1)
+    raise RuntimeError("Postgres is not ready.")
+
+
+def run_migrations():
+    print("Running migrations.")
+    subprocess.run(["alembic", "upgrade", "head"], check=True)
+
+
 def run_worker():
     print("Launching taskiq worker.")
     # Own session, so Ctrl+C in the terminal does not reach the worker - stop_worker owns its lifecycle.
@@ -60,6 +79,8 @@ def main():
         "-e POSTGRES_PASSWORD=postgres -p 127.0.0.1:5432:5432"
         " -v pg-data:/var/lib/postgresql pgvector:0.8.4-pg18-trixie",
     )
+    wait_for_postgres("postgres_db_prawobiorca")
+    run_migrations()
 
     run_container_if_not_running(
         "rustfs",
