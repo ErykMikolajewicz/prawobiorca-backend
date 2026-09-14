@@ -13,12 +13,10 @@ DATA_DIR = Path(__file__).parents[3] / "data"
 ACT_FIXTURE = "ustawa-nauka_slice_30-31"
 
 CHUNK_MAX_TOKENS = 60
-TITLE_TOKENS_OVERHEAD = 4
 
 
 class WordTokenizer:
     max_tokens = 2048
-    title_tokens_overhead = TITLE_TOKENS_OVERHEAD
 
     def count_tokens(self, text: str) -> int:
         return len(text.split())
@@ -157,6 +155,15 @@ def test_section_header_has_no_part_suffix():
     section = create_sections(elements)[0]
 
     assert section.header == "Art. 110"
+
+
+def test_chunk_embedding_text_with_title_fits_limit():
+    elements = create_subsections(subsections_count=6, words_per_subsection=26)
+
+    section = create_sections(elements)[0]
+
+    for chunk in section.chunks:
+        assert len(chunk.embedding_text.split()) <= CHUNK_MAX_TOKENS
 
 
 def test_element_longer_than_budget_is_split_by_sentences():

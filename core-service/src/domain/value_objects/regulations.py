@@ -24,7 +24,6 @@ MAX_TITLE_TOKENS_SHARE = 0.25
 
 class Tokenizer(Protocol):
     max_tokens: int
-    title_tokens_overhead: int
 
     def count_tokens(self, text: str) -> int: ...
 
@@ -53,18 +52,14 @@ class RegulationAct:
             return None
 
         embed_title = self._fit_title(unit)
-        content_budget = self._count_content_budget(embed_title)
-        parts = self._split_to_parts(unit.elements, content_budget)
-        part_titles = self._create_part_titles(embed_title, parts)
-
-        chunks = [
-            SectionChunk(
-                text=" ".join(element.text for element in part),
-                embed_title=part_title,
-                chunk_index=chunk_index,
-            )
-            for chunk_index, (part, part_title) in enumerate(zip(parts, part_titles, strict=True))
-        ]
+        tokens_limit = min(CHUNK_MAX_TOKENS, self._tokenizer.max_tokens)
+        content_budget = self._count_content_budget(embed_title, tokens_limit)
+        chunks = self._create_chunks(unit.elements, embed_title, content_budget)
+        overflow = self._count_overflow(chunks, tokens_limit)
+        while overflow > 0 and content_budget > MIN_CONTENT_TOKENS:
+            content_budget = max(content_budget - overflow, MIN_CONTENT_TOKENS)
+            chunks = self._create_chunks(unit.elements, embed_title, content_budget)
+            overflow = self._count_overflow(chunks, tokens_limit)
 
         return RegulationSection(
             header=unit.breadcrumb,
@@ -75,6 +70,26 @@ class RegulationAct:
             unit_path=list(unit.path),
             elements=list(unit.elements),
         )
+
+    def _create_chunks(
+        self, elements: list[LegalUnitElement], embed_title: str | None, content_budget: int
+    ) -> list[SectionChunk]:
+        parts = self._split_to_parts(elements, content_budget)
+        part_titles = self._create_part_titles(embed_title, parts)
+
+        return [
+            SectionChunk(
+                text=" ".join(element.text for element in part),
+                embed_title=part_title,
+                chunk_index=chunk_index,
+            )
+            for chunk_index, (part, part_title) in enumerate(zip(parts, part_titles, strict=True))
+        ]
+
+    def _count_overflow(self, chunks: list[SectionChunk], tokens_limit: int) -> int:
+        max_chunk_tokens = max(self._tokenizer.count_tokens(chunk.embedding_text) for chunk in chunks)
+
+        return max_chunk_tokens - tokens_limit
 
     def _fit_title(self, unit: LegalUnit) -> str | None:
         segments = unit.breadcrumb_segments
@@ -89,11 +104,10 @@ class RegulationAct:
 
         return title
 
-    def _count_content_budget(self, title: str | None) -> int:
-        title_tokens = self._tokenizer.count_tokens(title) if title is not None else 0
-        tokens_limit = min(CHUNK_MAX_TOKENS, self._tokenizer.max_tokens)
+    def _count_content_budget(self, title: str | None, tokens_limit: int) -> int:
+        prefix_tokens = self._tokenizer.count_tokens(SectionChunk(text="", embed_title=title).embedding_text)
 
-        content_budget = tokens_limit - title_tokens - self._tokenizer.title_tokens_overhead
+        content_budget = tokens_limit - prefix_tokens
 
         return max(content_budget, MIN_CONTENT_TOKENS)
 

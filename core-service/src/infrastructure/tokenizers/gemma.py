@@ -5,7 +5,6 @@ from tokenizers import Tokenizer as HFTokenizer
 
 class GemmaTokenizer:
     max_tokens = 2048
-    title_tokens_overhead = 16
 
     def __init__(self, tokenizer_path: str | Path | None = None):
         if tokenizer_path is None:

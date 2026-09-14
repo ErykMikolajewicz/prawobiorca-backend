@@ -89,6 +89,9 @@ chunking exists only so that a long article still embeds well.
   breadcrumb as its `header`. Short articles are never merged with their neighbours.
 - The section is split into chunks of at most `CHUNK_MAX_TOKENS` tokens (200). A boundary
   may only fall **between** elements (subsections, points).
+- The limit applies to the whole text sent for embedding (`SectionChunk.embedding_text`): the prefix, the
+  `embed_title` with its suffix, and the content. When a chunk still exceeds it after splitting, the whole
+  section is split again with a smaller budget, down to `MIN_CONTENT_TOKENS`.
 - An element longer than the budget is split on sentence boundaries, and — as a last resort — on token counts.
   Nothing raises: a single oversized paragraph must not fail the whole regulation.
 - Each chunk carries an `embed_title` used only for the embedding prefix: the breadcrumb, trimmed from the

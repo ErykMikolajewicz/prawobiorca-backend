@@ -14,6 +14,11 @@ class SectionChunk:
     vector: list[float] | None = None
     id: UUID = field(default_factory=uuid4)
 
+    @property
+    def embedding_text(self) -> str:
+        title = self.embed_title or "none"
+        return f"title: {title} | text: {self.text}"
+
 
 @dataclass
 class RegulationSection:
