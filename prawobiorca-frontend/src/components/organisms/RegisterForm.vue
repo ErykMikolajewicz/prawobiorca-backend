@@ -44,7 +44,7 @@ const onSubmit = async () => {
 </script>
 
 <template>
-  <el-form :model="form" @keyup.enter="onSubmit" label-position="top">
+  <el-form :model="form" label-position="top" @keyup.enter="onSubmit">
     <el-alert
       v-if="errorMessage"
       :title="errorMessage"
@@ -55,11 +55,11 @@ const onSubmit = async () => {
     />
 
     <el-form-item label="Nazwa użytkownika:" prop="username">
-      <el-input v-model="form.username" id="username" required />
+      <el-input id="username" v-model="form.username" required />
     </el-form-item>
 
     <el-form-item label="Hasło:" prop="password">
-      <el-input v-model="form.password" type="password" id="password" show-password required />
+      <el-input id="password" v-model="form.password" type="password" show-password required />
     </el-form-item>
 
     <el-form-item>

@@ -39,8 +39,20 @@ pnpm build
 pnpm test:unit
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+### Lint with [Oxlint](https://oxc.rs/docs/guide/usage/linter) and [ESLint](https://eslint.org/)
 
 ```sh
 pnpm lint
+```
+
+### Format with [Oxfmt](https://oxc.rs/docs/guide/usage/formatter)
+
+```sh
+pnpm format
+```
+
+### Check Lint and Formatting Without Fixing
+
+```sh
+pnpm check
 ```

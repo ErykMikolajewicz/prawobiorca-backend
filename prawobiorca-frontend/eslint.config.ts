@@ -3,7 +3,6 @@ import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescri
 import pluginVue from 'eslint-plugin-vue'
 import pluginVitest from '@vitest/eslint-plugin'
 import pluginOxlint from 'eslint-plugin-oxlint'
-import stylistic from '@stylistic/eslint-plugin'
 
 export default defineConfigWithVueTs(
   {
@@ -13,24 +12,21 @@ export default defineConfigWithVueTs(
 
   globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
 
-  ...pluginVue.configs['flat/essential'],
+  ...pluginVue.configs['flat/recommended'],
   vueTsConfigs.recommended,
 
   {
-    plugins: {
-      '@stylistic': stylistic,
-    },
     rules: {
-      semi: 'off',
-      '@typescript-eslint/semi': 'off',
-      '@stylistic/semi': ['error', 'never'],
+      'vue/max-attributes-per-line': 'off',
+      'vue/singleline-html-element-content-newline': 'off',
+      'vue/html-indent': 'off',
+      'vue/html-self-closing': 'off',
     },
-
   },
 
   {
     ...pluginVitest.configs.recommended,
-    files: ['src/**/__tests__/*'],
+    files: ['src/**/__tests__/**'],
   },
 
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json')

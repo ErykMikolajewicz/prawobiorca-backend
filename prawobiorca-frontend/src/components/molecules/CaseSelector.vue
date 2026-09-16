@@ -29,8 +29,8 @@ const handleCaseSelect = (caseId: string) => {
     <el-select
       v-model="currentCaseId"
       placeholder="-- Wybierz z listy --"
-      @change="handleCaseSelect"
       clearable
+      @change="handleCaseSelect"
     >
       <el-option
         v-for="userCase in cases"

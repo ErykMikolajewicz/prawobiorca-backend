@@ -5,6 +5,7 @@
     "browser": true
   },
   "categories": {
-    "correctness": "error"
+    "correctness": "error",
+    "suspicious": "error"
   }
 }

@@ -59,5 +59,5 @@ export function useRegulationsPolling(
 
   onUnmounted(stop)
 
-  return { }
+  return {}
 }

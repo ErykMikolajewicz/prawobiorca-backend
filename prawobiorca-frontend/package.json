@@ -13,7 +13,11 @@
     "lint": "run-s lint:*",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
-    "format": "oxfmt src/"
+    "format": "oxfmt src/",
+    "check": "run-s check:*",
+    "check:oxlint": "oxlint .",
+    "check:eslint": "eslint . --cache",
+    "check:format": "oxfmt --check src/"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
@@ -25,7 +29,6 @@
     "vue-router": "^5.0.6"
   },
   "devDependencies": {
-    "@stylistic/eslint-plugin": "^5.10.0",
     "@tsconfig/node24": "^24.0.4",
     "@types/jsdom": "^28.0.1",
     "@types/node": "^24.12.2",

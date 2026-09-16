@@ -48,8 +48,8 @@ const onSubmit = async () => {
 
     <el-form-item label="Nazwa użytkownika:" prop="username">
       <el-input
-        v-model="form.username"
         id="username"
+        v-model="form.username"
         name="username"
         autocomplete="username"
         required
@@ -58,9 +58,9 @@ const onSubmit = async () => {
 
     <el-form-item label="Hasło:" prop="password">
       <el-input
+        id="password"
         v-model="form.password"
         type="password"
-        id="password"
         name="password"
         autocomplete="current-password"
         show-password

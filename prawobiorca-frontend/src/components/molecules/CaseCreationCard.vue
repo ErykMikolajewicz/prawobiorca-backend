@@ -37,9 +37,9 @@ defineExpose({
   <el-card shadow="never" class="form-card" @click="inputRef?.focus()">
     <form class="case-form" action="/user/cases" method="post" @submit.prevent="createCase">
       <input
+        id="case_name"
         ref="inputRef"
         v-model="newCaseName"
-        id="case_name"
         name="case_name"
         placeholder="Utwórz nową sprawę..."
         required

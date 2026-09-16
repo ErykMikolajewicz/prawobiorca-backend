@@ -25,7 +25,7 @@ const emit = defineEmits<{
       <CaseCard
         v-for="(userCase, index) in props.cases"
         :key="userCase.id"
-        :userCase="userCase"
+        :user-case="userCase"
         :index="index + 1"
         @deleted="(id) => emit('case-deleted', id)"
       />

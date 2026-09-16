@@ -65,7 +65,7 @@ const handleGeneratePdf = async (description: string) => {
         <el-col :span="12" :xs="24">
           <section>
             <h2>Kontekst / Opis Wniosku</h2>
-            <GeneratePdfForm :caseId="caseId" @generate-pdf="handleGeneratePdf" />
+            <GeneratePdfForm :case-id="caseId" @generate-pdf="handleGeneratePdf" />
           </section>
         </el-col>
       </el-row>

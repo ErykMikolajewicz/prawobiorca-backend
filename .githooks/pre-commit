@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-set -eu pipefail
+set -euo pipefail
 
 ruff check . --fix
 ruff format
 
 uv run poe test
+
+(cd prawobiorca-frontend && pnpm check)
 
 git add -u

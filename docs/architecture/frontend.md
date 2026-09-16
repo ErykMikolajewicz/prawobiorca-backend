@@ -75,5 +75,6 @@ All commands are run from the `prawobiorca-frontend/` directory:
 | `pnpm test:unit` | Run unit tests with Vitest. |
 | `pnpm lint` | Run oxlint and ESLint with autofix. |
 | `pnpm format` | Format `src/` with oxfmt. |
+| `pnpm check` | Run oxlint, ESLint and oxfmt without fixing; used by the pre-commit hook. |
 
 A JetBrains IDE (PyCharm Professional, free for students under a non-commercial licence) with the Vue plugin is recommended, so that the whole repository — Python services and frontend — is handled by a single IDE. In VS Code, the [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) extension is required to make the TypeScript language service aware of `.vue` types.

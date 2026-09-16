@@ -95,7 +95,7 @@ async function handleAddToCase(payload: { documentContent: string }) {
         <el-icon><ArrowLeft /></el-icon> Powrót do głównego ekranu
       </el-button>
 
-      <CaseSelector :cases="cases" v-model:selectedCaseId="selectedCaseId" />
+      <CaseSelector v-model:selected-case-id="selectedCaseId" :cases="cases" />
 
       <h1>Przeszukaj regulacje: {{ regulationName }}</h1>
 
