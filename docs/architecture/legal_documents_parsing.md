@@ -75,7 +75,9 @@ of the unit instead of a breadcrumb segment.
 
 Divisions are recognised only on elements labelled `section_header` — in Polish acts they are always centered
 headings, and Docling detects those reliably. A `section_header` that carries no division keyword becomes
-a breadcrumb segment of the lowest rank, which keeps unstructured documents working as before.
+a breadcrumb segment of the lowest rank, which keeps unstructured documents working as before. The exception is
+a `section_header` that opens with a point (`1)`) or a letter (`a)`), optionally preceded by the `<` marking
+a provision not yet in force — Docling mislabels those, so they are kept as content of the current unit.
 
 ---
 

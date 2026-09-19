@@ -17,6 +17,8 @@ PARAGRAPH_PATTERN = re.compile(r"^§\s*(\d+[a-z]*)\s*\.?")
 ARTICLE_HEADER_PATTERN = re.compile(r"\bArt\.\s*(\d+[a-z]*)\s*\.?")
 PARAGRAPH_HEADER_PATTERN = re.compile(r"§\s*(\d+[a-z]*)\s*\.?")
 SUBSECTION_PATTERN = re.compile(r"^(\d+[a-z]*)\.\s")
+POINT_PATTERN = re.compile(r"^<?\d+[a-z]*\)\s")
+LETTER_PATTERN = re.compile(r"^<?[a-z]\)\s")
 GLUED_ARTICLE_PATTERN = re.compile(r"(?<=[.;:])\s+(?=Art\.\s*\d+[a-z]*\s*\.)")
 
 WHITESPACE_PATTERN = re.compile(r"\s+")
@@ -195,7 +197,7 @@ class LegalStructureParser:
         # ARTICLE_PATTERN is never needed here: any header starting with "Art." would already have been
         # caught by _match_unit (ARTICLE_HEADER_PATTERN.search matches everything ARTICLE_PATTERN.match does,
         # and more), so execution never reaches this point with such text.
-        return PARAGRAPH_PATTERN.match(text) is not None
+        return any(pattern.match(text) is not None for pattern in (PARAGRAPH_PATTERN, POINT_PATTERN, LETTER_PATTERN))
 
     @staticmethod
     def _append_element(unit: LegalUnit, text: str) -> None:

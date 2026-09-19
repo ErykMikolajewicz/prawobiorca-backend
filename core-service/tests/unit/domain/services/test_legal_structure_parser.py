@@ -10,6 +10,7 @@ DATA_DIR = Path(__file__).parents[3] / "data"
 
 ACT_FIXTURE = "ustawa-nauka_slice_30-31"
 STATUTE_FIXTURE = "pwr-regulamin_2025_slice_7-9"
+PROMOTION_DATABASE_FIXTURE = "ustawa-nauka_slice_209-210"
 
 
 def load_regulation_elements(regulation_name: str) -> list[RegulationElement]:
@@ -134,6 +135,43 @@ def test_paragraph_is_treated_as_content_when_act_uses_articles():
     assert units[0].unit_type == UnitType.ARTICLE
     assert units[0].number == "5"
     assert len(units[0].elements) == 2
+
+
+def test_points_labelled_as_headers_stay_in_article():
+    elements = load_regulation_elements(PROMOTION_DATABASE_FIXTURE)
+
+    units = LegalStructureParser().parse(elements)
+
+    article = next(unit for unit in units if unit.number == "349")
+    article_texts = [element.text for element in article.elements]
+    assert "1) imiona i nazwisko;" in article_texts
+    assert "<1a) stopień albo tytuł profesora;" in article_texts
+    assert "5) informacje o wzorach:" in article_texts
+    assert units[-1] is article
+
+
+def test_points_labelled_as_headers_inherit_subsection():
+    elements = load_regulation_elements(PROMOTION_DATABASE_FIXTURE)
+
+    units = LegalStructureParser().parse(elements)
+
+    article = next(unit for unit in units if unit.number == "349")
+    point = next(element for element in article.elements if element.text.startswith("<3a)"))
+    assert point.subsection == "1"
+
+
+def test_letter_labelled_as_header_is_content():
+    elements = [
+        RegulationElement(label=UsefulLabels.TEXT, text="Art. 5. 1. Baza obejmuje:"),
+        RegulationElement(label=UsefulLabels.LIST_ITEM, text="1) informacje o wzorach:"),
+        RegulationElement(label=UsefulLabels.SECTION_HEADER, text="a) dyplomów ukończenia studiów,"),
+    ]
+
+    units = LegalStructureParser().parse(elements)
+
+    assert len(units) == 1
+    assert len(units[0].elements) == 3
+    assert units[0].path == []
 
 
 def test_nested_divisions_build_full_path():

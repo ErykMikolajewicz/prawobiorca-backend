@@ -4,7 +4,12 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Protocol
 
-from src.domain.services.legal_structure_parser import SUBSECTION_PATTERN, LegalStructureParser
+from src.domain.services.legal_structure_parser import (
+    LETTER_PATTERN,
+    POINT_PATTERN,
+    SUBSECTION_PATTERN,
+    LegalStructureParser,
+)
 from src.domain.value_objects.legal_units import (
     BREADCRUMB_SEPARATOR,
     LegalUnit,
@@ -14,8 +19,6 @@ from src.domain.value_objects.legal_units import (
 from src.domain.value_objects.sections import ChunkSpan, RegulationSection, SectionChunk, SectionsCollection
 
 SENTENCE_SPLIT_PATTERN = re.compile(r"(?<=[.;])\s+")
-POINT_PATTERN = re.compile(r"^\d+[a-z]*\)\s")
-LETTER_PATTERN = re.compile(r"^[a-z]\)\s")
 
 BLOCK_PATTERNS = (SUBSECTION_PATTERN, POINT_PATTERN, LETTER_PATTERN)
 
