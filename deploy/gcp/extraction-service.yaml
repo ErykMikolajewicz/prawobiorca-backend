@@ -26,6 +26,12 @@ spec:
             limits:
               cpu: "2"
               memory: "4Gi"
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 30
           readinessProbe:
             httpGet:
               path: /health
@@ -51,3 +57,33 @@ spec:
   ports:
     - port: 8080
       targetPort: 8080
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: extraction-service-proxy
+spec:
+  type: ExternalName
+  externalName: keda-add-ons-http-interceptor-proxy.keda.svc.cluster.local
+
+---
+apiVersion: http.keda.sh/v1alpha1
+kind: HTTPScaledObject
+metadata:
+  name: extraction-service
+spec:
+  hosts:
+    - extraction-service-proxy
+  scaleTargetRef:
+    name: extraction-service
+    kind: Deployment
+    apiVersion: apps/v1
+    service: extraction-service
+    port: 8080
+  replicas:
+    min: 0
+    max: 1
+  timeouts:
+    conditionWait: 5m
+    responseHeader: 25m

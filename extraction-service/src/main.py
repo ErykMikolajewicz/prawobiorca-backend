@@ -23,6 +23,7 @@ async def lifespan(application: FastAPI):
     application.state.converter = DocumentConverter(
         format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)}
     )
+    application.state.converter.initialize_pipeline(InputFormat.PDF)
     yield
 
 

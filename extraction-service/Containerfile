@@ -23,6 +23,10 @@ COPY uv.lock uv.lock
 
 RUN uv sync --compile-bytecode --no-cache
 
+RUN .venv/bin/docling-tools models download layout tableformer rapidocr -o /extraction-service/models
+
+ENV DOCLING_ARTIFACTS_PATH=/extraction-service/models
+
 COPY src src
 
 EXPOSE 8080

@@ -71,8 +71,9 @@ Hosts the core domain logic, user-facing endpoints, and background document inde
   * Document layout analysis, and text extraction (PDFs) into structured JSON format, using Docling.
 * **Characteristics**:
   * Completely stateless service.
-  * **Scale-to-0 on GCP**: Instances spin up on incoming HTTP processing requests and scale down to 0 during idle periods, significantly reducing RAM and compute costs.
-  * Runs as a dedicated container in On-Premise deployments.
+  * **Scale-to-0 on GCP**: a KEDA `HTTPScaledObject` (HTTP add-on) scales the Deployment between 0 and 1 replicas based on incoming request volume. `core-service` reaches it through the `extraction-service-proxy` ExternalName Service, which points to the add-on's interceptor proxy; the interceptor holds the request until the replica is ready.
+  * **Fast cold start**: the image uses CPU-only PyTorch and has the Docling models (layout, TableFormer, RapidOCR) baked in, so no model download happens at startup; models are loaded eagerly before the service reports healthy.
+  * Runs as a dedicated container in On-Premise deployments (single replica, no scale-to-0).
 
 ### 2.4. `llm-service`
 * **Responsibilities**:
