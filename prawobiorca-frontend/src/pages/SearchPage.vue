@@ -15,7 +15,7 @@ import { useAuthStore } from '@/stores/auth'
 import { getCases } from '@/api/cases'
 import type { caseData } from '@/types/api/cases'
 import { addDocumentToCase } from '@/api/documents.ts'
-import type { searchResult, searchParams } from '@/types/api/search.ts'
+import type { searchResult, searchParams, searchOrder } from '@/types/api/search.ts'
 import { searchRegulation, searchUserRegulation } from '@/api/regulations.ts'
 
 const route = useRoute()
@@ -29,6 +29,7 @@ const searchParams = ref<searchParams>({
   query: (route.query.query as string) || '',
   threshold: route.query.threshold !== undefined ? Number(route.query.threshold) : 0.2,
   limit: route.query.limit ? Number(route.query.limit) : undefined,
+  order_by: (route.query.order_by as searchOrder) || 'document',
 })
 
 const cases = ref<Array<caseData>>([])

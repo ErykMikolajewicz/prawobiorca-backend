@@ -14,6 +14,7 @@ const emit = defineEmits<{
 const searchParams = reactive<searchParams>({
   ...props.searchParams,
   threshold: props.searchParams.threshold ?? 0.2,
+  order_by: props.searchParams.order_by ?? 'document',
 })
 
 function onSubmit() {
@@ -65,6 +66,12 @@ function onSubmit() {
         </el-form-item>
       </el-col>
     </el-row>
+    <el-form-item label="Kolejność wyników:">
+      <el-radio-group v-model="searchParams.order_by" @change="onSubmit">
+        <el-radio-button value="document">Wg aktu prawnego</el-radio-button>
+        <el-radio-button value="score">Wg trafności</el-radio-button>
+      </el-radio-group>
+    </el-form-item>
     <el-form-item>
       <el-button native-type="submit">Przeszukaj</el-button>
     </el-form-item>

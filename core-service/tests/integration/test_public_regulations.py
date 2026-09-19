@@ -217,6 +217,40 @@ async def test_search_scores_section_by_its_two_best_chunks(
             await session.execute(delete(regulations_table).where(regulations_table.c.id == regulation_id))
 
 
+@pytest.mark.parametrize(
+    ("order_by", "expected_numbers"),
+    [
+        ("document", ["112", "113"]),
+        ("score", ["113", "112"]),
+    ],
+)
+async def test_search_orders_results(
+    client, override_session_maker, session_maker, set_user, clean_user, order_by, expected_numbers
+):
+    prawobiorca.dependency_overrides[get_texts_embedder] = lambda: StubTextsEmbedder()
+
+    async with session_maker.begin() as session:
+        regulation_id = await insert_regulation(session, None, "Public ordered regulation.pdf")
+
+        await insert_section(
+            session, regulation_id, None, "112", "Lower score section", 0, [QUERY_VECTOR, UNRELATED_VECTOR]
+        )
+        await insert_section(session, regulation_id, None, "113", "Higher score section", 1, [QUERY_VECTOR])
+
+    try:
+        response = await client.get(
+            f"/api/regulations/{regulation_id}/documents",
+            params={"threshold": 0.5, "limit": 10, "query": "public document query", "order_by": order_by},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert [result["unit_number"] for result in response.json()] == expected_numbers
+    finally:
+        prawobiorca.dependency_overrides.pop(get_texts_embedder, None)
+        async with session_maker.begin() as session:
+            await session.execute(delete(regulations_table).where(regulations_table.c.id == regulation_id))
+
+
 async def test_add_public_regulation_as_admin(
     client,
     override_session_maker,

@@ -1,3 +1,4 @@
+from enum import StrEnum
 from uuid import UUID
 
 from fastapi import Query
@@ -22,7 +23,13 @@ class SearchResult(BaseModel):
     elements: list[SearchResultElement] | None = None
 
 
+class SearchOrder(StrEnum):
+    DOCUMENT = "document"
+    SCORE = "score"
+
+
 class SearchParams(BaseModel):
     threshold: float = Query(ge=-1, le=1)
     limit: int | None = Query(default=None, gt=0)
     query: str = Query()
+    order_by: SearchOrder = Query(default=SearchOrder.DOCUMENT)

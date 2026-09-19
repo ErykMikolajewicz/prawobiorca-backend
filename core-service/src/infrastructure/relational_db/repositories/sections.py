@@ -4,7 +4,7 @@ from uuid import UUID
 from sqlalchemy import case, delete, func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.app.dtos.search import SearchParams, SearchResult, SearchResultElement
+from src.app.dtos.search import SearchOrder, SearchParams, SearchResult, SearchResultElement
 from src.domain.exceptions.documents import RegulationDocumentsNotFound
 from src.domain.value_objects.sections import SectionsCollection
 from src.infrastructure.relational_db.schemas.sections import regulations_chunks_table, regulations_sections_table
@@ -118,6 +118,11 @@ class RegulationsSectionsRepository:
             .subquery()
         )
 
+        if search_params.order_by == SearchOrder.SCORE:
+            result_order = scored_sections.c.score.desc()
+        else:
+            result_order = regulations_sections_table.c.section_order.asc()
+
         query = (
             select(
                 regulations_sections_table.c.id,
@@ -134,7 +139,7 @@ class RegulationsSectionsRepository:
                     scored_sections, scored_sections.c.section_id == regulations_sections_table.c.id
                 )
             )
-            .order_by(regulations_sections_table.c.section_order.asc())
+            .order_by(result_order)
         )
 
         result = await session.execute(query)

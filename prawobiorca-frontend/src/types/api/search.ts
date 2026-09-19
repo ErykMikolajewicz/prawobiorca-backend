@@ -8,8 +8,11 @@ export type searchResult = {
   elements: Array<searchResultElement> | null
 }
 
+export type searchOrder = 'document' | 'score'
+
 export type searchParams = {
   query: string
   threshold: number
   limit?: number
+  order_by: searchOrder
 }
