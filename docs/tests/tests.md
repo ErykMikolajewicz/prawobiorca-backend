@@ -6,8 +6,8 @@ Within the project, we maintain the following types of tests:
 
 - **Unit tests**
 - **Integration tests**
-- **Integration tests of the AI services** (`extraction-service`, `embedding-service`) — each service keeps them in its own
-`tests/` directory and they are run with `poe test_extraction` / `poe test_embedding` (the service image must be built first).
+- **Integration tests of the AI services** (`extraction-service`) — the service keeps them in its own
+`tests/` directory and they are run with `poe test_extraction` (the service image must be built first).
 - **Frontend unit tests** — the frontend lives in `prawobiorca-frontend/` in this repository and keeps its tests in `__tests__/` directories next to the tested code. They are run with `pnpm test:unit` (Vitest).
 - **E2E tests** are not currently implemented. They will be placed in `prawobiorca-frontend/`, probably using the `playwright` library.
 
@@ -31,7 +31,6 @@ Currently, there are **no plans to use plugins** for test parallelization or dat
 - `../../core-service/tests/conftest.py`
 - `../../core-service/tests/integration/conftest.py`
 - `../../extraction-service/tests/conftest.py`
-- `../../embedding-service/tests/conftest.py`
 
 Detailed documentation for these files can be found on separate documentation pages.  
 Other `conftest.py` files are documented with docstrings inside the files themselves.

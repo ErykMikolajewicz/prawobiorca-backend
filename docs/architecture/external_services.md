@@ -24,10 +24,26 @@ Api with an option to embed document and split PDF files for elements.
 
 ---
 
+## Embedding Service
+
+### Technology Choice and Justification
+**OpenVINO Model Server (OVMS)** serves the embedding model directly — no custom application code — replacing an earlier FastAPI + ONNX Runtime app with EmbeddingGemma-300m. The model is `sdadas/mmlw-retrieval-roberta-large-v2` (Polish RoBERTa, 1024-dimensional vectors, 512-token context), chosen for its strong Polish retrieval results on PL-MTEB relative to its size. It is quantized to int8 weights and runs on CPU in the cloud and on `AUTO` (iGPU when available) on-premise.
+
+### Scope of Use
+`core-service` calls the OpenAI-compatible `/v3/embeddings` endpoint (model name `mmlw-retrieval-roberta-large-v2`) to embed regulation chunks in the worker and search queries in the API. Queries are prefixed with `[query]: `, chunks are sent as `{title}\n{text}` without a prefix. OVMS applies CLS pooling and L2 normalization.
+
+### Abstraction Layer and Integration
+There is no pre-converted OpenVINO build of the model on Hugging Face and current OVMS images do not include `optimum-cli`, so an init container (`python:3.12-slim`) exports the model with `optimum-cli export openvino --weight-format int8` and `convert_tokenizer` into a persistent volume on first start; later restarts reuse it. OVMS then serves it with `--task=embeddings --pooling=CLS`. `core-service` counts tokens locally with the same `tokenizer.json` to fit chunks within the limit.
+
+### Capabilities and Future Plans
+Changing the model requires re-embedding all regulations — the vector column length is fixed in the database schema.
+
+---
+
 ## LLM Service
 
 ### Technology Choice and Justification
-**OpenVINO Model Server (OVMS)** serves the conversational LLM directly — no custom application code — using a pre-quantized int8 OpenVINO IR build of Gemma-4 E4B (`OpenVINO/gemma-4-E4B-it-int8-ov` on Hugging Face). An earlier iteration wrapped **OpenVINO GenAI** in a custom FastAPI app; OVMS replaced it once Gemma-4 VLM support landed there (OVMS 2026.3), since it removes that app entirely in favor of a maintained server with an OpenAI-compatible API, at the cost of continuous batching, which isn't available for this model yet (no PagedAttention support — see [openvinotoolkit/model_server#4178](https://github.com/openvinotoolkit/model_server/issues/4178)). This keeps the service consistent with the rest of the stack's preference for Intel-hardware-friendly, CPU-first inference (as in `embedding-service`'s ONNX Runtime usage).
+**OpenVINO Model Server (OVMS)** serves the conversational LLM directly — no custom application code — using a pre-quantized int8 OpenVINO IR build of Gemma-4 E4B (`OpenVINO/gemma-4-E4B-it-int8-ov` on Hugging Face). An earlier iteration wrapped **OpenVINO GenAI** in a custom FastAPI app; OVMS replaced it once Gemma-4 VLM support landed there (OVMS 2026.3), since it removes that app entirely in favor of a maintained server with an OpenAI-compatible API, at the cost of continuous batching, which isn't available for this model yet (no PagedAttention support — see [openvinotoolkit/model_server#4178](https://github.com/openvinotoolkit/model_server/issues/4178)). This keeps the service consistent with the rest of the stack's preference for Intel-hardware-friendly, CPU-first inference (as in `embedding-service`).
 
 ### Scope of Use
 Standalone service exposing an OpenAI-compatible `/v3/chat/completions` endpoint (model name `gemma-4-e4b-it`). It has no consumers yet — `core-service` integration (a chat feature usable by application users) is planned future work, not part of this iteration.

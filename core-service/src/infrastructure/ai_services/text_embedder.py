@@ -5,34 +5,30 @@ from httpx2 import AsyncClient, HTTPError
 from src.domain.exceptions.regulations import RegulationServiceUnavailable
 from src.domain.value_objects.sections import SectionChunk
 
+EMBEDDING_MODEL_NAME = "mmlw-retrieval-roberta-large-v2"
+
 
 class TextsEmbedder:
     def __init__(self, client: AsyncClient, embedding_service_url: str):
         self._client = client
-        self._embedding_url = f"{embedding_service_url}/embed"
+        self._embedding_url = f"{embedding_service_url}/v3/embeddings"
 
     async def embed_chunks(self, chunks: Iterable[SectionChunk]) -> list[list[float]]:
-        prefixed_chunks = [chunk.embedding_text for chunk in chunks]
-
-        try:
-            response = await self._client.post(self._embedding_url, json=prefixed_chunks)
-            response.raise_for_status()
-        except HTTPError as e:
-            raise RegulationServiceUnavailable() from e
-        embeddings = response.json()
-
-        return embeddings
+        return await self._embed([chunk.embedding_text for chunk in chunks])
 
     async def embed_queries(self, queries: Iterable[str]) -> list[list[float]]:
-        prefix = "task: search result | query: "
+        prefix = "[query]: "
 
-        queries_with_prefix = [prefix + query for query in queries]
+        return await self._embed([prefix + query for query in queries])
 
+    async def _embed(self, texts: list[str]) -> list[list[float]]:
         try:
-            response = await self._client.post(self._embedding_url, json=queries_with_prefix)
+            response = await self._client.post(
+                self._embedding_url, json={"model": EMBEDDING_MODEL_NAME, "input": texts}
+            )
             response.raise_for_status()
         except HTTPError as e:
             raise RegulationServiceUnavailable() from e
-        embeddings = response.json()
+        embeddings_data = sorted(response.json()["data"], key=lambda item: item["index"])
 
-        return embeddings
+        return [item["embedding"] for item in embeddings_data]

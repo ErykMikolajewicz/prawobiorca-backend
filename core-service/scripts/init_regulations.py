@@ -23,7 +23,7 @@ from src.infrastructure.relational_db.schemas.regulations import regulations_tab
 
 # Unused import necessary for sqlalchemy
 from src.infrastructure.relational_db.schemas.users import users_table  # noqa: F401
-from src.infrastructure.tokenizers.gemma import GemmaTokenizer
+from src.infrastructure.tokenizers.mmlw import MmlwTokenizer
 from src.shared.settings.ai_services import (
     embedding_service_settings,
     extraction_service_settings,
@@ -67,7 +67,7 @@ async def init_regulations():
             extraction_service_url=extraction_service_settings.URL,
         )
         sections_embedder = SectionsEmbedder(texts_embedder, embedding_service_settings.BATCH_SIZE)
-        tokenizer = GemmaTokenizer()
+        tokenizer = MmlwTokenizer()
         regulation_preparator = RegulationPreparator(
             regulation_splitter,
             sections_embedder,

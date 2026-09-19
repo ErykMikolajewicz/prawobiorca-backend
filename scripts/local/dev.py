@@ -6,6 +6,18 @@ import time
 RUSTFS_CORS_ALLOWED_ORIGINS = "http://localhost:4173,http://localhost:5173,http://localhost:8080"
 WORKER_SHUTDOWN_TIMEOUT = 3
 POSTGRES_READY_TIMEOUT = 60
+EMBEDDING_MODEL_EXPORT_SCRIPT = """
+set -e
+MODEL_DIR=/models/mmlw-retrieval-roberta-large-v2
+[ -f "$MODEL_DIR/openvino_model.xml" ] && exit 0
+pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu torch \\
+    "optimum-intel[openvino]==2.2.*" "openvino==2026.3.*" "openvino-tokenizers[transformers]==2026.3.*" \\
+    sentence-transformers
+optimum-cli export openvino --model sdadas/mmlw-retrieval-roberta-large-v2 --disable-convert-tokenizer \\
+    --task feature-extraction --weight-format int8 "$MODEL_DIR.tmp"
+convert_tokenizer -o "$MODEL_DIR.tmp" sdadas/mmlw-retrieval-roberta-large-v2
+mv "$MODEL_DIR.tmp" "$MODEL_DIR"
+"""
 
 
 def run_command(cmd):
@@ -52,6 +64,24 @@ def run_migrations():
     subprocess.run(["alembic", "upgrade", "head"], check=True)
 
 
+def export_embedding_model():
+    print("Exporting embedding model.")
+    subprocess.run(
+        [
+            "podman",
+            "run",
+            "--rm",
+            "-v",
+            "embedding-model:/models",
+            "python:3.12-slim",
+            "sh",
+            "-c",
+            EMBEDDING_MODEL_EXPORT_SCRIPT,
+        ],
+        check=True,
+    )
+
+
 def run_worker():
     print("Launching taskiq worker.")
     # Own session, so Ctrl+C in the terminal does not reach the worker - stop_worker owns its lifecycle.
@@ -88,7 +118,15 @@ def main():
         " -p 127.0.0.1:9000:9000 -p 127.0.0.1:9001:9001 -v rustfs-data:/data rustfs/rustfs:latest",
     )
 
-    run_container_if_not_running("embedding-service", "-p 127.0.0.1:8081:8080 embedding-service")
+    export_embedding_model()
+    run_container_if_not_running(
+        "embedding-service",
+        "-p 127.0.0.1:8081:8080 --device /dev/dri"
+        " --group-add $(stat -c '%g' /dev/dri/render* | head -n1) -v embedding-model:/models"
+        " docker.io/openvino/model_server:2026.3-gpu"
+        " --model_path=/models/mmlw-retrieval-roberta-large-v2 --model_name=mmlw-retrieval-roberta-large-v2"
+        " --task=embeddings --pooling=CLS --target_device=AUTO --rest_port=8080",
+    )
     run_container_if_not_running("extraction-service", "-p 127.0.0.1:8082:8080 extraction-service")
     run_container_if_not_running(
         "llm-service",

@@ -1,6 +1,6 @@
 from src.app.ports.tokenizer import Tokenizer
-from src.infrastructure.tokenizers.gemma import GemmaTokenizer
+from src.infrastructure.tokenizers.mmlw import MmlwTokenizer
 
 
 def get_tokenizer() -> Tokenizer:
-    return GemmaTokenizer()
+    return MmlwTokenizer()

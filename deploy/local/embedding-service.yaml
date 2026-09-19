@@ -6,12 +6,47 @@ metadata:
     app: prawobiorca
     component: embedding-service
 spec:
+  initContainers:
+    - name: embedding-model-export
+      image: docker.io/library/python:3.12-slim
+      command:
+        - sh
+        - -c
+        - |
+          set -e
+          MODEL_DIR=/models/mmlw-retrieval-roberta-large-v2
+          [ -f "$MODEL_DIR/openvino_model.xml" ] && exit 0
+          pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu torch "optimum-intel[openvino]==2.2.*" "openvino==2026.3.*" "openvino-tokenizers[transformers]==2026.3.*" sentence-transformers
+          optimum-cli export openvino --model sdadas/mmlw-retrieval-roberta-large-v2 --disable-convert-tokenizer --task feature-extraction --weight-format int8 "$MODEL_DIR.tmp"
+          convert_tokenizer -o "$MODEL_DIR.tmp" sdadas/mmlw-retrieval-roberta-large-v2
+          mv "$MODEL_DIR.tmp" "$MODEL_DIR"
+      volumeMounts:
+        - name: embedding-model
+          mountPath: /models
   containers:
     - name: embedding-service
-      image: localhost/embedding-service:latest
+      image: docker.io/openvino/model_server:2026.3-gpu
+      args:
+        - --model_path=/models/mmlw-retrieval-roberta-large-v2
+        - --model_name=mmlw-retrieval-roberta-large-v2
+        - --task=embeddings
+        - --pooling=CLS
+        - --target_device=AUTO
+        - --rest_port=8080
+      securityContext:
+        privileged: true
       ports:
         - containerPort: 8080
           hostPort: 8081
-      env:
-        - name: OMP_NUM_THREADS
-          value: "2"
+      volumeMounts:
+        - name: embedding-model
+          mountPath: /models
+        - name: dri
+          mountPath: /dev/dri
+  volumes:
+    - name: embedding-model
+      persistentVolumeClaim:
+        claimName: embedding-model
+    - name: dri
+      hostPath:
+        path: /dev/dri

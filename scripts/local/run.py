@@ -22,7 +22,6 @@ IMAGES = (
             "core-service/alembic.ini",
         ),
     ),
-    ("embedding-service", "embedding-service", ("embedding-service",)),
     ("extraction-service", "extraction-service", ("extraction-service",)),
     (
         "prawobiorca-frontend",

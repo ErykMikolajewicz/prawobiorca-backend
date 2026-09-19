@@ -9,10 +9,8 @@ run_locally_down = "uv run scripts/local/stop.py"
 test = { cmd = "uv run pytest tests/unit", cwd = "core-service" }
 test_integration = { cmd = "uv run pytest tests/integration", cwd = "core-service" }
 test_extraction = { cmd = "uv run --group test pytest tests/integration", cwd = "extraction-service" }
-test_embedding = { cmd = "uv run --group test pytest tests/integration", cwd = "embedding-service" }
 
 build_app = "podman image build --tag=prawobiorca-backend core-service"
-build_embedding-service = "podman image build --tag=embedding-service embedding-service"
 build_extraction-service = "podman image build --tag=extraction-service extraction-service"
 build_frontend = "podman image build --tag=prawobiorca-frontend prawobiorca-frontend"
 
@@ -29,7 +27,7 @@ sequence = [
 ]
 
 [tasks.build_images]
-sequence = ["build_app", "build_embedding-service", "build_extraction-service", "build_frontend"]
+sequence = ["build_app", "build_extraction-service", "build_frontend"]
 
 [tasks.init_db]
 sequence = ["upgrade_db", "seed", "init_regulations"]

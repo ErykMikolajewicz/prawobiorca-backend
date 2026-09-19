@@ -16,7 +16,6 @@ Plans include:
 The whole application lives in this repository:
 
 - `core-service/` - main API (FastAPI) and the Taskiq worker handling document processing.
-- `embedding-service/` - generates vector embeddings for text chunks and search queries.
 - `extraction-service/` - extracts structured text from PDFs.
 - `prawobiorca-frontend/` - Vue 3 frontend application.
 - `deploy/` - Kubernetes manifests for the local (Podman) and GCP environments.

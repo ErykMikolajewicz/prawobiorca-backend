@@ -24,7 +24,7 @@ flowchart TD
     Core["core-service<br/>(Auth, Cases, Files, Search Engine)"]
     Broker(["Broker"])
     Worker["Taskiq Worker<br/>(File Preparator / Chunking / Indexing)"]
-    Embeddings["embeddings-service<br/>(ONNX/Scale)"]
+    Embeddings["embeddings-service<br/>(OpenVINO Model Server)"]
     Extraction["extraction-service"]
     DB[("PostgreSQL + pgvector<br/>(Metadata, Chunks, DB)")]
     Storage[("Object Storage<br/>RustFS (on-premise) / GCS (cloud)")]
@@ -60,11 +60,11 @@ Hosts the core domain logic, user-facing endpoints, and background document inde
 
 ### 2.2. `embeddings-service`
 * **Responsibilities**:
-  * Dedicated, stateless microservice for generating dense vector embeddings for text chunks and search queries using **ONNX Runtime** / transformer models.
+  * Dedicated, stateless service generating dense vector embeddings for text chunks and search queries with the Polish retrieval model `sdadas/mmlw-retrieval-roberta-large-v2` (int8), served directly by **OpenVINO Model Server (OVMS)** — no custom application code — via the OpenAI-compatible `/v3/embeddings` endpoint.
 * **Characteristics**:
   * **Isolated Compute**: Heavy tensor computation and embedding model memory footprints are completely decoupled from the main API, preventing thread blockage and memory spikes.
   * **Independent Scaling**: Can be scaled independently (e.g., on GPU or high-CPU compute instances) based on search traffic and document ingestion volume.
-  * Exposes simple, low-latency endpoints for single-text and batch-text embeddings.
+  * A single endpoint accepts both single texts and batches.
 
 ### 2.3. `extraction-service`
 * **Responsibilities**:

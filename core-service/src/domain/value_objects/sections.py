@@ -16,8 +16,9 @@ class SectionChunk:
 
     @property
     def embedding_text(self) -> str:
-        title = self.embed_title or "none"
-        return f"title: {title} | text: {self.text}"
+        if not self.embed_title:
+            return self.text
+        return f"{self.embed_title}\n{self.text}"
 
 
 @dataclass
