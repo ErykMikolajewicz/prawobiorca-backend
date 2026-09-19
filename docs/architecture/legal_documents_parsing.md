@@ -87,8 +87,14 @@ chunking exists only so that a long article still embeds well.
 
 - Every unit with content becomes exactly **one** section, carrying the full unit text and the full
   breadcrumb as its `header`. Short articles are never merged with their neighbours.
-- The section is split into chunks of at most `CHUNK_MAX_TOKENS` tokens (200). A boundary
-  may only fall **between** elements (subsections, points).
+- The section is split into chunks of at most `CHUNK_MAX_TOKENS` tokens (200). The split is
+  hierarchical: whole subsections (`1.`) are packed together first; only a subsection that alone exceeds the
+  budget is split between its points (`1)`), and only a point that exceeds it — between its letters (`a)`).
+  Parts of a split subsection or point never share a chunk with their neighbours, and the parts of one split
+  are balanced to similar sizes without increasing their number.
+- A chunk that starts inside a split subsection or point repeats its lead-in (e.g. *"2. Do zadań rektora
+  należy w szczególności:"*) in `embed_title`, so only the embedding gets that context; `text` and `span`
+  still cover the original fragment.
 - The limit applies to the whole text sent for embedding (`SectionChunk.embedding_text`): the prefix, the
   `embed_title` with its suffix, and the content. When a chunk still exceeds it after splitting, the whole
   section is split again with a smaller budget, down to `MIN_CONTENT_TOKENS`.

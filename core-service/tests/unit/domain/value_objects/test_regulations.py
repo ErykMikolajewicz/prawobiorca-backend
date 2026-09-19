@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 from unittest.mock import patch
 
@@ -11,6 +12,16 @@ from src.domain.value_objects.regulations import RegulationAct
 DATA_DIR = Path(__file__).parents[3] / "data"
 
 ACT_FIXTURE = "ustawa-nauka_slice_30-31"
+
+RECTOR_TASKS_FIXTURE = "ustawa-nauka_slice_12-13"
+
+PROMOTION_DATABASE_FIXTURE = "ustawa-nauka_slice_209-210"
+
+STUDY_REGULATIONS_FIXTURE = "pwr-regulamin_2025_slice_5-6"
+
+SUBSECTION_OR_POINT_START_PATTERN = re.compile(r"^\d+[a-z]*[.)]\s")
+
+LETTER_START_PATTERN = re.compile(r"^[a-z]\)\s")
 
 CHUNK_MAX_TOKENS = 60
 
@@ -47,6 +58,16 @@ def create_subsections(subsections_count: int, words_per_subsection: int) -> lis
         elements.append(RegulationElement(label=UsefulLabels.LIST_ITEM, text=text))
 
     return elements
+
+
+def find_section(regulation_name: str, unit_number: str):
+    sections = create_sections(load_regulation_elements(regulation_name))
+
+    return next(section for section in sections if section.unit_number == unit_number)
+
+
+def get_chunk_subsections(section, chunk) -> set[str | None]:
+    return {element.subsection for element in section.elements[chunk.span.start_element : chunk.span.end_element + 1]}
 
 
 def test_each_article_becomes_separate_section():
@@ -277,3 +298,70 @@ def test_chunk_span_points_to_fragment_of_split_element():
     for chunk in section.chunks:
         assert chunk.span.start_element == chunk.span.end_element == 0
         assert element_text[chunk.span.start_offset : chunk.span.end_offset] == chunk.text
+
+
+def test_long_subsection_is_split_between_points():
+    section = find_section(RECTOR_TASKS_FIXTURE, "23")
+
+    for chunk in section.chunks:
+        assert SUBSECTION_OR_POINT_START_PATTERN.match(chunk.text)
+
+
+def test_split_subsection_does_not_share_chunk_with_other_subsections():
+    section = find_section(RECTOR_TASKS_FIXTURE, "23")
+
+    split_subsection_chunks = [chunk for chunk in section.chunks if get_chunk_subsections(section, chunk) == {"2"}]
+
+    assert len(split_subsection_chunks) > 1
+    for chunk in section.chunks:
+        subsections = get_chunk_subsections(section, chunk)
+        assert subsections == {"2"} or "2" not in subsections
+
+
+def test_continuation_chunks_repeat_subsection_intro_only_in_embed_title():
+    intro = "2. Do zadań rektora należy w szczególności:"
+    section = find_section(RECTOR_TASKS_FIXTURE, "23")
+
+    first_chunk, *continuation_chunks = [
+        chunk for chunk in section.chunks if get_chunk_subsections(section, chunk) == {"2"}
+    ]
+
+    assert first_chunk.text.startswith(intro)
+    assert intro not in first_chunk.embed_title
+    for chunk in continuation_chunks:
+        assert chunk.embed_title.endswith(f"\n{intro}")
+        assert intro not in chunk.text
+
+
+def test_chunks_split_between_letters_repeat_point_lead_in_embed_title():
+    section = find_section(PROMOTION_DATABASE_FIXTURE, "348")
+
+    letter_chunks = [chunk for chunk in section.chunks if LETTER_START_PATTERN.match(chunk.text)]
+
+    assert letter_chunks
+    for chunk in letter_chunks:
+        subsection_intro, point_lead = chunk.embed_title.split("\n")[-2:]
+        assert subsection_intro.startswith("1. Baza dokumentów")
+        assert SUBSECTION_OR_POINT_START_PATTERN.match(point_lead)
+
+
+def test_point_lead_is_not_separated_from_its_first_letter():
+    with patch.object(regulations_module, "CHUNK_MAX_TOKENS", 125):
+        section = find_section(STUDY_REGULATIONS_FIXTURE, "3")
+
+    chunk = next(chunk for chunk in section.chunks if "1) studia pierwszego stopnia" in chunk.text)
+
+    assert "a) licencjackie" in chunk.text
+
+
+def test_split_subsection_parts_are_balanced():
+    point = " ".join(["słowo"] * 10)
+    elements = [RegulationElement(label=UsefulLabels.TEXT, text="Art. 110. 1. Samorząd studencki w zakresie:")]
+    for point_number in range(1, 7):
+        elements.append(RegulationElement(label=UsefulLabels.LIST_ITEM, text=f"{point_number}) {point};"))
+
+    section = create_sections(elements)[0]
+
+    points_per_chunk = [len(re.findall(r"\d+\) ", chunk.text)) for chunk in section.chunks]
+    assert len(points_per_chunk) > 1
+    assert max(points_per_chunk) - min(points_per_chunk) <= 1

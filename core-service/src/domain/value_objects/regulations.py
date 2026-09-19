@@ -1,10 +1,10 @@
 import re
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Protocol
 
-from src.domain.services.legal_structure_parser import LegalStructureParser
+from src.domain.services.legal_structure_parser import SUBSECTION_PATTERN, LegalStructureParser
 from src.domain.value_objects.legal_units import (
     BREADCRUMB_SEPARATOR,
     LegalUnit,
@@ -14,6 +14,10 @@ from src.domain.value_objects.legal_units import (
 from src.domain.value_objects.sections import ChunkSpan, RegulationSection, SectionChunk, SectionsCollection
 
 SENTENCE_SPLIT_PATTERN = re.compile(r"(?<=[.;])\s+")
+POINT_PATTERN = re.compile(r"^\d+[a-z]*\)\s")
+LETTER_PATTERN = re.compile(r"^[a-z]\)\s")
+
+BLOCK_PATTERNS = (SUBSECTION_PATTERN, POINT_PATTERN, LETTER_PATTERN)
 
 CHUNK_MAX_TOKENS = 200
 
@@ -29,6 +33,12 @@ class ChunkAtom:
     element_index: int
     start: int
     end: int
+
+
+@dataclass
+class ChunkPart:
+    atoms: list[ChunkAtom]
+    context: list[str] = field(default_factory=list)
 
 
 class Tokenizer(Protocol):
@@ -88,10 +98,15 @@ class RegulationAct:
 
         return [
             SectionChunk(
-                text=" ".join(atom.text for atom in part),
+                text=" ".join(atom.text for atom in part.atoms),
                 embed_title=part_title,
                 chunk_index=chunk_index,
-                span=ChunkSpan(part[0].element_index, part[0].start, part[-1].element_index, part[-1].end),
+                span=ChunkSpan(
+                    part.atoms[0].element_index,
+                    part.atoms[0].start,
+                    part.atoms[-1].element_index,
+                    part.atoms[-1].end,
+                ),
             )
             for chunk_index, (part, part_title) in enumerate(zip(parts, part_titles, strict=True))
         ]
@@ -121,29 +136,136 @@ class RegulationAct:
 
         return max(content_budget, MIN_CONTENT_TOKENS)
 
-    def _split_to_parts(self, elements: list[LegalUnitElement], content_budget: int) -> list[list[ChunkAtom]]:
-        atoms = []
-        for element_index, element in enumerate(elements):
-            atoms.extend(self._split_long_element(element, element_index, content_budget))
+    def _split_to_parts(self, elements: list[LegalUnitElement], content_budget: int) -> list[ChunkPart]:
+        return self._split_block(elements, list(range(len(elements))), 0, content_budget)
+
+    def _split_block(
+        self, elements: list[LegalUnitElement], indices: list[int], level: int, content_budget: int
+    ) -> list[ChunkPart]:
+        if self._count_block_tokens(elements, indices) <= content_budget:
+            return [ChunkPart(self._create_element_atoms(elements, indices))]
+
+        if level == len(BLOCK_PATTERNS):
+            return self._split_elements(elements, indices, content_budget)
+
+        return self._split_children(elements, indices, level, content_budget)
+
+    def _split_children(
+        self, elements: list[LegalUnitElement], indices: list[int], level: int, content_budget: int
+    ) -> list[ChunkPart]:
+        children = self._group_indices(elements, indices, BLOCK_PATTERNS[level])
+        if len(children) == 1:
+            return self._split_block(elements, indices, level + 1, content_budget)
 
         parts = []
-        current_part = []
-        current_tokens = 0
-        for atom in atoms:
-            atom_tokens = self._tokenizer.count_tokens(atom.text)
+        fitting_children = []
+        for child in children:
+            if self._count_block_tokens(elements, child) <= content_budget:
+                fitting_children.append(child)
+                continue
 
-            if current_part and current_tokens + atom_tokens > content_budget:
-                parts.append(current_part)
-                current_part = []
-                current_tokens = 0
+            parts.extend(self._pack_children(elements, fitting_children, content_budget))
+            fitting_children = []
+            parts.extend(self._split_block(elements, child, level + 1, content_budget))
 
-            current_part.append(atom)
-            current_tokens += atom_tokens
+        parts.extend(self._pack_children(elements, fitting_children, content_budget))
 
-        if current_part:
-            parts.append(current_part)
+        if level > 0:
+            lead = self._find_lead(elements, indices, BLOCK_PATTERNS[level])
+            for part in parts[1:]:
+                if part.context[: len(lead)] != lead:
+                    part.context[:0] = lead
 
         return parts
+
+    def _pack_children(
+        self, elements: list[LegalUnitElement], children: list[list[int]], content_budget: int
+    ) -> list[ChunkPart]:
+        children_tokens = [self._count_block_tokens(elements, child) for child in children]
+
+        return [
+            ChunkPart(self._create_element_atoms(elements, [index for child in group for index in children[child]]))
+            for group in self._pack_evenly(children_tokens, content_budget)
+        ]
+
+    def _split_elements(
+        self, elements: list[LegalUnitElement], indices: list[int], content_budget: int
+    ) -> list[ChunkPart]:
+        atoms = []
+        for element_index in indices:
+            atoms.extend(self._split_long_element(elements[element_index], element_index, content_budget))
+
+        atoms_tokens = [self._tokenizer.count_tokens(atom.text) for atom in atoms]
+
+        return [ChunkPart([atoms[atom] for atom in group]) for group in self._pack_evenly(atoms_tokens, content_budget)]
+
+    @staticmethod
+    def _group_indices(elements: list[LegalUnitElement], indices: list[int], pattern: re.Pattern) -> list[list[int]]:
+        groups = []
+        has_child = False
+        for element_index in indices:
+            is_child_start = pattern.match(elements[element_index].text) is not None
+            if not groups or (is_child_start and has_child):
+                groups.append([])
+            groups[-1].append(element_index)
+            has_child = has_child or is_child_start
+
+        return groups
+
+    @staticmethod
+    def _find_lead(elements: list[LegalUnitElement], indices: list[int], pattern: re.Pattern) -> list[str]:
+        lead = []
+        for element_index in indices:
+            if pattern.match(elements[element_index].text):
+                break
+            lead.append(elements[element_index].text)
+
+        return lead
+
+    def _count_block_tokens(self, elements: list[LegalUnitElement], indices: list[int]) -> int:
+        return sum(self._tokenizer.count_tokens(elements[element_index].text) for element_index in indices)
+
+    @staticmethod
+    def _create_element_atoms(elements: list[LegalUnitElement], indices: list[int]) -> list[ChunkAtom]:
+        return [
+            ChunkAtom(
+                elements[element_index].text,
+                elements[element_index].subsection,
+                element_index,
+                0,
+                len(elements[element_index].text),
+            )
+            for element_index in indices
+        ]
+
+    @staticmethod
+    def _pack_evenly(items_tokens: list[int], content_budget: int) -> list[list[int]]:
+        groups_count = len(RegulationAct._pack_greedily(items_tokens, content_budget))
+
+        low = max(items_tokens, default=0)
+        high = max(content_budget, low)
+        while low < high:
+            middle = (low + high) // 2
+            if len(RegulationAct._pack_greedily(items_tokens, middle)) <= groups_count:
+                high = middle
+            else:
+                low = middle + 1
+
+        return RegulationAct._pack_greedily(items_tokens, low)
+
+    @staticmethod
+    def _pack_greedily(items_tokens: list[int], content_budget: int) -> list[list[int]]:
+        groups = []
+        current_tokens = 0
+        for item_index, item_tokens in enumerate(items_tokens):
+            if not groups or current_tokens + item_tokens > content_budget:
+                groups.append([])
+                current_tokens = 0
+
+            groups[-1].append(item_index)
+            current_tokens += item_tokens
+
+        return groups
 
     def _split_long_element(
         self, element: LegalUnitElement, element_index: int, content_budget: int
@@ -188,16 +310,16 @@ class RegulationAct:
         return fragments
 
     @staticmethod
-    def _create_part_titles(title: str | None, parts: list[list[ChunkAtom]]) -> list[str | None]:
+    def _create_part_titles(title: str | None, parts: list[ChunkPart]) -> list[str | None]:
         parts_total = len(parts)
         if parts_total == 1:
             return [title]
 
-        subsection_suffixes = [RegulationAct._create_subsection_suffix(part) for part in parts]
+        subsection_suffixes = [RegulationAct._create_subsection_suffix(part.atoms) for part in parts]
         are_suffixes_unambiguous = None not in subsection_suffixes and len(set(subsection_suffixes)) == parts_total
 
         part_titles = []
-        for part_index, subsection_suffix in enumerate(subsection_suffixes, start=1):
+        for part_index, (part, subsection_suffix) in enumerate(zip(parts, subsection_suffixes, strict=True), start=1):
             if are_suffixes_unambiguous:
                 part_suffix = subsection_suffix
             elif subsection_suffix is None:
@@ -205,7 +327,8 @@ class RegulationAct:
             else:
                 part_suffix = f"{subsection_suffix} (część {part_index}/{parts_total})"
 
-            part_titles.append(part_suffix if title is None else f"{title} {part_suffix}")
+            part_title = part_suffix if title is None else f"{title} {part_suffix}"
+            part_titles.append("\n".join([part_title, *part.context]))
 
         return part_titles
 
