@@ -1,6 +1,8 @@
 import logging
 from dataclasses import dataclass
 
+from fastapi.concurrency import run_in_threadpool
+
 from src.app.dtos.account import LoginData
 from src.app.dtos.user import CreateUserData
 from src.app.interfaces.relational import SessionMaker
@@ -18,7 +20,7 @@ class CreateAccount:
     users_repo: UsersRepository
 
     async def execute(self, login_data: LoginData):
-        hashed_password = hash_password(login_data.password)
+        hashed_password = await run_in_threadpool(hash_password, login_data.password)
         create_user_data = CreateUserData(login_data.username, hashed_password)
 
         async with self.session_maker.begin() as session:

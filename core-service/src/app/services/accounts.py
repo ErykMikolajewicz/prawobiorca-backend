@@ -1,6 +1,8 @@
 import logging
 from uuid import UUID
 
+from fastapi.concurrency import run_in_threadpool
+
 from src.app.dtos.account import LoginData
 from src.app.interfaces.relational import AsyncSession
 from src.app.interfaces.users import UsersRepository
@@ -18,7 +20,7 @@ async def check_user_can_log(session: AsyncSession, users_repo: UsersRepository,
 
     password = login_data.password
     hashed_password = user.hashed_password
-    if not verify_password(password, hashed_password):
+    if not await run_in_threadpool(verify_password, password, hashed_password):
         logger.warning("Failed login attempt. Invalid password!")
         return None
 
