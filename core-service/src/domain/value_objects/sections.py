@@ -7,10 +7,19 @@ from src.domain.value_objects.legal_units import LegalUnitElement, UnitType
 
 
 @dataclass
+class ChunkSpan:
+    start_element: int
+    start_offset: int
+    end_element: int
+    end_offset: int
+
+
+@dataclass
 class SectionChunk:
     text: str
     embed_title: str | None = None
     chunk_index: int = 0
+    span: ChunkSpan | None = None
     vector: list[float] | None = None
     id: UUID = field(default_factory=uuid4)
 

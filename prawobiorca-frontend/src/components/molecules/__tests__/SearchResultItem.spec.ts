@@ -3,15 +3,16 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import SearchResultItem from '../SearchResultItem.vue'
 import { useAuthStore } from '@/stores/auth'
-import type { searchResultElement } from '@/types/api/search.ts'
+import type { searchResultElement, searchResultHighlight } from '@/types/api/search.ts'
 
 function mountItem(
   result: string,
   elements?: Array<searchResultElement> | null,
   selectedCaseId = 'case-1',
+  highlight: searchResultHighlight | null = null,
 ) {
   return mount(SearchResultItem, {
-    props: { result, elements, score: 0.5, selectedCaseId },
+    props: { result, elements, score: 0.5, selectedCaseId, highlight },
     global: {
       stubs: {
         ElCard: { template: '<div class="el-card"><slot /></div>' },
@@ -72,5 +73,29 @@ describe('SearchResultItem', () => {
     await wrapper.find('button').trigger('click')
 
     expect(wrapper.emitted('add-to-case')?.[0]).toEqual([{ documentContent: '1. Ustęp pierwszy' }])
+  })
+
+  it('highlights the best chunk span across elements', () => {
+    const elements: Array<searchResultElement> = [
+      { text: '1. Ustęp pierwszy', subsection: '1' },
+      { text: '2. Ustęp drugi', subsection: '2' },
+      { text: '3. Ustęp trzeci', subsection: '3' },
+    ]
+    const highlight = { start_element: 0, start_offset: 3, end_element: 1, end_offset: 8 }
+
+    const wrapper = mountItem('irrelevant', elements, 'case-1', highlight)
+
+    const marks = wrapper.findAll('mark')
+    expect(marks.map((mark) => mark.text())).toEqual(['Ustęp pierwszy', '2. Ustęp'])
+    expect(wrapper.findAll('.result-line')[1]!.text()).toBe('2. Ustęp drugi')
+  })
+
+  it('does not highlight anything without highlight', () => {
+    const elements: Array<searchResultElement> = [{ text: '1. Ustęp pierwszy', subsection: '1' }]
+
+    const wrapper = mountItem('irrelevant', elements)
+
+    expect(wrapper.find('mark').exists()).toBe(false)
+    expect(wrapper.find('.result-line').text()).toBe('1. Ustęp pierwszy')
   })
 })

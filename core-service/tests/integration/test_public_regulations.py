@@ -124,6 +124,10 @@ async def insert_section(session, regulation_id, user_id, unit_number, text, sec
                     "chunk_index": chunk_index,
                     "text": f"{text} chunk {chunk_index}",
                     "vector": vector,
+                    "span_start_element": chunk_index,
+                    "span_start_offset": 0,
+                    "span_end_element": chunk_index,
+                    "span_end_offset": 10,
                 }
                 for chunk_index, vector in enumerate(chunk_vectors)
             ]
@@ -167,6 +171,7 @@ async def test_search_regulations_documents(client, override_session_maker, sess
                 "unit_number": "112",
                 "unit_path": ["Rozdział 5 Pracownicy uczelni"],
                 "elements": None,
+                "highlight": {"start_element": 0, "start_offset": 0, "end_element": 0, "end_offset": 10},
             }
         ]
     finally:
@@ -211,6 +216,43 @@ async def test_search_scores_section_by_its_two_best_chunks(
 
         assert results_by_id[str(single_chunk_section_id)] == pytest.approx(1.0)
         assert results_by_id[str(multi_chunk_section_id)] == pytest.approx(expected_score)
+    finally:
+        prawobiorca.dependency_overrides.pop(get_texts_embedder, None)
+        async with session_maker.begin() as session:
+            await session.execute(delete(regulations_table).where(regulations_table.c.id == regulation_id))
+
+
+async def test_search_highlights_best_chunk_of_section(
+    client, override_session_maker, session_maker, set_user, clean_user
+):
+    prawobiorca.dependency_overrides[get_texts_embedder] = lambda: StubTextsEmbedder()
+
+    async with session_maker.begin() as session:
+        regulation_id = await insert_regulation(session, None, "Public highlighted regulation.pdf")
+
+        await insert_section(
+            session,
+            regulation_id,
+            None,
+            "112",
+            "Highlighted section",
+            0,
+            [UNRELATED_VECTOR, QUERY_VECTOR, UNRELATED_VECTOR],
+        )
+
+    try:
+        response = await client.get(
+            f"/api/regulations/{regulation_id}/documents",
+            params={"threshold": 0.5, "limit": 10, "query": "public document query"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()[0]["highlight"] == {
+            "start_element": 1,
+            "start_offset": 0,
+            "end_element": 1,
+            "end_offset": 10,
+        }
     finally:
         prawobiorca.dependency_overrides.pop(get_texts_embedder, None)
         async with session_maker.begin() as session:

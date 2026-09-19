@@ -39,4 +39,8 @@ regulations_chunks_table = sqla.Table(
     sqla.Column("chunk_index", sqla.Integer, nullable=False),
     sqla.Column("text", sqla.Text, nullable=False),
     sqla.Column("vector", Vector(VECTOR_LENGTH), nullable=False),
+    sqla.Column("span_start_element", sqla.Integer, nullable=True),
+    sqla.Column("span_start_offset", sqla.Integer, nullable=True),
+    sqla.Column("span_end_element", sqla.Integer, nullable=True),
+    sqla.Column("span_end_offset", sqla.Integer, nullable=True),
 )

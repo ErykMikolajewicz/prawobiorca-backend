@@ -12,6 +12,13 @@ class SearchResultElement(BaseModel):
     subsection: str | None = None
 
 
+class SearchResultHighlight(BaseModel):
+    start_element: int
+    start_offset: int
+    end_element: int
+    end_offset: int
+
+
 class SearchResult(BaseModel):
     id: UUID
     score: float = Field(ge=-1, le=1)
@@ -21,6 +28,7 @@ class SearchResult(BaseModel):
     unit_number: str | None = None
     unit_path: list[str] | None = None
     elements: list[SearchResultElement] | None = None
+    highlight: SearchResultHighlight | None = None
 
 
 class SearchOrder(StrEnum):

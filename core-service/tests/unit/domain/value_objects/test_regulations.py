@@ -251,3 +251,29 @@ def test_unit_with_title_but_without_content_produces_no_sections():
     sections = create_sections(elements)
 
     assert sections == []
+
+
+def test_chunk_span_covers_whole_elements():
+    elements = create_subsections(subsections_count=6, words_per_subsection=26)
+
+    section = create_sections(elements)[0]
+
+    for chunk in section.chunks:
+        start_text = section.elements[chunk.span.start_element].text
+        end_text = section.elements[chunk.span.end_element].text
+        assert chunk.span.start_offset == 0
+        assert chunk.span.end_offset == len(end_text)
+        assert chunk.text.startswith(start_text)
+        assert chunk.text.endswith(end_text)
+
+
+def test_chunk_span_points_to_fragment_of_split_element():
+    sentence = " ".join(["słowo"] * 30)
+    elements = [RegulationElement(label=UsefulLabels.TEXT, text=f"Art. 110. {sentence}. {sentence}. {sentence}.")]
+
+    section = create_sections(elements)[0]
+
+    element_text = section.elements[0].text
+    for chunk in section.chunks:
+        assert chunk.span.start_element == chunk.span.end_element == 0
+        assert element_text[chunk.span.start_offset : chunk.span.end_offset] == chunk.text

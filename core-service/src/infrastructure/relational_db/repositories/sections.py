@@ -4,12 +4,20 @@ from uuid import UUID
 from sqlalchemy import case, delete, func, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.app.dtos.search import SearchOrder, SearchParams, SearchResult, SearchResultElement
+from src.app.dtos.search import (
+    SearchOrder,
+    SearchParams,
+    SearchResult,
+    SearchResultElement,
+    SearchResultHighlight,
+)
 from src.domain.exceptions.documents import RegulationDocumentsNotFound
 from src.domain.value_objects.sections import SectionsCollection
 from src.infrastructure.relational_db.schemas.sections import regulations_chunks_table, regulations_sections_table
 
 PRIMARY_CHUNK_SCORE_WEIGHT = 0.8
+
+SPAN_COLUMNS = ("span_start_element", "span_start_offset", "span_end_element", "span_end_offset")
 
 
 class RegulationsSectionsRepository:
@@ -44,6 +52,10 @@ class RegulationsSectionsRepository:
                     "chunk_index": chunk.chunk_index,
                     "text": chunk.text,
                     "vector": chunk.vector,
+                    "span_start_element": chunk.span.start_element if chunk.span else None,
+                    "span_start_offset": chunk.span.start_offset if chunk.span else None,
+                    "span_end_element": chunk.span.end_element if chunk.span else None,
+                    "span_end_offset": chunk.span.end_offset if chunk.span else None,
                 }
                 for chunk in section.chunks
             )
@@ -81,6 +93,7 @@ class RegulationsSectionsRepository:
             select(
                 regulations_chunks_table.c.section_id,
                 (1 - distance).label("similarity"),
+                *(regulations_chunks_table.c[column] for column in SPAN_COLUMNS),
                 func.row_number()
                 .over(partition_by=regulations_chunks_table.c.section_id, order_by=distance.asc())
                 .label("chunk_rank"),
@@ -108,8 +121,13 @@ class RegulationsSectionsRepository:
             else_=primary_weight * best_similarity + secondary_weight * second_similarity,
         )
 
+        best_chunk_span = [
+            func.max(case((ranked_chunks.c.chunk_rank == 1, ranked_chunks.c[column]))).label(column)
+            for column in SPAN_COLUMNS
+        ]
+
         scored_sections = (
-            select(ranked_chunks.c.section_id, score.label("score"))
+            select(ranked_chunks.c.section_id, score.label("score"), *best_chunk_span)
             .where(ranked_chunks.c.chunk_rank <= 2)
             .group_by(ranked_chunks.c.section_id)
             .having(score >= search_params.threshold)
@@ -133,6 +151,7 @@ class RegulationsSectionsRepository:
                 regulations_sections_table.c.unit_path,
                 regulations_sections_table.c.elements,
                 scored_sections.c.score,
+                *(scored_sections.c[column] for column in SPAN_COLUMNS),
             )
             .select_from(
                 regulations_sections_table.join(
@@ -155,6 +174,14 @@ class RegulationsSectionsRepository:
                 unit_path=row.unit_path,
                 elements=[SearchResultElement(**element) for element in row.elements] if row.elements else None,
                 score=row.score,
+                highlight=SearchResultHighlight(
+                    start_element=row.span_start_element,
+                    start_offset=row.span_start_offset,
+                    end_element=row.span_end_element,
+                    end_offset=row.span_end_offset,
+                )
+                if row.span_start_element is not None
+                else None,
             )
             for row in rows
         ]

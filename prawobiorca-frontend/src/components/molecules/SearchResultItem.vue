@@ -2,11 +2,12 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth'
-import type { searchResultElement } from '@/types/api/search.ts'
+import type { searchResultElement, searchResultHighlight } from '@/types/api/search.ts'
 
 const props = defineProps<{
   result: string
   elements?: Array<searchResultElement> | null
+  highlight?: searchResultHighlight | null
   score: number
   selectedCaseId?: string
 }>()
@@ -20,18 +21,42 @@ const { isUserLogged } = storeToRefs(authStore)
 
 const SUB_ELEMENT_PATTERN = /^(\d+\)|[a-z]\))\s/
 
-type ResultBlock = { subsection: string | null; lines: Array<string> }
+type LineSegment = { text: string; highlighted: boolean }
+type ResultLine = { text: string; segments: Array<LineSegment> }
+type ResultBlock = { subsection: string | null; lines: Array<ResultLine> }
+
+const createSegments = (text: string, elementIndex: number): Array<LineSegment> => {
+  const highlight = props.highlight
+
+  if (
+    !highlight ||
+    elementIndex < highlight.start_element ||
+    elementIndex > highlight.end_element
+  ) {
+    return [{ text, highlighted: false }]
+  }
+
+  const start = elementIndex === highlight.start_element ? highlight.start_offset : 0
+  const end = elementIndex === highlight.end_element ? highlight.end_offset : text.length
+
+  return [
+    { text: text.slice(0, start), highlighted: false },
+    { text: text.slice(start, end), highlighted: true },
+    { text: text.slice(end), highlighted: false },
+  ].filter((segment) => segment.text)
+}
 
 const blocks = computed<Array<ResultBlock>>(() => {
   const result: Array<ResultBlock> = []
 
-  for (const element of props.elements ?? []) {
+  for (const [elementIndex, element] of (props.elements ?? []).entries()) {
     const lastBlock = result[result.length - 1]
+    const line = { text: element.text, segments: createSegments(element.text, elementIndex) }
 
     if (lastBlock && lastBlock.subsection === element.subsection) {
-      lastBlock.lines.push(element.text)
+      lastBlock.lines.push(line)
     } else {
-      result.push({ subsection: element.subsection, lines: [element.text] })
+      result.push({ subsection: element.subsection, lines: [line] })
     }
   }
 
@@ -55,9 +80,12 @@ const handleAddToCase = () => {
               v-for="(line, lineIndex) in block.lines"
               :key="lineIndex"
               class="result-line"
-              :class="{ 'result-line--sub': isSubLine(line) }"
+              :class="{ 'result-line--sub': isSubLine(line.text) }"
             >
-              {{ line }}
+              <template v-for="(segment, segmentIndex) in line.segments" :key="segmentIndex">
+                <mark v-if="segment.highlighted" class="result-highlight">{{ segment.text }}</mark>
+                <template v-else>{{ segment.text }}</template>
+              </template>
             </p>
           </div>
         </div>
@@ -124,6 +152,15 @@ const handleAddToCase = () => {
 
 .result-line--sub {
   margin-left: 1rem;
+}
+
+.result-highlight {
+  background-color: transparent;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--el-color-primary);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
 }
 
 .score-column {

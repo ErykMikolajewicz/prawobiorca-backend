@@ -11,7 +11,7 @@ from src.domain.value_objects.legal_units import (
     LegalUnitElement,
     RegulationElement,
 )
-from src.domain.value_objects.sections import RegulationSection, SectionChunk, SectionsCollection
+from src.domain.value_objects.sections import ChunkSpan, RegulationSection, SectionChunk, SectionsCollection
 
 SENTENCE_SPLIT_PATTERN = re.compile(r"(?<=[.;])\s+")
 
@@ -20,6 +20,15 @@ CHUNK_MAX_TOKENS = 200
 MIN_CONTENT_TOKENS = 32
 
 MAX_TITLE_TOKENS_SHARE = 0.25
+
+
+@dataclass
+class ChunkAtom:
+    text: str
+    subsection: str | None
+    element_index: int
+    start: int
+    end: int
 
 
 class Tokenizer(Protocol):
@@ -79,9 +88,10 @@ class RegulationAct:
 
         return [
             SectionChunk(
-                text=" ".join(element.text for element in part),
+                text=" ".join(atom.text for atom in part),
                 embed_title=part_title,
                 chunk_index=chunk_index,
+                span=ChunkSpan(part[0].element_index, part[0].start, part[-1].element_index, part[-1].end),
             )
             for chunk_index, (part, part_title) in enumerate(zip(parts, part_titles, strict=True))
         ]
@@ -111,10 +121,10 @@ class RegulationAct:
 
         return max(content_budget, MIN_CONTENT_TOKENS)
 
-    def _split_to_parts(self, elements: list[LegalUnitElement], content_budget: int) -> list[list[LegalUnitElement]]:
+    def _split_to_parts(self, elements: list[LegalUnitElement], content_budget: int) -> list[list[ChunkAtom]]:
         atoms = []
-        for element in elements:
-            atoms.extend(self._split_long_element(element, content_budget))
+        for element_index, element in enumerate(elements):
+            atoms.extend(self._split_long_element(element, element_index, content_budget))
 
         parts = []
         current_part = []
@@ -135,15 +145,24 @@ class RegulationAct:
 
         return parts
 
-    def _split_long_element(self, element: LegalUnitElement, content_budget: int) -> list[LegalUnitElement]:
+    def _split_long_element(
+        self, element: LegalUnitElement, element_index: int, content_budget: int
+    ) -> list[ChunkAtom]:
         if self._tokenizer.count_tokens(element.text) <= content_budget:
-            return [element]
+            return [ChunkAtom(element.text, element.subsection, element_index, 0, len(element.text))]
 
         fragments = []
         for sentence in SENTENCE_SPLIT_PATTERN.split(element.text):
             fragments.extend(self._split_by_tokens(sentence, content_budget))
 
-        return [LegalUnitElement(text=fragment, subsection=element.subsection) for fragment in fragments]
+        atoms = []
+        cursor = 0
+        for fragment in fragments:
+            start = element.text.find(fragment, cursor)
+            cursor = start + len(fragment)
+            atoms.append(ChunkAtom(fragment, element.subsection, element_index, start, cursor))
+
+        return atoms
 
     def _split_by_tokens(self, text: str, content_budget: int) -> list[str]:
         if self._tokenizer.count_tokens(text) <= content_budget:
@@ -169,7 +188,7 @@ class RegulationAct:
         return fragments
 
     @staticmethod
-    def _create_part_titles(title: str | None, parts: list[list[LegalUnitElement]]) -> list[str | None]:
+    def _create_part_titles(title: str | None, parts: list[list[ChunkAtom]]) -> list[str | None]:
         parts_total = len(parts)
         if parts_total == 1:
             return [title]
@@ -191,7 +210,7 @@ class RegulationAct:
         return part_titles
 
     @staticmethod
-    def _create_subsection_suffix(part: list[LegalUnitElement]) -> str | None:
+    def _create_subsection_suffix(part: list[ChunkAtom]) -> str | None:
         subsections = [element.subsection for element in part if element.subsection is not None]
         if not subsections:
             return None
