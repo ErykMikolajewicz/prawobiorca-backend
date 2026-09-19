@@ -3,7 +3,7 @@ import axios, { type InternalAxiosRequestConfig } from 'axios'
 import { notifySessionExpired } from '@/api/sessionExpiry'
 
 export const prawobiorcaClient = axios.create({
-  baseURL: import.meta.env.VITE_PRAWOBIORCA_API_URL || '/api',
+  baseURL: '/api',
 })
 prawobiorcaClient.defaults.withCredentials = true
 

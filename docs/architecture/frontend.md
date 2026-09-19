@@ -43,7 +43,7 @@ All application code lives in `prawobiorca-frontend/src`:
 
 ## 4. API Integration
 
-* The shared axios instance (`src/api/axios.ts`) is created with `baseURL` taken from the `VITE_PRAWOBIORCA_API_URL` environment variable, defaulting to `/api`. Copy `.env.example` to `.env` to override it for local development.
+* The shared axios instance (`src/api/axios.ts`) is created with a fixed `baseURL` of `/api` — in every environment the API is served under this prefix of the same origin (the Vite dev server proxies it to `core-service`).
 * `withCredentials` is enabled — access and refresh tokens are carried in cookies, never stored by the application itself.
 * A response interceptor retries a request once after refreshing the tokens when `core-service` answers `401`. Concurrent refreshes share a single in-flight request, and the auth endpoints themselves are excluded from this path.
 * When the refresh fails, the session-expiry handler resets the auth store and redirects to the login page.

@@ -15,6 +15,7 @@ class ObjectStorageSettings(BaseSettings):
 
     model_config = SettingsConfigDict(
         env_file=Path(".env"),
+        secrets_dir=Path("/mnt/secrets-store"),
         extra="forbid",
         dotenv_filtering="match_prefix",
         case_sensitive=True,

@@ -33,27 +33,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: prawobiorca-backend-config
-          env:
-            - name: APP_JWT_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: prawobiorca-secrets
-                  key: JWT_SECRET_KEY
-            - name: RELATIONAL_DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: prawobiorca-secrets
-                  key: POSTGRES_PASSWORD
-            - name: OBJECT_STORAGE_ACCESS_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: prawobiorca-secrets
-                  key: OBJECT_STORAGE_ACCESS_KEY
-            - name: OBJECT_STORAGE_SECRET_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: prawobiorca-secrets
-                  key: OBJECT_STORAGE_SECRET_KEY
       volumes:
         - name: secrets-store
           csi:

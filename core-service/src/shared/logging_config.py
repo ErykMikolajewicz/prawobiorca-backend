@@ -19,7 +19,7 @@ def setup_logging():
                 "stream": "ext://sys.stdout",
             }
         },
-        "loggers": {"app": {"handlers": ["console"], "level": global_logging_level, "propagate": False}},
+        "loggers": {"src": {"handlers": ["console"], "level": global_logging_level, "propagate": False}},
         "root": {"handlers": ["console"], "level": "WARNING"},
     }
 

@@ -4,6 +4,8 @@ metadata:
   name: postgres
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: prawobiorca
@@ -32,7 +34,7 @@ spec:
             - name: POSTGRES_DB
               value: "postgres"
             - name: POSTGRES_PASSWORD_FILE
-              value: "/mnt/secrets-store/postgres-password"
+              value: "/mnt/secrets-store/RELATIONAL_DB_PASSWORD"
           resources:
             requests:
               cpu: "100m"

@@ -79,3 +79,26 @@ gcloud secrets add-iam-policy-binding object-storage-access-key \
 gcloud secrets add-iam-policy-binding object-storage-secret-key \
   --role=roles/secretmanager.secretAccessor \
   --member="principal://iam.googleapis.com/projects/296630821006/locations/global/workloadIdentityPools/prawobiorca.svc.id.goog/subject/ns/default/sa/prawobiorca-runner"
+
+gcloud secrets create jwt-secret-key \
+  --data-file=./deploy/gcp/secrets/jwt-secret-key.txt \
+  --replication-policy=automatic
+
+gcloud secrets add-iam-policy-binding jwt-secret-key \
+  --role=roles/secretmanager.secretAccessor \
+  --member="principal://iam.googleapis.com/projects/296630821006/locations/global/workloadIdentityPools/prawobiorca.svc.id.goog/subject/ns/default/sa/prawobiorca-runner"
+
+gcloud storage buckets update gs://prawobiorca-regulations \
+  --cors-file=./deploy/gcp/bucket-cors.json
+
+helm repo add kedacore https://kedacore.github.io/charts
+helm repo update kedacore
+
+helm install keda kedacore/keda \
+  --namespace keda \
+  --create-namespace \
+  --version 2.18.0
+
+helm install http-add-on kedacore/keda-add-ons-http \
+  --namespace keda \
+  --version 0.11.0

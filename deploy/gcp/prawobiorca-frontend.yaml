@@ -19,9 +19,6 @@ spec:
           image: europe-central2-docker.pkg.dev/prawobiorca/prawobiorca-repo/prawobiorca-frontend:latest
           ports:
             - containerPort: 8000
-          env:
-            - name: VITE_PRAWOBIORCA_API_URL
-              value: "https://www.prawobiorca.pl/api"
           resources:
             requests:
               cpu: "50m"

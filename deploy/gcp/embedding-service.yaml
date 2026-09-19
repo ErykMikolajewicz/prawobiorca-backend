@@ -4,6 +4,8 @@ metadata:
   name: embedding-service
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: prawobiorca
@@ -35,9 +37,11 @@ spec:
             requests:
               cpu: "1"
               memory: "4Gi"
+              ephemeral-storage: "8Gi"
             limits:
               cpu: "2"
               memory: "6Gi"
+              ephemeral-storage: "8Gi"
       containers:
         - name: embedding-service
           image: docker.io/openvino/model_server:2026.3

@@ -30,12 +30,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: prawobiorca-backend-config
-          env:
-            - name: RELATIONAL_DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: prawobiorca-secrets
-                  key: POSTGRES_PASSWORD
       volumes:
         - name: secrets-store
           csi:

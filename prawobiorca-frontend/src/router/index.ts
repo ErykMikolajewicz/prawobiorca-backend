@@ -6,7 +6,7 @@ import SearchPage from '@/pages/SearchPage.vue'
 import CasePage from '@/pages/CasePage.vue'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.PRAWOBIORCA_API_URL),
+  history: createWebHistory(),
   routes: [
     {
       path: '/',

@@ -75,6 +75,7 @@ metadata:
 spec:
   hosts:
     - extraction-service-proxy
+    - extraction-service-proxy:8080
   scaleTargetRef:
     name: extraction-service
     kind: Deployment
