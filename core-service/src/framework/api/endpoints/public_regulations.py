@@ -1,7 +1,7 @@
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, Response, status
 
 from src.app.dtos.regulations import RegulationData, RegulationRepresentation, RegulationUploadTarget
 from src.app.dtos.search import SearchParams, SearchResult
@@ -40,22 +40,24 @@ public_regulations_router = APIRouter(tags=["regulations"], prefix="/api")
 
 @public_regulations_router.get(
     "/regulations",
+    response_model=list[RegulationRepresentation],
     responses={status.HTTP_204_NO_CONTENT: {"description": "No public files for given search criteria."}},
 )
 async def get_public_regulations(
     list_regulations: Annotated[ListRegulations, Depends(get_list_regulations)],
     regulation_type: RegulationType | None = Query(default=None, alias="documentType"),
-) -> list[RegulationRepresentation]:
+) -> list[RegulationRepresentation] | Response:
     user_id = None
     public_regulations = await list_regulations.execute(user_id, regulation_type)
     if not public_regulations:
-        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="No public files for given search criteria.")
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
 
     return public_regulations
 
 
 @public_regulations_router.get(
     "/regulations/{regulationId}/documents",
+    response_model=list[SearchResult],
     responses={
         status.HTTP_204_NO_CONTENT: {"description": "No search results."},
         status.HTTP_400_BAD_REQUEST: {"description": "Regulation not prepared, normally should not occur."},
@@ -66,7 +68,7 @@ async def search_regulation_documents(
     search_regulation: Annotated[SearchRegulation, Depends(get_search_regulation)],
     regulation_id: Annotated[UUID, Path(alias="regulationId")],
     search_params: Annotated[SearchParams, Query()],
-) -> list[SearchResult]:
+) -> list[SearchResult] | Response:
     user_id = None
     try:
         results = await search_regulation.execute(user_id, regulation_id, search_params)
@@ -82,7 +84,7 @@ async def search_regulation_documents(
         )
 
     if not results:
-        raise HTTPException(status_code=status.HTTP_204_NO_CONTENT, detail="No search results.")
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
 
     return results
 
