@@ -17,6 +17,7 @@ The whole application lives in this repository:
 
 - `core-service/` - main API (FastAPI) and the Taskiq worker handling document processing.
 - `extraction-service/` - extracts structured text from PDFs.
+- `embedding-service/` - OpenVINO Model Server image with the embedding model baked in.
 - `prawobiorca-frontend/` - Vue 3 frontend application.
 - `deploy/` - Kubernetes manifests for the local (Podman) and GCP environments.
 - `scripts/` - helper scripts for running the app locally and deploying it to the cloud.

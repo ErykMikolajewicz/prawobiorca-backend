@@ -8,6 +8,7 @@ from google.auth.transport.requests import Request
 IMAGES_NAMES = (
     "prawobiorca-backend",
     "extraction-service",
+    "embedding-service",
     "prawobiorca-frontend",
 )
 

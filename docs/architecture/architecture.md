@@ -64,6 +64,7 @@ Hosts the core domain logic, user-facing endpoints, and background document inde
 * **Characteristics**:
   * **Isolated Compute**: Heavy tensor computation and embedding model memory footprints are completely decoupled from the main API, preventing thread blockage and memory spikes.
   * **Independent Scaling**: Can be scaled independently (e.g., on GPU or high-CPU compute instances) based on search traffic and document ingestion volume.
+  * **Fast cold start**: the OpenVINO int8 export of the model is baked into the image at build time, so no model download or conversion happens at startup and no volume is needed; it runs on CPU in every environment.
   * A single endpoint accepts both single texts and batches.
 
 ### 2.3. `extraction-service`

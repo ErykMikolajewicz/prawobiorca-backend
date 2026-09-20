@@ -27,13 +27,13 @@ Api with an option to embed document and split PDF files for elements.
 ## Embedding Service
 
 ### Technology Choice and Justification
-**OpenVINO Model Server (OVMS)** serves the embedding model directly — no custom application code — replacing an earlier FastAPI + ONNX Runtime app with EmbeddingGemma-300m. The model is `sdadas/mmlw-retrieval-roberta-large-v2` (Polish RoBERTa, 1024-dimensional vectors, 512-token context), chosen for its strong Polish retrieval results on PL-MTEB relative to its size. It is quantized to int8 weights and runs on CPU in the cloud and on `AUTO` (iGPU when available) on-premise.
+**OpenVINO Model Server (OVMS)** serves the embedding model directly — no custom application code — replacing an earlier FastAPI + ONNX Runtime app with EmbeddingGemma-300m. The model is `sdadas/mmlw-retrieval-roberta-large-v2` (Polish RoBERTa, 1024-dimensional vectors, 512-token context), chosen for its strong Polish retrieval results on PL-MTEB relative to its size. It is quantized to int8 weights and runs on CPU in every environment.
 
 ### Scope of Use
 `core-service` calls the OpenAI-compatible `/v3/embeddings` endpoint (model name `mmlw-retrieval-roberta-large-v2`) to embed regulation chunks in the worker and search queries in the API. Queries are prefixed with `[query]: `, chunks are sent as `{title}\n{text}` without a prefix. OVMS applies CLS pooling and L2 normalization.
 
 ### Abstraction Layer and Integration
-There is no pre-converted OpenVINO build of the model on Hugging Face and current OVMS images do not include `optimum-cli`, so an init container (`python:3.12-slim`) exports the model with `optimum-cli export openvino --weight-format int8` and `convert_tokenizer` into a persistent volume on first start; later restarts reuse it. OVMS then serves it with `--task=embeddings --pooling=CLS`. `core-service` counts tokens locally with the same `tokenizer.json` to fit chunks within the limit.
+There is no pre-converted OpenVINO build of the model on Hugging Face and current OVMS images do not include `optimum-cli`, so the `embedding-service` image is built in two stages: a `python:3.12-slim` stage exports the model with `optimum-cli export openvino --weight-format int8` and `convert_tokenizer`, and the final stage is the OVMS image with that model baked in. Nothing is downloaded or converted at startup, and no volume is needed. OVMS serves it with `--task=embeddings --pooling=CLS`. `core-service` counts tokens locally with the same `tokenizer.json` to fit chunks within the limit.
 
 ### Capabilities and Future Plans
 Changing the model requires re-embedding all regulations — the vector column length is fixed in the database schema.

@@ -26,7 +26,7 @@ echo "Waiting for broker..."
 kubectl rollout status deployment/redis --timeout=180s
 
 echo "Waiting for embedding-service..."
-kubectl rollout status deployment/embedding-service --timeout=1200s
+kubectl rollout status deployment/embedding-service --timeout=300s
 
 echo "Waiting for extraction-service..."
 kubectl rollout status deployment/extraction-service --timeout=180s

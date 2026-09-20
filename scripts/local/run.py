@@ -23,6 +23,7 @@ IMAGES = (
         ),
     ),
     ("extraction-service", "extraction-service", ("extraction-service",)),
+    ("embedding-service", "embedding-service", ("embedding-service/Containerfile",)),
     (
         "prawobiorca-frontend",
         "prawobiorca-frontend",
