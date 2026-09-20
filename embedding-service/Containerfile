@@ -1,0 +1,15 @@
+FROM docker.io/library/python:3.12-slim AS export
+
+RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu torch \
+    "optimum-intel[openvino]==2.2.*" "openvino==2026.3.*" "openvino-tokenizers[transformers]==2026.3.*" \
+    sentence-transformers
+
+RUN optimum-cli export openvino --model sdadas/mmlw-retrieval-roberta-large-v2 \
+    --disable-convert-tokenizer --task feature-extraction --weight-format int8 \
+    /models/mmlw-retrieval-roberta-large-v2
+
+RUN convert_tokenizer -o /models/mmlw-retrieval-roberta-large-v2 sdadas/mmlw-retrieval-roberta-large-v2
+
+FROM docker.io/openvino/model_server:2026.3
+
+COPY --from=export /models /models
