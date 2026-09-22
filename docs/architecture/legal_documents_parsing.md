@@ -76,8 +76,26 @@ of the unit instead of a breadcrumb segment.
 Divisions are recognised only on elements labelled `section_header` — in Polish acts they are always centered
 headings, and Docling detects those reliably. A `section_header` that carries no division keyword becomes
 a breadcrumb segment of the lowest rank, which keeps unstructured documents working as before. The exception is
-a `section_header` that opens with a point (`1)`) or a letter (`a)`), optionally preceded by the `<` marking
-a provision not yet in force — Docling mislabels those, so they are kept as content of the current unit.
+a `section_header` that opens with a subsection (`2a.`), a point (`1)`) or a letter (`a)`), optionally preceded by
+the `<` marking a provision not yet in force — Docling mislabels those, so they are kept as content of the current
+unit. The cost is that a genuinely numbered heading such as `1. Postanowienia ogólne` is treated as content too.
+
+---
+
+## Text Normalization
+
+Before the structure is recovered, every element's text is cleaned of extraction artefacts:
+
+- **Whitespace**, including non-breaking spaces and the byte order mark (`﻿`), is collapsed, so an element
+  holding only a BOM — Docling emits one at the top of every `Dziennik Ustaw` page — becomes empty and is dropped.
+- **Footnote markers** are removed when they follow a unit or subsection number (`§ 18. 1. 12) Protokół…` →
+  `§ 18. 1. Protokół…`, `§ 20. 13) 1. Wzór…` → `§ 20. 1. Wzór…`) or close an element after punctuation
+  (`…odnotowuje się w: 11)` → `…odnotowuje się w:`). Otherwise the marker would hide the subsection number,
+  or be mistaken for a point. The footnotes themselves are dropped as noise.
+- **Hyphenated words** split across lines (`złoże -nia`) are joined, but only on pages that also contain a spaced
+  dash (` - `). Docling renders a dash as ` -` in some documents (`braku -numer`, `student -osoba`), so a hyphenation
+  can be told apart from a dash only on a page whose dashes are demonstrably spaced. Pages are delimited by
+  `page_header` / `page_footer` elements.
 
 ---
 

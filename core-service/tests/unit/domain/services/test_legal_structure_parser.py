@@ -11,6 +11,7 @@ DATA_DIR = Path(__file__).parents[3] / "data"
 ACT_FIXTURE = "ustawa-nauka_slice_30-31"
 STATUTE_FIXTURE = "pwr-regulamin_2025_slice_7-9"
 PROMOTION_DATABASE_FIXTURE = "ustawa-nauka_slice_209-210"
+MINISTERIAL_REGULATION_FIXTURE = "rozporzadzenie-studia_slice_11-12"
 
 
 def load_regulation_elements(regulation_name: str) -> list[RegulationElement]:
@@ -223,7 +224,7 @@ def test_points_inherit_subsection_of_their_parent():
     assert [element.subsection for element in article.elements] == ["1", "2", "2", "2"]
 
 
-@pytest.mark.parametrize("empty_text", ["", "   "])
+@pytest.mark.parametrize("empty_text", ["", "   ", "\ufeff"])
 def test_empty_elements_are_dropped(empty_text):
     elements = [
         RegulationElement(label=UsefulLabels.TEXT, text="Art. 1. Przepis."),
@@ -293,3 +294,110 @@ def test_division_title_is_not_stolen_by_following_unit():
 
     assert units[0].title is None
     assert units[0].path == ["Rozdział 4 Samorząd studencki"]
+
+
+def test_ministerial_regulation_is_split_into_paragraphs():
+    elements = load_regulation_elements(MINISTERIAL_REGULATION_FIXTURE)
+
+    units = LegalStructureParser().parse(elements)
+
+    assert [unit.unit_type for unit in units] == [UnitType.UNNUMBERED] + [UnitType.PARAGRAPH] * 7
+    assert [unit.number for unit in units[1:]] == ["18", "19", "19a", "20", "21", "22", "23"]
+
+
+def test_footnote_markers_are_removed():
+    elements = load_regulation_elements(MINISTERIAL_REGULATION_FIXTURE)
+
+    units = LegalStructureParser().parse(elements)
+
+    first_texts = {unit.number: unit.elements[0].text for unit in units}
+    assert first_texts[None].startswith("1a. W przypadku prowadzenia kart okresowych")
+    assert first_texts["18"].startswith("1. Protokół egzaminu dyplomowego zawiera")
+    assert first_texts["19a"].startswith("Dokumentacja przebiegu studiów w postaci elektronicznej")
+    assert first_texts["20"] == "1. Wzór legitymacji studenckiej wydawanej w postaci:"
+    assert first_texts["21"] == "1. Ważność legitymacji studenckiej potwierdza się co semestr:"
+    assert first_texts["23"].startswith("1. W przypadku utraty oryginału dyplomu")
+
+
+def test_footnote_marker_at_end_of_element_is_removed():
+    elements = load_regulation_elements(MINISTERIAL_REGULATION_FIXTURE)
+
+    units = LegalStructureParser().parse(elements)
+
+    assert "4. Ukończenie studiów odnotowuje się w:" in [element.text for element in units[0].elements]
+
+
+def test_footnote_markers_in_subsections_are_removed():
+    elements = load_regulation_elements(MINISTERIAL_REGULATION_FIXTURE)
+
+    units = LegalStructureParser().parse(elements)
+
+    paragraph = next(unit for unit in units if unit.number == "22")
+    paragraph_texts = [element.text for element in paragraph.elements]
+    assert paragraph_texts[0].startswith("1. Odpis dyplomu ukończenia studiów")
+    assert paragraph_texts[2].startswith("2a. W odpisie dyplomu wspólnego")
+    assert paragraph_texts[3].startswith("2a. W odpisie dyplomu wspólnego")
+    assert paragraph_texts[5] == "4. Do odpisów dyplomu wspólnego przepis ust. 3 stosuje się odpowiednio."
+
+
+def test_subsection_after_footnote_marker_is_recognised():
+    elements = load_regulation_elements(MINISTERIAL_REGULATION_FIXTURE)
+
+    units = LegalStructureParser().parse(elements)
+
+    paragraph = next(unit for unit in units if unit.number == "20")
+    assert [element.subsection for element in paragraph.elements] == ["1", "1", "1", "1", "2"]
+
+
+def test_paragraph_continued_on_next_page_keeps_subsections():
+    elements = load_regulation_elements(MINISTERIAL_REGULATION_FIXTURE)
+
+    units = LegalStructureParser().parse(elements)
+
+    paragraph = next(unit for unit in units if unit.number == "21")
+    assert [element.subsection for element in paragraph.elements] == [
+        "1",
+        "1",
+        "1",
+        "2",
+        "3",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "4",
+        "5",
+    ]
+
+
+def test_subsection_labelled_as_header_stays_in_paragraph():
+    elements = load_regulation_elements(MINISTERIAL_REGULATION_FIXTURE)
+
+    units = LegalStructureParser().parse(elements)
+
+    paragraph = next(unit for unit in units if unit.number == "22")
+    assert [element.subsection for element in paragraph.elements] == ["1", "2", "2a", "2a", "3", "4", "5"]
+    assert all(unit.path == [] for unit in units)
+
+
+def test_hyphenated_words_are_joined():
+    elements = load_regulation_elements(MINISTERIAL_REGULATION_FIXTURE)
+
+    units = LegalStructureParser().parse(elements)
+
+    parsed_texts = {unit.number: unit_text(unit) for unit in units}
+    assert "datę złożenia egzaminu dyplomowego" in parsed_texts["19"]
+    assert "w systemie teleinformatycznym" in parsed_texts["19a"]
+    assert "podmiotów realizujących zadania publiczne" in parsed_texts["19a"]
+    assert "zawieszenia w prawach studenta" in parsed_texts["21"]
+    assert "wyraz 'DUPLIKAT'" in parsed_texts["23"]
+
+
+def test_dash_between_spaces_is_kept():
+    elements = load_regulation_elements(MINISTERIAL_REGULATION_FIXTURE)
+
+    units = LegalStructureParser().parse(elements)
+
+    paragraph = next(unit for unit in units if unit.number == "20")
+    assert paragraph.elements[3].text == "- jest określony w załączniku nr 1 do rozporządzenia."

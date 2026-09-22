@@ -10,6 +10,7 @@ from src.domain.value_objects.legal_units import (
 )
 
 NOISE_LABELS = frozenset({"page_header", "page_footer", "footnote"})
+PAGE_BREAK_LABELS = frozenset({"page_header", "page_footer"})
 
 DIVISION_PATTERN = re.compile(r"^(CZĘŚĆ|KSIĘGA|TYTUŁ|DZIAŁ|ROZDZIAŁ|ODDZIAŁ)\s+([IVXLCDM]+|\d+[A-Za-z]*)\b", re.I)
 ARTICLE_PATTERN = re.compile(r"^Art\.\s*(\d+[a-z]*)\s*\.")
@@ -21,9 +22,13 @@ POINT_PATTERN = re.compile(r"^<?\d+[a-z]*\)\s")
 LETTER_PATTERN = re.compile(r"^<?[a-z]\)\s")
 GLUED_ARTICLE_PATTERN = re.compile(r"(?<=[.;:])\s+(?=Art\.\s*\d+[a-z]*\s*\.)")
 
-WHITESPACE_PATTERN = re.compile(r"\s+")
+WHITESPACE_PATTERN = re.compile(r"[\s﻿]+")
 SPACE_BEFORE_PUNCTUATION_PATTERN = re.compile(r"\s+([.,;:)])")
 SPACE_AFTER_OPENING_BRACKET_PATTERN = re.compile(r"\(\s+")
+FOOTNOTE_MARKER_AFTER_NUMBER_PATTERN = re.compile(r"^(§\s*\d+[a-z]*\.(?:\s\d+[a-z]*\.)?|\d+[a-z]*\.)\s\d+\)\s")
+TRAILING_FOOTNOTE_MARKER_PATTERN = re.compile(r"(?<=[.,;:])\s\d+\)$")
+HYPHENATION_PATTERN = re.compile(r"(?<=\w) -(?=\w)")
+SPACED_DASH = " - "
 
 DIVISION_RANKS = {
     "CZĘŚĆ": 0,
@@ -114,28 +119,50 @@ class LegalStructureParser:
 
     def _prepare_elements(self, elements: Iterable[RegulationElement]) -> list[RegulationElement]:
         prepared_elements = []
-        for element in elements:
-            if element.label in NOISE_LABELS:
-                continue
+        for page in self._split_into_pages(elements):
+            page_elements = [
+                RegulationElement(label=element.label, text=self._normalize_text(element.text))
+                for element in page
+                if element.label not in NOISE_LABELS
+            ]
+            joins_hyphenated_words = any(SPACED_DASH in element.text for element in page_elements)
 
-            normalized_text = self._normalize_text(element.text)
-            if not normalized_text:
-                continue
+            for element in page_elements:
+                text = HYPHENATION_PATTERN.sub("", element.text) if joins_hyphenated_words else element.text
+                if not text:
+                    continue
 
-            if element.label == UsefulLabels.SECTION_HEADER:
-                prepared_elements.append(RegulationElement(label=element.label, text=normalized_text))
-                continue
+                if element.label == UsefulLabels.SECTION_HEADER:
+                    prepared_elements.append(RegulationElement(label=element.label, text=text))
+                    continue
 
-            for fragment in GLUED_ARTICLE_PATTERN.split(normalized_text):
-                prepared_elements.append(RegulationElement(label=element.label, text=fragment))
+                for fragment in GLUED_ARTICLE_PATTERN.split(text):
+                    prepared_elements.append(RegulationElement(label=element.label, text=fragment))
 
         return prepared_elements
+
+    @staticmethod
+    def _split_into_pages(elements: Iterable[RegulationElement]) -> list[list[RegulationElement]]:
+        """Hyphenated words and dashes are rendered alike (`złoże -nia`, `braku -numer`), but a page that also
+        contains a spaced dash (` - `) renders its dashes that way, so its ` -` can only be a hyphenation.
+        """
+        pages: list[list[RegulationElement]] = [[]]
+        for element in elements:
+            if element.label in PAGE_BREAK_LABELS:
+                if pages[-1]:
+                    pages.append([])
+                continue
+            pages[-1].append(element)
+
+        return pages
 
     @staticmethod
     def _normalize_text(text: str) -> str:
         normalized_text = WHITESPACE_PATTERN.sub(" ", text).strip()
         normalized_text = SPACE_BEFORE_PUNCTUATION_PATTERN.sub(r"\1", normalized_text)
         normalized_text = SPACE_AFTER_OPENING_BRACKET_PATTERN.sub("(", normalized_text)
+        normalized_text = FOOTNOTE_MARKER_AFTER_NUMBER_PATTERN.sub(r"\1 ", normalized_text)
+        normalized_text = TRAILING_FOOTNOTE_MARKER_PATTERN.sub("", normalized_text)
         return normalized_text
 
     @staticmethod
@@ -197,7 +224,10 @@ class LegalStructureParser:
         # ARTICLE_PATTERN is never needed here: any header starting with "Art." would already have been
         # caught by _match_unit (ARTICLE_HEADER_PATTERN.search matches everything ARTICLE_PATTERN.match does,
         # and more), so execution never reaches this point with such text.
-        return any(pattern.match(text) is not None for pattern in (PARAGRAPH_PATTERN, POINT_PATTERN, LETTER_PATTERN))
+        return any(
+            pattern.match(text) is not None
+            for pattern in (PARAGRAPH_PATTERN, SUBSECTION_PATTERN, POINT_PATTERN, LETTER_PATTERN)
+        )
 
     @staticmethod
     def _append_element(unit: LegalUnit, text: str) -> None:
