@@ -97,3 +97,7 @@ gcloud services enable run.googleapis.com
 gcloud iam service-accounts create extraction-service-runner \
   --project=prawobiorca \
   --display-name="Prawobiorca extraction-service runner"
+
+gcloud iam service-accounts create embedding-batch-service-runner \
+  --project=prawobiorca \
+  --display-name="Prawobiorca embedding-batch-service runner"

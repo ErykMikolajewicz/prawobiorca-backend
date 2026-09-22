@@ -12,7 +12,7 @@ gcloud run deploy extraction-service \
   --image="${IMAGE}" \
   --service-account="extraction-service-runner@${PROJECT_ID}.iam.gserviceaccount.com" \
   --port=8080 \
-  --cpu=2 \
+  --cpu=4 \
   --memory=4Gi \
   --concurrency=1 \
   --min-instances=0 \

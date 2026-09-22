@@ -33,6 +33,11 @@ spec:
           envFrom:
             - configMapRef:
                 name: prawobiorca-backend-config
+          env:
+            - name: EMBEDDING_SERVICE_URL
+              value: "https://embedding-batch-service-296630821006.europe-central2.run.app"
+            - name: EMBEDDING_SERVICE_BATCH_SIZE
+              value: "32"
       volumes:
         - name: secrets-store
           csi:
