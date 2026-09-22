@@ -12,7 +12,7 @@ data:
   RELATIONAL_DB_NAME: "postgres"
 
   EMBEDDING_SERVICE_URL: "http://embedding-service:8080"
-  EXTRACTION_SERVICE_URL: "http://extraction-service-proxy:8080"
+  EXTRACTION_SERVICE_URL: "https://extraction-service-296630821006.europe-central2.run.app"
 
   BROKER_URL: "redis://redis:6379"
 

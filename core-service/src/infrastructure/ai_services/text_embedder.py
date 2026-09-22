@@ -24,7 +24,7 @@ class TextsEmbedder:
     async def _embed(self, texts: list[str]) -> list[list[float]]:
         try:
             response = await self._client.post(
-                self._embedding_url, json={"model": EMBEDDING_MODEL_NAME, "input": texts}
+                self._embedding_url, timeout=300, json={"model": EMBEDDING_MODEL_NAME, "input": texts}
             )
             response.raise_for_status()
         except HTTPError as e:

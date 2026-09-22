@@ -72,8 +72,8 @@ Hosts the core domain logic, user-facing endpoints, and background document inde
   * Document layout analysis, and text extraction (PDFs) into structured JSON format, using Docling.
 * **Characteristics**:
   * Completely stateless service.
-  * **Scale-to-0 on GCP**: a KEDA `HTTPScaledObject` (HTTP add-on) scales the Deployment between 0 and 1 replicas based on incoming request volume. `core-service` reaches it through the `extraction-service-proxy` ExternalName Service, which points to the add-on's interceptor proxy; the interceptor holds the request until the replica is ready.
-  * **Fast cold start**: the image uses CPU-only PyTorch and has the Docling models (layout, TableFormer, RapidOCR) baked in, so no model download happens at startup; models are loaded eagerly before the service reports healthy.
+  * **Scale-to-0 on GCP**: runs on **Cloud Run** rather than in the GKE cluster, so it scales to zero natively and is billed only while a request is being handled. Deployed by `scripts/cloud/deploy_extraction_service.sh` with `--ingress=internal`, which limits callers to the VPC; the Taskiq worker reaches it over HTTPS at the service URL in `EXTRACTION_SERVICE_URL`. The only caller is the worker, so the cold start is absorbed by a background job rather than by a user request.
+  * **Fast cold start**: the image uses CPU-only PyTorch and has the Docling models (layout, TableFormer, RapidOCR) baked in, so no model download happens at startup; models are loaded eagerly before the service reports healthy. On Cloud Run a cold start costs roughly 30 s on top of the request.
   * Runs as a dedicated container in On-Premise deployments (single replica, no scale-to-0).
 
 ### 2.4. `llm-service`
@@ -83,7 +83,7 @@ Hosts the core domain logic, user-facing endpoints, and background document inde
   * Not yet wired into `core-service` — this is a first, isolated deployment step; a future iteration will add the client/use-case integration needed to expose a conversational feature to end users.
   * OVMS pulls the model from Hugging Face straight into a persistent volume on first start (cached across restarts after that), so no image build/model-baking step is needed for this service.
   * On-Premise uses `--target_device=AUTO` with `/dev/dri` passed through, so it runs on the Intel iGPU when the host exposes one and transparently falls back to CPU otherwise. GCP stays on CPU (GKE Autopilot only supports NVIDIA GPU passthrough). This model has no continuous-batching support yet, so there's no throughput benefit from OVMS's usual batching path either way.
-  * **Scale-to-0 on GCP**: a KEDA `HTTPScaledObject` (HTTP add-on) scales the Deployment between 0 and 1 replicas based on incoming request volume, since the model's RAM footprint is too large to keep idle. Requires KEDA and its HTTP add-on installed on the cluster. Once scaled to 0, traffic must reach it through the add-on's interceptor proxy rather than the `llm-service` Service directly — relevant for the future `core-service` integration.
+  * **No scale-to-0 yet**: runs as a single always-on replica on GKE. The service is not deployed by `scripts/cloud/deploy_app.sh`, so it costs nothing today; the scaling model has to be settled together with the `core-service` integration, since the model's RAM footprint is too large to keep idle once it is actually serving traffic.
 
 ### 2.5. `prawobiorca-frontend`
 * **Responsibilities**:

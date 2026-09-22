@@ -52,6 +52,7 @@ gcloud iam service-accounts create prawobiorca-runner \
 gcloud secrets add-iam-policy-binding postgres-password \
   --role=roles/secretmanager.secretAccessor \
   --member="principal://iam.googleapis.com/projects/296630821006/locations/global/workloadIdentityPools/prawobiorca.svc.id.goog/subject/ns/default/sa/prawobiorca-runner"
+
 gcloud storage buckets create gs://prawobiorca-regulations \
   --project=prawobiorca \
   --location=europe-central2 \
@@ -91,14 +92,8 @@ gcloud secrets add-iam-policy-binding jwt-secret-key \
 gcloud storage buckets update gs://prawobiorca-regulations \
   --cors-file=./deploy/gcp/bucket-cors.json
 
-helm repo add kedacore https://kedacore.github.io/charts
-helm repo update kedacore
+gcloud services enable run.googleapis.com
 
-helm install keda kedacore/keda \
-  --namespace keda \
-  --create-namespace \
-  --version 2.18.0
-
-helm install http-add-on kedacore/keda-add-ons-http \
-  --namespace keda \
-  --version 0.11.0
+gcloud iam service-accounts create extraction-service-runner \
+  --project=prawobiorca \
+  --display-name="Prawobiorca extraction-service runner"

@@ -74,24 +74,6 @@ spec:
       targetPort: 8080
 
 ---
-apiVersion: http.keda.sh/v1alpha1
-kind: HTTPScaledObject
-metadata:
-  name: llm-service
-spec:
-  hosts:
-    - llm-service.default.svc.cluster.local
-  scaleTargetRef:
-    name: llm-service
-    kind: Deployment
-    apiVersion: apps/v1
-    service: llm-service
-    port: 8080
-  replicas:
-    min: 0
-    max: 1
-
----
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
