@@ -84,5 +84,13 @@ const handleGeneratePdf = async (description: string) => {
 
 .case-page {
   flex-grow: 1;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .case-page {
+    padding: 0.5rem;
+  }
 }
 </style>

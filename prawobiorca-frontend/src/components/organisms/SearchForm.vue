@@ -30,7 +30,7 @@ function onSubmit() {
       <el-input v-model="searchParams.query" placeholder="Wpisz treść..." clearable required />
     </el-form-item>
     <el-row :gutter="20">
-      <el-col :span="12">
+      <el-col :span="12" :xs="24">
         <el-form-item label="Poziom istotności:">
           <div style="display: flex; align-items: center; gap: 15px; width: 100%">
             <el-slider
@@ -54,7 +54,7 @@ function onSubmit() {
           </div>
         </el-form-item>
       </el-col>
-      <el-col :span="12">
+      <el-col :span="12" :xs="24">
         <el-form-item label="Maksymalna liczba wyników:">
           <el-input-number
             v-model="searchParams.limit"

@@ -56,7 +56,7 @@ async function handleSubmit() {
   <el-dialog
     :model-value="modelValue"
     title="Dodaj plik"
-    width="480px"
+    width="min(480px, 92vw)"
     @update:model-value="(value: boolean) => emit('update:modelValue', value)"
   >
     <el-form label-position="top" @submit.prevent="handleSubmit">
