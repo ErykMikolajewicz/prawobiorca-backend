@@ -2,6 +2,7 @@
 name = "prawobiorca"
 version = "0.1.0"
 description = "Law acts search engine with AI features."
+license = "MIT"
 readme = "README.md"
 requires-python = "==3.14.*"
 dependencies = [
