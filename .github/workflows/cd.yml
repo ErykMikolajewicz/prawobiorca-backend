@@ -9,19 +9,40 @@ env:
   REPOSITORY: europe-central2-docker.pkg.dev/prawobiorca/prawobiorca-repo
 
 jobs:
-  build:
+  changes:
     if: github.repository == 'ErykMikolajewicz/prawobiorca-backend'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changes: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: filter
+        uses: dorny/paths-filter@v4
+        with:
+          filters: |
+            prawobiorca-backend:
+              - core-service/**
+              - deploy/gcp/prawobiorca-backend.yaml
+              - deploy/gcp/prawobiorca-worker.yaml
+              - deploy/gcp/prawobiorca-migrations.yaml
+            prawobiorca-frontend:
+              - prawobiorca-frontend/**
+              - deploy/gcp/prawobiorca-frontend.yaml
+
+  build:
+    if: github.repository == 'ErykMikolajewicz/prawobiorca-backend' && needs.changes.outputs.changes != '[]'
+    needs: changes
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     strategy:
       matrix:
-        include:
-          - image: prawobiorca-backend
-            context: core-service
-          - image: prawobiorca-frontend
-            context: prawobiorca-frontend
+        image: ${{ fromJSON(needs.changes.outputs.changes) }}
+    env:
+      CONTEXT: ${{ fromJSON('{"prawobiorca-backend":"core-service","prawobiorca-frontend":"prawobiorca-frontend"}')[matrix.image] }}
     steps:
       - uses: actions/checkout@v7
       - id: auth
@@ -37,15 +58,15 @@ jobs:
           password: ${{ steps.auth.outputs.access_token }}
       - run: >
           docker build
-          --file ${{ matrix.context }}/Containerfile
+          --file ${{ env.CONTEXT }}/Containerfile
           --tag ${{ env.REPOSITORY }}/${{ matrix.image }}:${{ github.sha }}
           --tag ${{ env.REPOSITORY }}/${{ matrix.image }}:latest
-          ${{ matrix.context }}
+          ${{ env.CONTEXT }}
       - run: docker push --all-tags ${{ env.REPOSITORY }}/${{ matrix.image }}
 
   deploy:
     if: github.repository == 'ErykMikolajewicz/prawobiorca-backend'
-    needs: build
+    needs: [changes, build]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -66,16 +87,20 @@ jobs:
           deploy/gcp/prawobiorca-backend.yaml
           deploy/gcp/prawobiorca-worker.yaml
           deploy/gcp/prawobiorca-frontend.yaml
-      - run: |
+      - if: contains(needs.changes.outputs.changes, 'prawobiorca-backend')
+        run: |
           kubectl delete job prawobiorca-migrations --ignore-not-found
           kubectl apply -f deploy/gcp/prawobiorca-migrations.yaml
           kubectl wait --for=condition=complete job/prawobiorca-migrations --timeout=300s
-      - run: |
+      - if: contains(needs.changes.outputs.changes, 'prawobiorca-backend')
+        run: |
           kubectl apply -f deploy/gcp/prawobiorca-backend.yaml
           kubectl rollout status deployment/prawobiorca-backend --timeout=180s
-      - run: |
+      - if: contains(needs.changes.outputs.changes, 'prawobiorca-backend')
+        run: |
           kubectl apply -f deploy/gcp/prawobiorca-worker.yaml
           kubectl rollout status deployment/prawobiorca-worker --timeout=180s
-      - run: |
+      - if: contains(needs.changes.outputs.changes, 'prawobiorca-frontend')
+        run: |
           kubectl apply -f deploy/gcp/prawobiorca-frontend.yaml
           kubectl rollout status deployment/prawobiorca-frontend --timeout=180s
