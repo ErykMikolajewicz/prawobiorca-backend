@@ -42,3 +42,40 @@ jobs:
           --tag ${{ env.REPOSITORY }}/${{ matrix.image }}:latest
           ${{ matrix.context }}
       - run: docker push --all-tags ${{ env.REPOSITORY }}/${{ matrix.image }}
+
+  deploy:
+    if: github.repository == 'ErykMikolajewicz/prawobiorca-backend'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: projects/296630821006/locations/global/workloadIdentityPools/github/providers/prawobiorca-backend
+          service_account: prawobiorca-deployer@prawobiorca.iam.gserviceaccount.com
+      - uses: google-github-actions/get-gke-credentials@v3
+        with:
+          cluster_name: prawobiorca
+          location: europe-central2
+      - run: >
+          sed -i "s|:latest|:${{ github.sha }}|"
+          deploy/gcp/prawobiorca-migrations.yaml
+          deploy/gcp/prawobiorca-backend.yaml
+          deploy/gcp/prawobiorca-worker.yaml
+          deploy/gcp/prawobiorca-frontend.yaml
+      - run: |
+          kubectl delete job prawobiorca-migrations --ignore-not-found
+          kubectl apply -f deploy/gcp/prawobiorca-migrations.yaml
+          kubectl wait --for=condition=complete job/prawobiorca-migrations --timeout=300s
+      - run: |
+          kubectl apply -f deploy/gcp/prawobiorca-backend.yaml
+          kubectl rollout status deployment/prawobiorca-backend --timeout=180s
+      - run: |
+          kubectl apply -f deploy/gcp/prawobiorca-worker.yaml
+          kubectl rollout status deployment/prawobiorca-worker --timeout=180s
+      - run: |
+          kubectl apply -f deploy/gcp/prawobiorca-frontend.yaml
+          kubectl rollout status deployment/prawobiorca-frontend --timeout=180s
