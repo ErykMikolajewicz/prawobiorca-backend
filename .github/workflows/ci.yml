@@ -17,7 +17,7 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check
       - run: cp core-service/.env.example core-service/.env
-      - run: uv run poe test
+      - run: uv run poe cov
 
   integration:
     if: github.repository == 'ErykMikolajewicz/prawobiorca-backend'

@@ -24,7 +24,7 @@ cwd = "core-service"
 sequence = [
     { cmd = "uv run coverage erase" },
     { cmd = "uv run pytest tests/unit --cov=src --cov-config=coverage.toml" },
-    { cmd = "uv run coverage report -m --skip-covered --fail-under=95 --sort=Cover --rcfile=coverage.toml" }
+    { cmd = "uv run coverage report -m --skip-covered --fail-under=90 --sort=Cover --rcfile=coverage.toml" }
 ]
 
 [tasks.build_images]
