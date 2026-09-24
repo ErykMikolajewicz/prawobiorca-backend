@@ -19,6 +19,18 @@ jobs:
       - run: cp core-service/.env.example core-service/.env
       - run: uv run poe test
 
+  integration:
+    if: github.repository == 'ErykMikolajewicz/prawobiorca-backend'
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_HOST: unix:///var/run/docker.sock
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.2.0
+      - run: uv sync --locked
+      - run: cp core-service/.env.example core-service/.env
+      - run: uv run poe test_integration
+
   frontend:
     if: github.repository == 'ErykMikolajewicz/prawobiorca-backend'
     runs-on: ubuntu-latest
