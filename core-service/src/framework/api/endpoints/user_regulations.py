@@ -11,7 +11,6 @@ from src.app.use_cases.regulations import (
     DeleteRegulation,
     GetRegulationDownloadUrl,
     ListRegulations,
-    RegulationNotFound,
     RetryRegulationPreparation,
     SearchRegulation,
 )
@@ -19,6 +18,7 @@ from src.domain.exceptions.regulations import (
     RegulationAlreadyInitialized,
     RegulationContentNotFound,
     RegulationInInvalidState,
+    RegulationNotFound,
     RegulationPreparationInProgress,
     RegulationServiceUnavailable,
     RegulationsNotPreparedToSearch,
@@ -44,7 +44,7 @@ user_regulations_router = APIRouter(
     "/user/regulations",
     response_model=list[RegulationRepresentation],
     responses={
-        status.HTTP_204_NO_CONTENT: {"descriptions": "Not found user files with that criteria."},
+        status.HTTP_204_NO_CONTENT: {"description": "Not found user files with that criteria."},
     },
 )
 async def get_user_regulations(

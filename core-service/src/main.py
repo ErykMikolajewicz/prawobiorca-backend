@@ -47,7 +47,7 @@ async def lifespan(app: FastAPI):
         closing_callbacks.insert(0, broker_closing_callback)
 
     except Exception as e:
-        logger.critical(f"Can not connect to external service: {e}")
+        logger.critical("Can not connect to external service: %s", e)
         raise
     else:
         app.state.ready = True
@@ -62,7 +62,7 @@ async def lifespan(app: FastAPI):
                 async with asyncio.timeout(30):
                     await callback()
             except Exception as e:
-                logger.error(f"Error during clean up: {e}")
+                logger.error("Error during clean up: %s", e)
 
 
 prawobiorca = FastAPI(lifespan=lifespan, title="PRAWOBIORCA", version=version)
