@@ -18,6 +18,7 @@ build_frontend = "podman image build --tag=prawobiorca-frontend prawobiorca-fron
 upgrade_db = { cmd = "uv run alembic upgrade head", cwd = "core-service" }
 seed = { cmd = "uv run scripts/seed_relational_db.py", cwd = "core-service" }
 init_regulations = { cmd = "uv run scripts/init_regulations.py", cwd = "core-service" }
+export_openapi = { cmd = "uv run scripts/export_openapi.py", cwd = "core-service" }
 
 [tasks.cov]
 cwd = "core-service"
