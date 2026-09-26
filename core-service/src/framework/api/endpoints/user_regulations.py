@@ -23,6 +23,7 @@ from src.domain.exceptions.regulations import (
     RegulationServiceUnavailable,
     RegulationsNotPreparedToSearch,
 )
+from src.domain.exceptions.users import UserNotFound
 from src.domain.value_objects.regulations import RegulationType
 from src.framework.dependencies.authentication import require_logged_user
 from src.framework.dependencies.regulations import (
@@ -65,6 +66,7 @@ async def get_user_regulations(
     status_code=status.HTTP_201_CREATED,
     responses={
         status.HTTP_400_BAD_REQUEST: {"description": "Can't add empty regulation."},
+        status.HTTP_404_NOT_FOUND: {"description": "User not found!"},
     },
 )
 async def add_user_regulation(
@@ -72,7 +74,10 @@ async def add_user_regulation(
     add_regulation_: Annotated[AddRegulation, Depends(get_add_regulation)],
     regulation_data: RegulationData,
 ) -> RegulationUploadTarget:
-    return await add_regulation_.execute(user_id, regulation_data)
+    try:
+        return await add_regulation_.execute(user_id, regulation_data)
+    except UserNotFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found!")
 
 
 @user_regulations_router.post(
